@@ -5,6 +5,8 @@
     box-sizing: border-box;
 }
 
+
+
 body
 {
     font-family: "pangolin", "Comic Sans MS", 'Trebuchet MS', Monospace, sans-serif;
@@ -80,6 +82,41 @@ a
     justify-content: space-between;
     align-items: center;
     container: footer / inline-size;
+}
+
+button:hover
+{
+    background-color: #fff;
+}
+
+#sitemap
+{
+    transition: 0.5s cubic-bezier(0.35, 0.39, 0.54, 1.49);
+}
+
+dialog[open]
+{
+    opacity: 1;
+    scale: 1;
+    translate: 0 0;
+}
+
+dialog
+{
+    opacity: 0;
+    scale: 1;
+    translate: -100% 0;
+    transition: all 0.7s allow-discrete;
+}
+
+@starting-style
+{
+    dialog[open]
+    {
+        opacity: 0;
+        scale: 1;
+        translate: -100% 0;
+    }
 }
 
 @media (max-width: 575px)
