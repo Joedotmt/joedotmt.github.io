@@ -87,6 +87,7 @@ a
 button:hover
 {
     background-color: #fff;
+    cursor: pointer;
 }
 
 #sitemap
