@@ -1,0 +1,180 @@
+@import url("https://fonts.googleapis.com/css2?family=Pangolin&display=swap");
+
+:root {
+    font-family: pangolin, "comic sans ms", sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+    color: #213547;
+    background-color: #ffffff;
+}
+
+body {
+    margin: 0;
+    display: flex;
+    place-items: center;
+    min-width: 320px;
+    min-height: 100vh;
+    box-sizing: border-box;
+    margin: 0;
+}
+
+h1 {
+    font-size: 2.4em;
+    margin-bottom: 1.5rem;
+    z-index: 3;
+    margin: 0;
+    pointer-events: none;
+    user-select: none;
+}
+.heading {
+    position: fixed;
+    z-index: 4;
+    left: 0.4em;
+    top: 0.4em;
+    background: none;
+    display: flex;
+    gap: 0.5em;
+    pointer-events: none;
+}
+img {
+    pointer-events: all;
+    -webkit-user-drag: none;
+}
+.noevents {
+    pointer-events: none;
+}
+img.hovering {
+    pointer-events: auto;
+    user-select: none;
+    scale: 1.1;
+}
+
+.controls {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    padding: 1px;
+    margin: 0em;
+    background: #ffffff;
+    backdrop-filter: blur(8px);
+    border-radius: 0px;
+    border-top: 2px solid rgba(0, 0, 0, 1);
+    z-index: 2;
+    user-select: none;
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    font-family: "Pangolin", cursive;
+    transition: all 0.3s ease;
+    width: 100%;
+    align-content: stretch;
+    align-items: stretch;
+    justify-content: space-evenly;
+}
+
+.controls:hover {
+    user-select: auto;
+}
+
+canvas:active ~ .controls {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.input-group {
+    display: flex;
+    align-items: center;
+    gap: 0rem;
+    background-color: #ffffff;
+    justify-content: center;
+    border-radius: 5px;
+    margin: 0 0;
+    padding: 0px 5px;
+    height: 45px;
+}
+
+input[type="range"] {
+    width: 200px;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    appearance: none;
+    outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #4c6baf;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+}
+
+select {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 2px solid #ddd;
+    background: white;
+    font-family: "Pangolin", cursive;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+select:hover {
+    border-color: #4c6baf;
+}
+
+input[type="checkbox"] {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #4c6baf;
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s;
+}
+
+input[type="checkbox"]:checked {
+    background: #4c6baf;
+}
+
+input[type="checkbox"]:checked::after {
+    content: "✓";
+    position: absolute;
+    color: white;
+    font-size: 14px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+canvas {
+    border: 0px solid #000000;
+    border-radius: 0px;
+    background-color: white;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+.message {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #f0f9ff;
+    border-radius: 4px;
+    font-weight: 500;
+    color: #2563eb;
+    position: fixed;
+    bottom: 5em;
+    left: 0em;
+    display: none;
+}
