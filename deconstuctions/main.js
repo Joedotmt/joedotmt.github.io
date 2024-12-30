@@ -1,22 +1,69 @@
+
+
 const canvas = document.getElementById('geometryCanvas');
 const ctx = canvas.getContext('2d');
 const message = document.getElementById('message');
 
 // Input elements
 const sideABInput = document.getElementById('sideAB');
+const sideABSlider = document.getElementById('sideABSlider');
 const sideBCInput = document.getElementById('sideBC');
+const sideBCSlider = document.getElementById('sideBCSlider');
 const angleBInput = document.getElementById('angleB');
-const sideABValue = document.getElementById('sideABValue');
-const sideBCValue = document.getElementById('sideBCValue');
 const showFullCircle = document.getElementById('showFullCircle');
 const showGridEle = document.getElementById('showGrid');
 
+let unit = '';
 
-showGridEle.oninput = drawMain;
-sideABInput.oninput = drawMain;
-sideBCInput.oninput = drawMain;
-angleBInput.oninput = drawMain;
-showFullCircle.oninput = drawMain;
+function syncInputs(slider, input)
+{
+  [slider, input].forEach(element =>
+  {
+    element.addEventListener('input', (e) =>
+    {
+      if (element.type === 'text')
+      {
+        // Remove non-numeric chars from start, keep only last decimal point
+        let value = e.target.value;
+        value = value.replace(/^[^\d]+/, '');
+        const parts = value.split('.');
+        if (parts.length > 1)
+        {
+          value = parts[0] + '.' + parts.slice(1).join('');
+        }
+
+        // Extract number and unit
+        const match = value.match(/^(\d*\.?\d+)(.*)$/);
+        if (match)
+        {
+          const numValue = match[1];
+          unit = match[2] || '';
+          slider.value = numValue;
+          input.value = numValue + unit;
+
+          // Update other text input
+          const otherInput = input === sideABInput ? sideBCInput : sideABInput;
+          const otherValue = otherInput.value.replace(/[^\d.]+/g, '');
+          otherInput.value = otherValue + unit;
+        }
+      } else
+      {
+        const value = e.target.value;
+        slider.value = value;
+        input.value = value + unit;
+      }
+      drawMain();
+    });
+  });
+}
+
+syncInputs(sideABSlider, sideABInput);
+syncInputs(sideBCSlider, sideBCInput);
+
+[showGridEle, angleBInput, showFullCircle].forEach(element =>
+{
+  element.addEventListener('input', drawMain);
+});
 
 // Camera variables
 let cameraOffsetX = 0;
@@ -153,6 +200,52 @@ const deg2rad = Math.PI / 180;
 
 const MAX_PAN_DISTANCE = 800;
 
+let animAmount = 0;
+
+
+function arcpoint(x, y, x2, y2, angle)
+{
+  // Calculate radius using distance formula
+  let radius = Math.sqrt(Math.pow(x2 - x, 2) + Math.pow(y2 - y, 2));
+
+  // Calculate starting angle in degrees
+  let startAngle = (Math.atan2(y2 - y, x2 - x) * 180 / Math.PI) - angle / 2;
+
+  // Calculate end angle by adding the input angle
+  let endAngle = startAngle + angle;
+
+  arc(x, y, radius, startAngle, endAngle);
+}
+function arc(x, y, radius, startAngle, endAngle)
+{
+  if (showFullCircle.checked)
+  {
+    ctx.strokeStyle = "black";
+    ctx.globalAlpha = 0.2;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, 2 * Math.PI);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  let func = () => ctx.arc(x, y, radius, startAngle * Math.PI / 180, endAngle * Math.PI / 180);
+
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  func();
+  ctx.closePath();
+  ctx.fillStyle = "rgba(0, 0, 0, 0.02)";
+  ctx.strokeStyle = "transparent";
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.beginPath();
+  func();
+  ctx.strokeStyle = "black";
+  ctx.stroke();
+}
+
+
 function drawMain()
 {
   constrainCamera();
@@ -172,10 +265,6 @@ function drawMain()
   const sideAB = parseInt(sideABInput.value);
   const sideBC = parseInt(sideBCInput.value);
   const angleB = parseFloat(angleBInput.value);
-
-  // Update displayed values
-  sideABValue.textContent = sideAB;
-  sideBCValue.textContent = sideBC;
 
   // Calculate third side using law of cosines
   const angleRad = angleB * deg2rad;
@@ -224,36 +313,18 @@ function drawMain()
 
 
   ctx.strokeStyle = 'black';
-  ctx.beginPath();
-  ctx.arc(ax, ay, sideAB * SCALE, 280 * deg2rad, -40 * deg2rad);
-  ctx.stroke();
 
-  ctx.beginPath();
-  ctx.arc(bx, by, sideAB * SCALE, 220 * deg2rad, -100 * deg2rad);
-  ctx.stroke();
 
-  // Full circles with lower opacity if checkbox is checked
-  if (showFullCircle.checked)
-  {
-    ctx.globalAlpha = 0.2;
-    ctx.beginPath();
-    ctx.arc(ax, ay, sideAB * SCALE, 0, 2 * Math.PI);
-    ctx.stroke();
 
-    ctx.beginPath();
-    ctx.arc(bx, by, sideAB * SCALE, 0, 2 * Math.PI);
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-  }
 
   // Point Circle intersection top
-  const cix = bx - sideBC * SCALE * Math.cos(60 * deg2rad);
-  const ciy = startY - sideBC * SCALE * Math.sin(60 * deg2rad);
+  const cix = bx - sideAB * SCALE * Math.cos(60 * deg2rad);
+  const ciy = startY - sideAB * SCALE * Math.sin(60 * deg2rad);
 
   // Calculate extended line BC
   const extendFactor = 6000; // Length of extension
-  const extendedX = cix + ((cix - bx) / sideBC) * extendFactor;
-  const extendedY = ciy + ((ciy - by) / sideBC) * extendFactor;
+  const extendedX = cix + ((cix - bx) / sideAB) * extendFactor;
+  const extendedY = ciy + ((ciy - by) / sideAB) * extendFactor;
 
   // Draw extended line in different color
   ctx.beginPath();
@@ -262,8 +333,41 @@ function drawMain()
   ctx.lineTo(extendedX, extendedY);
   ctx.stroke();
 
+
+  ctx.beginPath();
+  let deltaNeeded = (280 * deg2rad) - (320 * deg2rad);
+  arcpoint(ax, ay, cix, ciy, 10);
+  ctx.stroke();
+
+
+  setTimeout(() =>
+  {
+    if (animAmount < 1)
+    {
+      animAmount += 0.001;
+    }
+    drawMain();
+  }, 60);
+
+
+
+  //arc(bx, by, sideAB * SCALE, 100, -100);
+  arcpoint(bx, by, cix, ciy, 10);
+
+
+
+
+
+
+
+
   // Reset stroke style
   ctx.strokeStyle = 'black';
+
+
+  ctx.beginPath();
+  arcpoint(ax, ay, bx, by, 5);
+  ctx.closePath();
 
   // Draw triangle
   ctx.beginPath();
@@ -271,6 +375,7 @@ function drawMain()
   ctx.lineTo(bx, by);
   ctx.lineTo(cx, cy);
   ctx.closePath();
+
 
   // Style and fill
   ctx.strokeStyle = '#2563eb';
@@ -299,10 +404,10 @@ function drawMain()
   ctx.fillText('C', pointC.x, pointC.y);
 
   const sideABLabel = worldToScreen((ax + bx) / 2, ay + 2);
-  ctx.fillText(`${sideAB}`, sideABLabel.x, sideABLabel.y + 12);
+  ctx.fillText(`${sideAB}${unit}`, sideABLabel.x, sideABLabel.y + 12);
 
   const sideBCLabel = worldToScreen((bx + cx) / 2, (by + cy) / 2);
-  ctx.fillText(`${sideBC}`, sideBCLabel.x + 25, sideBCLabel.y - 25);
+  ctx.fillText(`${sideBC}${unit}`, sideBCLabel.x + 25, sideBCLabel.y - 25);
 
   const angleBLabel = worldToScreen(bx - 5, by - 1);
   ctx.fillText(`${angleB}°`, angleBLabel.x - 30, angleBLabel.y - 5);
@@ -319,23 +424,16 @@ function drawMain()
 
     // First two arcs centered at point B
     ctx.beginPath();
-    ctx.arc(bx, by, radiusA, 0.95 * Math.PI, 1.05 * Math.PI);
+    let x2 = bx + radiusA * Math.cos(Math.PI);
+    let y2 = by + radiusA * Math.sin(Math.PI);
+    arcpoint(bx, by, x2, y2, 20);
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.arc(bx, by, radiusA, angleToBisect - 0.15 - Math.PI, angleToBisect + 0.15 - Math.PI);
+    let x2b = bx + radiusA * Math.cos(angleToBisect - Math.PI);
+    let y2b = by + radiusA * Math.sin(angleToBisect - Math.PI);
+    arcpoint(bx, by, x2b, y2b, 20);
     ctx.stroke();
-
-    if (showFullCircle.checked)
-    {
-      // First two arcs centered at point B
-      ctx.globalAlpha = 0.2;
-      ctx.beginPath();
-      ctx.arc(bx, by, radiusA, 0, 2 * Math.PI);
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-    }
-
 
     // Calculate intersection points
     const intersectAB = {
@@ -349,28 +447,18 @@ function drawMain()
     };
 
 
-
     // Last two arcs from intersection points
     ctx.beginPath();
-    ctx.arc(intersectAB.x, intersectAB.y, radiusB, 230 * deg2rad, -100 * deg2rad);
+    const angle = 30 * deg2rad;
+    const endX = bx - 130 * Math.cos(angle);
+    const endY = by - 130 * Math.sin(angle);
+    arcpoint(x2, y2, endX, endY, 20);
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.arc(intersectBC.x, intersectBC.y, radiusB, 160 * deg2rad, -170 * deg2rad);
+    arcpoint(x2b, y2b, endX, endY, 20);
     ctx.stroke();
 
-    if (showFullCircle.checked)
-    {
-      // Last two arcs from intersection points
-      ctx.globalAlpha = 0.2;
-      ctx.beginPath();
-      ctx.arc(intersectAB.x, intersectAB.y, radiusB, 0, 2 * Math.PI);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.arc(intersectBC.x, intersectBC.y, radiusB, 0, 2 * Math.PI);
-      ctx.stroke();
-    }
 
 
 
@@ -378,6 +466,8 @@ function drawMain()
   }
 
   ctx.restore();
+
+  // requestAnimationFrame(drawMain);
 }
 
 // Center camera on triangle initially
@@ -393,8 +483,13 @@ function constrainCamera()
   const centerX = canvas.width / 2 - (parseInt(sideABInput.value) * SCALE / 2) * cameraZoom;
   const centerY = canvas.height / 2 + 300;
 
-  cameraOffsetX = Math.min(Math.max(cameraOffsetX, centerX - MAX_PAN_DISTANCE), centerX + MAX_PAN_DISTANCE);
-  cameraOffsetY = Math.min(Math.max(cameraOffsetY, centerY - MAX_PAN_DISTANCE), centerY + MAX_PAN_DISTANCE);
+  // if (cameraZoom < 0.25)
+  // {
+  //   MAX_PAN_DISTANCE *= cameraZoom
+  // }
+
+  cameraOffsetX = Math.min(Math.max(cameraOffsetX, centerX - MAX_PAN_DISTANCE * cameraZoom), centerX + MAX_PAN_DISTANCE * cameraZoom);
+  cameraOffsetY = Math.min(Math.max(cameraOffsetY, centerY - MAX_PAN_DISTANCE * cameraZoom), centerY + MAX_PAN_DISTANCE * cameraZoom);
 }
 
 // Mouse drag for panning
@@ -402,7 +497,7 @@ let isDragging = false;
 let lastX = 0;
 let lastY = 0;
 
-canvas.addEventListener('mousedown', (e) =>
+canvas.addEventListener('pointerdown', (e) =>
 {
   isDragging = true;
   lastX = e.clientX * 2;
@@ -410,8 +505,9 @@ canvas.addEventListener('mousedown', (e) =>
   logoElement.classList.add('noevents');
 });
 
-canvas.addEventListener('mousemove', (e) =>
+canvas.addEventListener('pointermove', (e) =>
 {
+
   if (isDragging)
   {
     cameraOffsetX += e.clientX * 2 - lastX;
@@ -425,19 +521,19 @@ canvas.addEventListener('mousemove', (e) =>
 const logoElement = document.getElementById('logoimg');
 if (logoElement)
 {
-  logoElement.addEventListener('mouseover', () =>
+  logoElement.addEventListener('pointerover', () =>
   {
     logoElement.classList.add('hovering');
   });
 
-  logoElement.addEventListener('mouseout', () =>
+  logoElement.addEventListener('pointerout', () =>
   {
     logoElement.classList.remove('hovering');
   });
 }
 
-canvas.addEventListener('mouseup', () => { isDragging = false; logoElement.classList.remove('noevents'); });
-canvas.addEventListener('mouseleave', () => isDragging = false);
+canvas.addEventListener('pointerup', () => { isDragging = false; logoElement.classList.remove('noevents'); });
+canvas.addEventListener('pointerleave', () => isDragging = false);
 
 // Replace wheel event listener
 canvas.addEventListener('wheel', (e) =>

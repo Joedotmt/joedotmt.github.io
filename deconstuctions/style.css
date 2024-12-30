@@ -8,6 +8,21 @@
     background-color: #ffffff;
 }
 
+input[type="text"] {
+    width: 60px;
+    font-family: pangolin, "comic sans ms", sans-serif;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 2px solid #ddd;
+    background: white;
+    font-family: "Pangolin", cursive;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0s;
+}
+input[type="text"]:hover {
+    border-color: #4c6baf;
+}
 body {
     margin: 0;
     display: flex;
@@ -70,6 +85,12 @@ img.hovering {
     align-content: stretch;
     align-items: stretch;
     justify-content: space-evenly;
+    max-width: 100dvw;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+label {
+    text-wrap: nowrap;
 }
 
 .controls:hover {
@@ -124,7 +145,7 @@ select {
     font-family: "Pangolin", cursive;
     cursor: pointer;
     outline: none;
-    transition: border-color 0.3s;
+    transition: border-color 0s;
 }
 
 select:hover {
@@ -133,8 +154,8 @@ select:hover {
 
 input[type="checkbox"] {
     appearance: none;
-    width: 20px;
-    height: 20px;
+    min-width: 20px;
+    min-height: 20px;
     border: 2px solid #4c6baf;
     border-radius: 4px;
     cursor: pointer;
