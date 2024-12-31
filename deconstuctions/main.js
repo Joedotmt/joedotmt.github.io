@@ -530,14 +530,17 @@ canvas.addEventListener('pointermove', (e) =>
 canvas.addEventListener('pointerup', () => { isDragging = false; logoElement.classList.remove('noevents'); });
 canvas.addEventListener('pointerleave', () => isDragging = false);
 
+let initialPinchDistance = null;
+let lastPinchCenter = null;
+
 canvas.addEventListener('wheel', (e) =>
 {
-  //e.preventDefault();
+  e.preventDefault();
 
   // Get mouse position relative to canvas
   const rect = canvas.getBoundingClientRect();
-  const mouseX = (e.clientX * 2 - rect.left);
-  const mouseY = (e.clientY * 2 - rect.top);
+  const mouseX = (e.clientX - rect.left) * 2;
+  const mouseY = (e.clientY - rect.top) * 2;
 
   // Get world position before zoom
   const worldX = (mouseX - cameraOffsetX) / cameraZoom;
@@ -555,21 +558,65 @@ canvas.addEventListener('wheel', (e) =>
   cameraOffsetY = mouseY - worldY * cameraZoom;
 
   drawMain();
+}, { passive: false });
 
-  // Continue animation
-  function animate()
+canvas.addEventListener('touchstart', (e) =>
+{
+  if (e.touches.length === 2)
   {
-    if (Math.abs(cameraZoom - targetZoom) > 0.01)
-    {
-      cameraZoom = lerp(cameraZoom, targetZoom, 0.1);
-      cameraOffsetX = mouseX - worldX * cameraZoom;
-      cameraOffsetY = mouseY - worldY * cameraZoom;
-      drawMain();
-      requestAnimationFrame(animate);
-    }
+    e.preventDefault();
+    const touch1 = e.touches[0];
+    const touch2 = e.touches[1];
+    initialPinchDistance = Math.hypot(
+      touch2.clientX - touch1.clientX,
+      touch2.clientY - touch1.clientY
+    );
+    lastPinchCenter = {
+      x: (touch1.clientX + touch2.clientX) / 2,
+      y: (touch1.clientY + touch2.clientY) / 2
+    };
   }
-  animate();
-}, { passive: true });
+}, { passive: false });
+
+canvas.addEventListener('touchmove', (e) =>
+{
+  if (e.touches.length === 2 && initialPinchDistance !== null)
+  {
+    e.preventDefault();
+    const touch1 = e.touches[0];
+    const touch2 = e.touches[1];
+    const currentPinchDistance = Math.hypot(
+      touch2.clientX - touch1.clientX,
+      touch2.clientY - touch1.clientY
+    );
+
+    const rect = canvas.getBoundingClientRect();
+    const centerX = (lastPinchCenter.x - rect.left) * 2;
+    const centerY = (lastPinchCenter.y - rect.top) * 2;
+
+    const worldX = (centerX - cameraOffsetX) / cameraZoom;
+    const worldY = (centerY - cameraOffsetY) / cameraZoom;
+
+    const zoomAmount = currentPinchDistance / initialPinchDistance;
+    targetZoom = Math.max(targetZoom * zoomAmount, 0.2);
+
+    cameraZoom = lerp(cameraZoom, targetZoom, 0.1);
+    cameraOffsetX = centerX - worldX * cameraZoom;
+    cameraOffsetY = centerY - worldY * cameraZoom;
+
+    drawMain();
+    initialPinchDistance = currentPinchDistance;
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchend', (e) =>
+{
+  if (e.touches.length < 2)
+  {
+    initialPinchDistance = null;
+    lastPinchCenter = null;
+  }
+}, { passive: false });
 
 
 
