@@ -514,7 +514,7 @@ canvas.addEventListener('touchmove', (e) =>
   e.preventDefault();
   if (isDragging)
   {
-    if (e.touches.length == 2) { return; }
+    if (e.touches.length > 1) { return; }
     const touch = e.touches[0];
     handleMoveEvent(touch.clientX, touch.clientY);
   }
