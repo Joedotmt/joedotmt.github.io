@@ -492,40 +492,40 @@ let isDragging = false;
 let lastX = 0;
 let lastY = 0;
 
-canvas.addEventListener('pointerdown', (e) =>
-{
-  isDragging = true;
-  lastX = e.clientX * 2;
-  lastY = e.clientY * 2;
-  logoElement.classList.add('noevents');
-});
+// canvas.addEventListener('pointerdown', (e) =>
+// {
+//   isDragging = true;
+//   lastX = e.clientX * 2;
+//   lastY = e.clientY * 2;
+//   logoElement.classList.add('noevents');
+// });
 
-function handleMoveEvent(clientX, clientY)
-{
-  cameraOffsetX += clientX * 2 - lastX;
-  cameraOffsetY += clientY * 2 - lastY;
-  lastX = clientX * 2;
-  lastY = clientY * 2;
-  drawMain();
-}
+// function handleMoveEvent(clientX, clientY)
+// {
+//   cameraOffsetX += clientX * 2 - lastX;
+//   cameraOffsetY += clientY * 2 - lastY;
+//   lastX = clientX * 2;
+//   lastY = clientY * 2;
+//   drawMain();
+// }
 
-canvas.addEventListener('touchmove', (e) =>
-{
-  e.preventDefault();
-  if (isDragging)
-  {
-    const touch = e.touches[0];
-    handleMoveEvent(touch.clientX, touch.clientY);
-  }
-});
+// canvas.addEventListener('touchmove', (e) =>
+// {
+//   e.preventDefault();
+//   if (isDragging)
+//   {
+//     const touch = e.touches[0];
+//     handleMoveEvent(touch.clientX, touch.clientY);
+//   }
+// });
 
-canvas.addEventListener('pointermove', (e) =>
-{
-  if (isDragging)
-  {
-    handleMoveEvent(e.clientX, e.clientY);
-  }
-});
+// canvas.addEventListener('pointermove', (e) =>
+// {
+//   if (isDragging)
+//   {
+//     handleMoveEvent(e.clientX, e.clientY);
+//   }
+// });
 
 canvas.addEventListener('pointerup', () => { isDragging = false; logoElement.classList.remove('noevents'); });
 canvas.addEventListener('pointerleave', () => isDragging = false);
