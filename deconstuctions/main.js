@@ -530,14 +530,57 @@ canvas.addEventListener('pointermove', (e) =>
 canvas.addEventListener('pointerup', () => { isDragging = false; logoElement.classList.remove('noevents'); });
 canvas.addEventListener('pointerleave', () => isDragging = false);
 
+// canvas.addEventListener('wheel', (e) =>
+// {
+//   //e.preventDefault();
+
+//   // Get mouse position relative to canvas
+//   const rect = canvas.getBoundingClientRect();
+//   const mouseX = (e.clientX * 2 - rect.left);
+//   const mouseY = (e.clientY * 2 - rect.top);
+
+//   // Get world position before zoom
+//   const worldX = (mouseX - cameraOffsetX) / cameraZoom;
+//   const worldY = (mouseY - cameraOffsetY) / cameraZoom;
+
+//   // Calculate new zoom
+//   const zoomAmount = e.deltaY > 0 ? 0.9 : 1.1;
+//   targetZoom = Math.max(targetZoom * zoomAmount, 0.2);
+
+//   // Smoothly interpolate current zoom
+//   cameraZoom = lerp(cameraZoom, targetZoom, 0.1);
+
+//   // Adjust offset to zoom into mouse position
+//   cameraOffsetX = mouseX - worldX * cameraZoom;
+//   cameraOffsetY = mouseY - worldY * cameraZoom;
+
+//   drawMain();
+
+//   // Continue animation
+//   function animate()
+//   {
+//     if (Math.abs(cameraZoom - targetZoom) > 0.01)
+//     {
+//       cameraZoom = lerp(cameraZoom, targetZoom, 0.1);
+//       cameraOffsetX = mouseX - worldX * cameraZoom;
+//       cameraOffsetY = mouseY - worldY * cameraZoom;
+//       drawMain();
+//       requestAnimationFrame(animate);
+//     }
+//   }
+//   animate();
+// }, { passive: true });
+
+
+
+
+// Mouse wheel zooming
 canvas.addEventListener('wheel', (e) =>
 {
-  //e.preventDefault();
-
   // Get mouse position relative to canvas
   const rect = canvas.getBoundingClientRect();
-  const mouseX = (e.clientX * 2 - rect.left);
-  const mouseY = (e.clientY * 2 - rect.top);
+  const mouseX = (e.clientX - rect.left) * 2;
+  const mouseY = (e.clientY - rect.top) * 2;
 
   // Get world position before zoom
   const worldX = (mouseX - cameraOffsetX) / cameraZoom;
@@ -554,8 +597,6 @@ canvas.addEventListener('wheel', (e) =>
   cameraOffsetX = mouseX - worldX * cameraZoom;
   cameraOffsetY = mouseY - worldY * cameraZoom;
 
-  drawMain();
-
   // Continue animation
   function animate()
   {
@@ -564,9 +605,144 @@ canvas.addEventListener('wheel', (e) =>
       cameraZoom = lerp(cameraZoom, targetZoom, 0.1);
       cameraOffsetX = mouseX - worldX * cameraZoom;
       cameraOffsetY = mouseY - worldY * cameraZoom;
-      drawMain();
       requestAnimationFrame(animate);
     }
   }
   animate();
 }, { passive: true });
+
+// Touch pinch zooming
+const touchHandler = setupPointingDevice(canvas);
+let pinchMode = false;
+
+canvas.addEventListener('touchmove', (e) =>
+{
+  if (touchHandler.count === 2)
+  {
+    const p1 = { x: touchHandler.points[0].x, y: touchHandler.points[0].y };
+    const p2 = { x: touchHandler.points[1].x, y: touchHandler.points[1].y };
+
+    if (!pinchMode)
+    {
+      pinchMode = true;
+      view.setPinch(p1, p2);
+    } else
+    {
+      view.movePinch(p1, p2, true); // Disable rotation
+      cameraZoom = view.matrix[0];
+      cameraOffsetX = view.matrix[4];
+      cameraOffsetY = view.matrix[5];
+    }
+  }
+});
+
+canvas.addEventListener('touchend', () =>
+{
+  pinchMode = false;
+});
+
+// View transformation for pinch zooming
+const view = (() =>
+{
+  const matrix = [1, 0, 0, 1, 0, 0];
+  const invMatrix = [1, 0, 0, 1, 0, 0];
+  const pinch1 = { x: 0, y: 0 };
+  const pinch1R = { x: 0, y: 0 };
+  let scale = 1;
+  let pinchScale = 1;
+  let pinchDist = 0;
+
+  return {
+    matrix,
+    setPinch(p1, p2)
+    {
+      pinch1.x = p1.x;
+      pinch1.y = p1.y;
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      pinchDist = Math.sqrt(dx * dx + dy * dy);
+      pinchScale = scale;
+      this.toWorld(pinch1, pinch1R);
+    },
+    movePinch(p1, p2)
+    {
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const newDist = Math.sqrt(dx * dx + dy * dy);
+      scale = pinchScale * (newDist / pinchDist);
+      matrix[0] = scale;
+      matrix[3] = scale;
+      matrix[4] = p1.x - pinch1R.x * matrix[0];
+      matrix[5] = p1.y - pinch1R.y * matrix[3];
+    },
+    toWorld(screen, world = {})
+    {
+      const invScale = 1 / scale;
+      world.x = (screen.x - matrix[4]) * invScale;
+      world.y = (screen.y - matrix[5]) * invScale;
+      return world;
+    },
+  };
+})();
+
+// Pointing device setup for touch events
+function setupPointingDevice(element)
+{
+  const touch = {
+    points: Array.from({ length: navigator.maxTouchPoints || 5 }, () => ({
+      x: 0,
+      y: 0,
+      down: false,
+      id: -1,
+    })),
+    count: 0,
+  };
+
+  const updateTouch = (changedTouches, start) =>
+  {
+    for (const point of changedTouches)
+    {
+      const touchPoint = touch.points.find((tp) => tp.id === point.identifier || tp.id === -1);
+      if (touchPoint)
+      {
+        touchPoint.x = point.pageX;
+        touchPoint.y = point.pageY;
+        touchPoint.down = start;
+        if (start) touchPoint.id = point.identifier;
+        else touchPoint.id = -1;
+      }
+    }
+    touch.count = touch.points.filter((tp) => tp.down).length;
+  };
+
+  const onTouchEvent = (e) =>
+  {
+    switch (e.type)
+    {
+      case "touchstart":
+        updateTouch(e.changedTouches, true);
+        break;
+      case "touchmove":
+        updateTouch(e.changedTouches, true);
+        break;
+      case "touchend":
+        updateTouch(e.changedTouches, false);
+        break;
+    }
+    e.preventDefault();
+  };
+
+  element.addEventListener("touchstart", onTouchEvent);
+  element.addEventListener("touchmove", onTouchEvent);
+  element.addEventListener("touchend", onTouchEvent);
+
+  return touch;
+}
+
+
+
+
+
+
+
+
