@@ -492,84 +492,44 @@ let isDragging = false;
 let lastX = 0;
 let lastY = 0;
 
-// canvas.addEventListener('pointerdown', (e) =>
-// {
-//   isDragging = true;
-//   lastX = e.clientX * 2;
-//   lastY = e.clientY * 2;
-//   logoElement.classList.add('noevents');
-// });
+canvas.addEventListener('pointerdown', (e) =>
+{
+  isDragging = true;
+  lastX = e.clientX * 2;
+  lastY = e.clientY * 2;
+  logoElement.classList.add('noevents');
+});
 
-// function handleMoveEvent(clientX, clientY)
-// {
-//   cameraOffsetX += clientX * 2 - lastX;
-//   cameraOffsetY += clientY * 2 - lastY;
-//   lastX = clientX * 2;
-//   lastY = clientY * 2;
-//   drawMain();
-// }
+function handleMoveEvent(clientX, clientY)
+{
+  cameraOffsetX += clientX * 2 - lastX;
+  cameraOffsetY += clientY * 2 - lastY;
+  lastX = clientX * 2;
+  lastY = clientY * 2;
+  drawMain();
+}
 
-// canvas.addEventListener('touchmove', (e) =>
-// {
-//   e.preventDefault();
-//   if (isDragging)
-//   {
-//     const touch = e.touches[0];
-//     handleMoveEvent(touch.clientX, touch.clientY);
-//   }
-// });
+canvas.addEventListener('touchmove', (e) =>
+{
+  e.preventDefault();
+  if (isDragging)
+  {
+    const touch = e.touches[0];
+    handleMoveEvent(touch.clientX, touch.clientY);
+  }
+});
 
-// canvas.addEventListener('pointermove', (e) =>
-// {
-//   if (isDragging)
-//   {
-//     handleMoveEvent(e.clientX, e.clientY);
-//   }
-// });
+canvas.addEventListener('pointermove', (e) =>
+{
+  if (isDragging)
+  {
+    handleMoveEvent(e.clientX, e.clientY);
+  }
+});
 
 canvas.addEventListener('pointerup', () => { isDragging = false; logoElement.classList.remove('noevents'); });
 canvas.addEventListener('pointerleave', () => isDragging = false);
 
-// canvas.addEventListener('wheel', (e) =>
-// {
-//   //e.preventDefault();
-
-//   // Get mouse position relative to canvas
-//   const rect = canvas.getBoundingClientRect();
-//   const mouseX = (e.clientX * 2 - rect.left);
-//   const mouseY = (e.clientY * 2 - rect.top);
-
-//   // Get world position before zoom
-//   const worldX = (mouseX - cameraOffsetX) / cameraZoom;
-//   const worldY = (mouseY - cameraOffsetY) / cameraZoom;
-
-//   // Calculate new zoom
-//   const zoomAmount = e.deltaY > 0 ? 0.9 : 1.1;
-//   targetZoom = Math.max(targetZoom * zoomAmount, 0.2);
-
-//   // Smoothly interpolate current zoom
-//   cameraZoom = lerp(cameraZoom, targetZoom, 0.1);
-
-//   // Adjust offset to zoom into mouse position
-//   cameraOffsetX = mouseX - worldX * cameraZoom;
-//   cameraOffsetY = mouseY - worldY * cameraZoom;
-
-//   drawMain();
-
-//   // Continue animation
-//   function animate()
-//   {
-//     if (Math.abs(cameraZoom - targetZoom) > 0.01)
-//     {
-//       cameraZoom = lerp(cameraZoom, targetZoom, 0.1);
-//       cameraOffsetX = mouseX - worldX * cameraZoom;
-//       cameraOffsetY = mouseY - worldY * cameraZoom;
-//       drawMain();
-//       requestAnimationFrame(animate);
-//     }
-//   }
-//   animate();
-// }, { passive: true });
 
 
 
@@ -602,6 +562,7 @@ canvas.addEventListener('wheel', (e) =>
   {
     if (Math.abs(cameraZoom - targetZoom) > 0.01)
     {
+      drawMain();
       cameraZoom = lerp(cameraZoom, targetZoom, 0.1);
       cameraOffsetX = mouseX - worldX * cameraZoom;
       cameraOffsetY = mouseY - worldY * cameraZoom;
