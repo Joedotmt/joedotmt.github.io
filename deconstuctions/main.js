@@ -617,6 +617,7 @@ let pinchMode = false;
 
 canvas.addEventListener('touchmove', (e) =>
 {
+  if (e.touches == 1) return;
   if (touchHandler.count === 2)
   {
     const p1 = { x: touchHandler.points[0].x, y: touchHandler.points[0].y };
