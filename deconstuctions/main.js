@@ -487,16 +487,32 @@ drawMain();
 
 
 
+
 // Mouse drag for panning
 let isDragging = false;
 let lastX = 0;
 let lastY = 0;
 
+let touchStartDistance = 0; // For pinch-to-zoom
+let initialZoom = cameraZoom;
+
 canvas.addEventListener('pointerdown', (e) =>
 {
-  isDragging = true;
-  lastX = e.clientX * 2;
-  lastY = e.clientY * 2;
+  if (e.pointerType === 'touch')
+  {
+    // Handle multitouch setup
+    if (e.isPrimary)
+    {
+      lastX = e.clientX * 2;
+      lastY = e.clientY * 2;
+      isDragging = true;
+    }
+  } else
+  {
+    isDragging = true;
+    lastX = e.clientX * 2;
+    lastY = e.clientY * 2;
+  }
   logoElement.classList.add('noevents');
 });
 
@@ -509,35 +525,83 @@ function handleMoveEvent(clientX, clientY)
   drawMain();
 }
 
-canvas.addEventListener('touchmove', (e) =>
-{
-  e.preventDefault();
-  if (isDragging)
-  {
-    const touch = e.touches[0];
-    handleMoveEvent(touch.clientX, touch.clientY);
-  }
-});
-
 canvas.addEventListener('pointermove', (e) =>
 {
-  if (isDragging)
+  if (isDragging && e.pointerType !== 'touch')
   {
     handleMoveEvent(e.clientX, e.clientY);
   }
 });
 
-canvas.addEventListener('pointerup', () => { isDragging = false; logoElement.classList.remove('noevents'); });
-canvas.addEventListener('pointerleave', () => isDragging = false);
+canvas.addEventListener('pointerup', () =>
+{
+  isDragging = false;
+  logoElement.classList.remove('noevents');
+});
 
+canvas.addEventListener('pointerleave', () =>
+{
+  isDragging = false;
+});
+
+canvas.addEventListener('touchmove', (e) =>
+{
+  e.preventDefault();
+  if (e.touches.length === 1 && isDragging)
+  {
+    const touch = e.touches[0];
+    handleMoveEvent(touch.clientX, touch.clientY);
+  } else if (e.touches.length === 2)
+  {
+    // Pinch-to-zoom
+    const touch1 = e.touches[0];
+    const touch2 = e.touches[1];
+    const distance = Math.hypot(
+      touch2.clientX - touch1.clientX,
+      touch2.clientY - touch1.clientY
+    );
+
+    if (touchStartDistance === 0)
+    {
+      touchStartDistance = distance;
+      initialZoom = cameraZoom;
+    } else
+    {
+      const zoomFactor = distance / touchStartDistance;
+      cameraZoom = Math.max(initialZoom * zoomFactor, 0.2);
+
+      // Adjust camera offset for zoom focus
+      const rect = canvas.getBoundingClientRect();
+      const centerX = ((touch1.clientX + touch2.clientX) / 2) * 2 - rect.left;
+      const centerY = ((touch1.clientY + touch2.clientY) / 2) * 2 - rect.top;
+
+      const worldX = (centerX - cameraOffsetX) / cameraZoom;
+      const worldY = (centerY - cameraOffsetY) / cameraZoom;
+
+      cameraOffsetX = centerX - worldX * cameraZoom;
+      cameraOffsetY = centerY - worldY * cameraZoom;
+
+      drawMain();
+    }
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchend', () =>
+{
+  if (isDragging)
+  {
+    isDragging = false;
+  }
+  touchStartDistance = 0;
+});
+
+// Wheel zoom
 canvas.addEventListener('wheel', (e) =>
 {
-  //e.preventDefault();
-
   // Get mouse position relative to canvas
   const rect = canvas.getBoundingClientRect();
-  const mouseX = (e.clientX * 2 - rect.left);
-  const mouseY = (e.clientY * 2 - rect.top);
+  const mouseX = e.clientX * 2 - rect.left;
+  const mouseY = e.clientY * 2 - rect.top;
 
   // Get world position before zoom
   const worldX = (mouseX - cameraOffsetX) / cameraZoom;
@@ -570,10 +634,3 @@ canvas.addEventListener('wheel', (e) =>
   }
   animate();
 }, { passive: true });
-
-
-
-
-
-
-
