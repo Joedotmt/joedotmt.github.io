@@ -494,10 +494,10 @@ let lastY = 0;
 
 canvas.addEventListener('pointerdown', (e) =>
 {
-  isDragging = true;
-  lastX = e.clientX * 2;
-  lastY = e.clientY * 2;
-  logoElement.classList.add('noevents');
+  // isDragging = true;
+  // lastX = e.clientX * 2;
+  // lastY = e.clientY * 2;
+  // logoElement.classList.add('noevents');
 });
 
 function handleMoveEvent(clientX, clientY)
