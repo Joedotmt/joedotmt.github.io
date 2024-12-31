@@ -1,5 +1,3 @@
-
-
 const canvas = document.getElementById('geometryCanvas');
 const ctx = canvas.getContext('2d');
 const message = document.getElementById('message');
@@ -71,7 +69,6 @@ let cameraOffsetY = 0;
 let cameraZoom = 3.0;
 let targetZoom = cameraZoom;
 
-// Add lerp function at the top with other utilities
 function lerp(start, end, t)
 {
   return start * (1 - t) + end * t;
@@ -113,8 +110,6 @@ function drawGrid(ctx)
   {
     baseGridSize = 20;
   }
-
-  const gridSize = baseGridSize * cameraZoom;
 
 
   // Calculate visible range in world coordinates
@@ -200,8 +195,17 @@ const deg2rad = Math.PI / 180;
 
 const MAX_PAN_DISTANCE = 800;
 
-let animAmount = 0;
 
+function drawTriangle(x1, y1, x2, y2, x3, y3)
+{
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.lineTo(x3, y3);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.fill();
+}
 
 function arcpoint(x, y, x2, y2, angle)
 {
@@ -245,6 +249,56 @@ function arc(x, y, radius, startAngle, endAngle)
   ctx.stroke();
 }
 
+/**
+ * Draws an angle bisector with arcs
+ * @param {number} angle - Angle in radians
+ * @param {number} centerX - X coordinate of angle vertex
+ * @param {number} centerY - Y coordinate of angle vertex
+ * @param {number} radius - Radius of initial arcs (default: 80)
+ * @param {number} bisectorLength - Length of the bisector line (default: 130)
+ * @param {number} arcRadius - Radius of connecting arcs (default: 20)
+ */
+function drawBisector(
+  angle,
+  centerX,
+  centerY,
+  radius = 80,
+  bisectorLength = 130,
+  arcRadius = 20
+)
+{
+  // Validate parameters
+  if (!Number.isFinite(centerX) || !Number.isFinite(centerY))
+  {
+    throw new Error('Invalid center coordinates');
+  }
+
+  // Calculate arc points using polar coordinates
+  const point1 = {
+    x: centerX + radius * Math.cos(Math.PI),
+    y: centerY + radius * Math.sin(Math.PI)
+  };
+
+  const point2 = {
+    x: centerX + radius * Math.cos(angle - Math.PI),
+    y: centerY + radius * Math.sin(angle - Math.PI)
+  };
+
+  // Calculate bisector endpoint
+  const bisectorAngle = angle / 2;
+  const endPoint = {
+    x: centerX - bisectorLength * Math.cos(bisectorAngle),
+    y: centerY - bisectorLength * Math.sin(bisectorAngle)
+  };
+
+  // Draw all arcs in one path
+  ctx.beginPath();
+  arcpoint(centerX, centerY, point1.x, point1.y, arcRadius);
+  arcpoint(centerX, centerY, point2.x, point2.y, arcRadius);
+  arcpoint(point1.x, point1.y, endPoint.x, endPoint.y, arcRadius);
+  arcpoint(point2.x, point2.y, endPoint.x, endPoint.y, arcRadius);
+  ctx.stroke();
+}
 
 function drawMain()
 {
@@ -253,8 +307,6 @@ function drawMain()
   ctx.save();
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawGrid(ctx);
-
-
 
   // Apply camera transform
   ctx.translate(cameraOffsetX, cameraOffsetY);
@@ -288,7 +340,7 @@ function drawMain()
   message.textContent = "";
 
   // Calculate coordinates for visualization
-  const startX = 0;//-sideAB * SCALE / 2;
+  const startX = 0;
   const startY = 0;
 
 
@@ -312,11 +364,6 @@ function drawMain()
   const cy = startY - sideBC * SCALE * Math.sin(angleRad);
 
 
-  ctx.strokeStyle = 'black';
-
-
-
-
   // Point Circle intersection top
   const cix = bx - sideAB * SCALE * Math.cos(60 * deg2rad);
   const ciy = startY - sideAB * SCALE * Math.sin(60 * deg2rad);
@@ -335,21 +382,8 @@ function drawMain()
 
 
   ctx.beginPath();
-  let deltaNeeded = (280 * deg2rad) - (320 * deg2rad);
   arcpoint(ax, ay, cix, ciy, 10);
   ctx.stroke();
-
-
-  setTimeout(() =>
-  {
-    if (animAmount < 1)
-    {
-      animAmount += 0.001;
-    }
-    drawMain();
-  }, 60);
-
-
 
   //arc(bx, by, sideAB * SCALE, 100, -100);
   arcpoint(bx, by, cix, ciy, 10);
@@ -369,20 +403,9 @@ function drawMain()
   arcpoint(ax, ay, bx, by, 5);
   ctx.closePath();
 
-  // Draw triangle
-  ctx.beginPath();
-  ctx.moveTo(ax, ay);
-  ctx.lineTo(bx, by);
-  ctx.lineTo(cx, cy);
-  ctx.closePath();
-
-
-  // Style and fill
   ctx.strokeStyle = '#2563eb';
-  ctx.stroke();
   ctx.fillStyle = 'rgba(37, 99, 235, 0.1)';
-  ctx.fill();
-
+  drawTriangle(ax, ay, bx, by, cx, cy);
 
 
   // Draw text labels
@@ -417,57 +440,10 @@ function drawMain()
   // If angle is 30°, draw the bisector construction
   if (angleB === 30)
   {
-    const radiusA = 80;
-    const radiusB = 70;
-    const angleToBisect = angleRad * 2;
-    ctx.strokeStyle = 'black';
-
-    // First two arcs centered at point B
-    ctx.beginPath();
-    let x2 = bx + radiusA * Math.cos(Math.PI);
-    let y2 = by + radiusA * Math.sin(Math.PI);
-    arcpoint(bx, by, x2, y2, 20);
-    ctx.stroke();
-
-    ctx.beginPath();
-    let x2b = bx + radiusA * Math.cos(angleToBisect - Math.PI);
-    let y2b = by + radiusA * Math.sin(angleToBisect - Math.PI);
-    arcpoint(bx, by, x2b, y2b, 20);
-    ctx.stroke();
-
-    // Calculate intersection points
-    const intersectAB = {
-      x: bx - radiusA * Math.cos(0),
-      y: by - radiusA * Math.sin(0)
-    };
-
-    const intersectBC = {
-      x: bx - radiusA * Math.cos(angleToBisect),
-      y: by - radiusA * Math.sin(angleToBisect)
-    };
-
-
-    // Last two arcs from intersection points
-    ctx.beginPath();
-    const angle = 30 * deg2rad;
-    const endX = bx - 130 * Math.cos(angle);
-    const endY = by - 130 * Math.sin(angle);
-    arcpoint(x2, y2, endX, endY, 20);
-    ctx.stroke();
-
-    ctx.beginPath();
-    arcpoint(x2b, y2b, endX, endY, 20);
-    ctx.stroke();
-
-
-
-
-    ctx.strokeStyle = 'black';
+    drawBisector(angleRad * 2, bx, by);
   }
 
   ctx.restore();
-
-  // requestAnimationFrame(drawMain);
 }
 
 // Center camera on triangle initially
@@ -483,40 +459,9 @@ function constrainCamera()
   const centerX = canvas.width / 2 - (parseInt(sideABInput.value) * SCALE / 2) * cameraZoom;
   const centerY = canvas.height / 2 + 300;
 
-  // if (cameraZoom < 0.25)
-  // {
-  //   MAX_PAN_DISTANCE *= cameraZoom
-  // }
-
   cameraOffsetX = Math.min(Math.max(cameraOffsetX, centerX - MAX_PAN_DISTANCE * cameraZoom), centerX + MAX_PAN_DISTANCE * cameraZoom);
   cameraOffsetY = Math.min(Math.max(cameraOffsetY, centerY - MAX_PAN_DISTANCE * cameraZoom), centerY + MAX_PAN_DISTANCE * cameraZoom);
 }
-
-// Mouse drag for panning
-let isDragging = false;
-let lastX = 0;
-let lastY = 0;
-
-canvas.addEventListener('pointerdown', (e) =>
-{
-  isDragging = true;
-  lastX = e.clientX * 2;
-  lastY = e.clientY * 2;
-  logoElement.classList.add('noevents');
-});
-
-canvas.addEventListener('pointermove', (e) =>
-{
-
-  if (isDragging)
-  {
-    cameraOffsetX += e.clientX * 2 - lastX;
-    cameraOffsetY += e.clientY * 2 - lastY;
-    lastX = e.clientX * 2;
-    lastY = e.clientY * 2;
-    drawMain();
-  }
-});
 
 const logoElement = document.getElementById('logoimg');
 if (logoElement)
@@ -532,13 +477,62 @@ if (logoElement)
   });
 }
 
+// Initial draw
+centerCamera();
+drawMain();
+
+
+
+
+
+
+
+// Mouse drag for panning
+let isDragging = false;
+let lastX = 0;
+let lastY = 0;
+
+canvas.addEventListener('pointerdown', (e) =>
+{
+  isDragging = true;
+  lastX = e.clientX * 2;
+  lastY = e.clientY * 2;
+  logoElement.classList.add('noevents');
+});
+
+function handleMoveEvent(clientX, clientY)
+{
+  cameraOffsetX += clientX * 2 - lastX;
+  cameraOffsetY += clientY * 2 - lastY;
+  lastX = clientX * 2;
+  lastY = clientY * 2;
+  drawMain();
+}
+
+canvas.addEventListener('touchmove', (e) =>
+{
+  e.preventDefault();
+  if (isDragging)
+  {
+    const touch = e.touches[0];
+    handleMoveEvent(touch.clientX, touch.clientY);
+  }
+});
+
+canvas.addEventListener('pointermove', (e) =>
+{
+  if (isDragging)
+  {
+    handleMoveEvent(e.clientX, e.clientY);
+  }
+});
+
 canvas.addEventListener('pointerup', () => { isDragging = false; logoElement.classList.remove('noevents'); });
 canvas.addEventListener('pointerleave', () => isDragging = false);
 
-// Replace wheel event listener
 canvas.addEventListener('wheel', (e) =>
 {
-  e.preventDefault();
+  //e.preventDefault();
 
   // Get mouse position relative to canvas
   const rect = canvas.getBoundingClientRect();
@@ -575,10 +569,11 @@ canvas.addEventListener('wheel', (e) =>
     }
   }
   animate();
-});
+}, { passive: true });
 
 
 
-// Initial draw
-centerCamera();
-drawMain();
+
+
+
+
