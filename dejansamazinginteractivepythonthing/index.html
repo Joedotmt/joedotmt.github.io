@@ -92,9 +92,18 @@
             margin: 0 10px;
             flex: 1;
         }
+
+        .logo {
+            transition: 0.2s cubic-bezier(0.075, 0.82, 0.165, 1);
+        }
+
+        .logo:hover {
+            scale: 1.1;
+        }
     </style>
 </head>
 <body>
+    <a style="position: fixed; left: 1em; top:1em; z-index: 5;" href="https://joe.mt/"><img id="logoimg" src="../joe-logo.webp" width="100" alt="Logo" class="logo" /></a>
     <div class="decor"></div>
     <div style="    translate: 2em 5em;
     rotate: 45deg;" class="decor"></div>
@@ -105,7 +114,6 @@
     <div class="container">
         <h1 style="margin: 0;">Dejan Interactive Python Program</h1>
         <p id="iptext">Your IP Address: 121.8.87.141</p>
-
 
         <div class="slider-container">
             <label for="maxDots">Peak:</label>
