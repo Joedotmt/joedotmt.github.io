@@ -64,6 +64,11 @@ body
 a
 {
     color: rgb(176, 176, 255);
+    text-decoration: none;
+}
+a:hover
+{
+    color: rgb(146, 146, 255);
     text-decoration: underline;
 }
 
