@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>JOE - Home</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Pangolin&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/png" href="./favicon.png">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Pangolin&display=swap" rel="stylesheet" />
+    <link rel="icon" type="image/png" href="./favicon.png" />
+    <link rel="stylesheet" href="styles.css" />
     <style>
         a {
             color: rgb(255, 255, 255);
@@ -24,22 +24,61 @@
             margin: 0;
             padding: 0;
             background-size: cover;
-            font-family: 'Pangolin', cursive;
+            font-family: 'Pangolin', "comic sans ms";
             background-image: url(IMGGINGINGG.png);
             background-size: cover;
             backdrop-filter: blur(50px);
             background-repeat: round;
-            overflow: hidden;
             color: white;
             display: flex;
-            height: 100dvh;
+            height: 120dvh;
             align-items: center;
             justify-content: flex-start;
         }
 
         .menu-container {
-            width: 430px;
+            width: 600px;
+            transform: translateX(0px);
             margin-left: 50px;
+            overflow: hidden;
+            min-height: 390px;
+            /* Ensures container stays tall enough */
+        }
+
+        .menu-background {
+            padding: 20px;
+            position: absolute;
+            width: 430px;
+            top: 0;
+            left: 0;
+            transition: transform 0.3s ease;
+        }
+
+        /* Main menu and submenu positioning */
+        .main-menu {
+            transform: translateX(0);
+        }
+
+        .main-menu.exit {
+            transform: translateX(-200%);
+        }
+
+        .submenu {
+            transform: translateX(200%);
+        }
+
+        .submenu.active {
+            transform: translateX(0);
+        }
+
+        .selection-background {
+            position: absolute;
+            z-index: 0;
+            width: 450px;
+            height: 60px;
+            background: rgba(0, 0, 0, 0.8);
+            transition: all 0.05s cubic-bezier(0.35, 0, 0, 1);
+            clip-path: polygon(2% 15%, 97% 20%, 100% 80%, 0% 85%);
         }
 
         .menu-item {
@@ -55,15 +94,16 @@
             z-index: 2;
         }
 
-        .selection-background {
-            content: '';
-            position: fixed;
-            z-index: 1;
-            width: 450px;
-            height: 60px;
-            background: rgba(0, 0, 0, 0.8);
-            transition: all 0.05s cubic-bezier(0.35, 0, 0, 1);
-            clip-path: polygon(2% 15%, 97% 20%, 100% 80%, 0% 85%);
+        /* Arrow indicator for items with a submenu */
+        .menu-item[data-submenu]::after {
+            content: '→';
+            float: right;
+            opacity: 0.2;
+            transition: opacity 0.2s ease;
+        }
+
+        .menu-item.selected[data-submenu]::after {
+            opacity: 1;
         }
 
         .logo-container {
@@ -85,8 +125,8 @@
 
         .construction-banner {
             position: absolute;
-            right: 50px;
-            width: 650px;
+            right: min(3dvw, 50px);
+            width: min(50dvw, 650px);
             background: rgba(0, 0, 0, 0.6);
             padding: 50px;
             text-align: center;
@@ -98,98 +138,210 @@
             content: '';
             position: absolute;
             z-index: -1;
-            top: -0px;
+            top: 0;
             left: 0;
             right: -50px;
             bottom: -60px;
             background: rgba(0, 0, 0, 0.6);
-            clip-path: polygon(3% 0%,
-                    90% 5%,
-                    100% 80%,
-                    0% 95%);
+            clip-path: polygon(3% 0%, 90% 5%, 100% 80%, 0% 95%);
         }
 
-        .menu-background {
-            position: relative;
-            padding: 20px;
+        /* Responsive Styles */
+        @media (max-width: 1000px) {
+            body {
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+                height: 300dvh;
+            }
+
+            .menu-container {
+                transform: translateX(60px);
+            }
+
+            .logo-container {
+                position: relative;
+                width: 100%;
+                height: auto;
+                margin-bottom: 20px;
+            }
+
+            body>.logo-container {
+                order: 0;
+            }
+
+            body>.construction-banner {
+                order: 1;
+            }
+
+            body>.menu-container {
+                order: 2;
+                margin: 0;
+                width: 490px;
+            }
+
+            .construction-banner {
+                position: relative;
+                right: auto;
+                width: 90%;
+                padding: 30px;
+                margin-bottom: 20px;
+            }
         }
     </style>
-
 </head>
 <body>
     <div class="logo-container">
-        <a href="/"><img style="aspect-ratio: 1.904; width: 200px;" src="../joe-logo.webp" alt="Joe.mt Logo" class="logo"></a>
+        <a href="/"><img style="aspect-ratio: 1.904; width: 50%; margin: 1em;" src="../joe-logo.webp" alt="Joe.mt Logo" class="logo" /></a>
     </div>
     <div class="menu-container">
-        <div class="menu-background">
-            <div class="selection-background"></div>
+        <div class="selection-background"></div>
+        <!-- Main Menu -->
+        <div class="menu-background main-menu">
             <a href="/" class="menu-item" data-index="0">Home</a>
-            <a href="/bombvideo" class="menu-item" data-index="1">Bomb</a>
-            <a href="/veterans" class="menu-item" data-index="2">Veterans</a>
-            <a href="/deconstuctions" class="menu-item" data-index="3">Deconstructions</a>
-            <a href="/dejansamazinginteractivepythonthing" class="menu-item" data-index="4">Dejan's Python Thing</a>
-            <a href="https://icedjelly.com" class="menu-item" data-index="5">IcedJelly.com</a>
+            <a href="#" class="menu-item" data-index="1" data-submenu="things">Things</a>
+            <a href="https://icedjelly.com" class="menu-item" data-index="2">IcedJelly.com</a>
+        </div>
+        <!-- Submenu for "Things" -->
+        <div class="menu-background submenu" data-parent="things">
+            <a class="menu-item close-button" data-index="-1">← Back</a>
+            <a href="/bombvideo" class="menu-item" data-index="0">Bomb</a>
+            <a href="/veterans" class="menu-item" data-index="1">Veterans</a>
+            <a href="/deconstuctions" class="menu-item" data-index="2">Deconstructions</a>
+            <a href="/dejansamazinginteractivepythonthing" class="menu-item" data-index="3">Dejan's Python Thing</a>
         </div>
     </div>
-
     <div class="construction-banner">
         <h1>This website is Under Construction</h1>
         <p>This is the website for Joe Esposito in Malta. My projects are not on <strong>joe.mt</strong> but on <a href="https://icedjelly.com">icedjelly.com</a>, and so are my contacts. Eventually, <strong>joe.mt</strong> will replace <strong>icedjelly.com</strong>.</p>
         <div class="footer">
-            <p>For more information/contacts<br>please visit <a href="https://icedjelly.com" target="_blank">icedjelly.com</a></p>
-            <img src="icedjelly-logo.png" alt="IcedJelly Logo" class="icedjelly-logo">
+            <p>For more information/contacts<br />please visit <a href="https://icedjelly.com" target="_blank">icedjelly.com</a></p>
+            <img src="icedjelly-logo.png" alt="IcedJelly Logo" class="icedjelly-logo" />
         </div>
     </div>
     <script>
+        window.addEventListener("keydown", function (e)
+        {
+            if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].indexOf(e.code) > -1)
+            {
+                e.preventDefault();
+            }
+        }, false);
+
+        // Track the current active menu and index
+        const mainMenu = document.querySelector('.main-menu');
+        let activeMenu = mainMenu;
+        let lastMainMenuIndex = 0; // To restore main menu selection when leaving a submenu
         let currentIndex = 0;
-        const menuItems = document.querySelectorAll('.menu-item');
         const selectionBackground = document.querySelector('.selection-background');
 
+        // Returns menu items from the active menu container
+        function getActiveMenuItems()
+        {
+            return activeMenu.querySelectorAll('.menu-item');
+        }
+
+        // Update the selection background to follow the currently selected item
         function updateSelection(index = currentIndex)
         {
-            menuItems.forEach(item => item.classList.remove('selected'));
+            const items = getActiveMenuItems();
+            items.forEach(item => item.classList.remove('selected'));
             currentIndex = index;
-            const selectedItem = menuItems[currentIndex];
-            selectedItem.classList.add('selected');
-
-            // Keep using getBoundingClientRect for accurate background positioning
-            const bounds = selectedItem.getBoundingClientRect();
-            selectionBackground.style.top = `${bounds.top - 10}px`;
-            selectionBackground.style.left = `${bounds.left}px`;
-            setInterval(() =>
+            const selectedItem = items[currentIndex];
+            if (selectedItem)
             {
-                updateSelection();
-            }, 500);
-        }
-
-        function handleKeyPress(e)
-        {
-            switch (e.key)
-            {
-                case 'ArrowUp':
-                    currentIndex = (currentIndex - 1 + menuItems.length) % menuItems.length;
-                    break;
-                case 'ArrowDown':
-                    currentIndex = (currentIndex + 1) % menuItems.length;
-                    break;
-                case 'Enter':
-                    menuItems[currentIndex].click();
-                    break;
+                selectedItem.classList.add('selected');
+                const top = selectedItem.offsetTop - 10;
+                const left = selectedItem.offsetLeft;
+                selectionBackground.style.top = `${top}px`;
+                selectionBackground.style.left = `${left}px`;
             }
-            updateSelection();
         }
 
-        // Add hover listeners to menu items
-        menuItems.forEach((item, index) =>
+        // Handle mouse hover for all menu items (but only update selection if within active menu)
+        document.querySelectorAll('.menu-item').forEach(item =>
         {
-            item.addEventListener('mouseenter', () => updateSelection(index));
+            item.addEventListener('mouseenter', () =>
+            {
+                const container = item.closest('.menu-background');
+                if (container === activeMenu)
+                {
+                    const items = Array.from(getActiveMenuItems());
+                    const idx = items.indexOf(item);
+                    updateSelection(idx);
+                }
+            });
         });
 
-        // Initialize first selection
-        updateSelection();
+        // Global keyboard navigation
+        document.addEventListener('keydown', function (e)
+        {
+            const items = getActiveMenuItems();
+            // If in a submenu, Escape or left arrow returns to main menu
+            if (activeMenu !== mainMenu && (e.key === 'Escape' || e.key === 'ArrowLeft'))
+            {
+                activeMenu.classList.remove('active');
+                mainMenu.classList.remove('exit');
+                activeMenu = mainMenu;
+                currentIndex = lastMainMenuIndex;
+                updateSelection(currentIndex);
+                return;
+            }
+            if (e.key === 'ArrowUp')
+            {
+                currentIndex = (currentIndex - 1 + items.length) % items.length;
+            } else if (e.key === 'ArrowDown')
+            {
+                currentIndex = (currentIndex + 1) % items.length;
+            } else if (e.key === 'Enter')
+            {
+                items[currentIndex].click();
+            }
+            updateSelection(currentIndex);
+        });
 
-        // Add keyboard controls
-        document.addEventListener('keydown', handleKeyPress);
+        // Handle clicks for items with submenus (only in the active menu)
+        document.querySelectorAll('.menu-item').forEach(item =>
+        {
+            if (item.dataset.submenu)
+            {
+                item.addEventListener('click', function (e)
+                {
+                    e.preventDefault();
+                    const submenuName = item.dataset.submenu;
+                    const submenu = document.querySelector(`.submenu[data-parent="${submenuName}"]`);
+                    if (submenu)
+                    {
+                        // Save current main menu index before switching
+                        lastMainMenuIndex = currentIndex;
+                        mainMenu.classList.add('exit');
+                        submenu.classList.add('active');
+                        activeMenu = submenu;
+                        currentIndex = 0; // Default selection in the submenu (e.g. the back button)
+                        updateSelection(currentIndex);
+                    }
+                });
+            }
+        });
+
+        // Close button in the submenu
+        document.querySelectorAll('.submenu .close-button').forEach(btn =>
+        {
+            btn.addEventListener('click', function ()
+            {
+                if (activeMenu !== mainMenu)
+                {
+                    activeMenu.classList.remove('active');
+                    mainMenu.classList.remove('exit');
+                    activeMenu = mainMenu;
+                    currentIndex = lastMainMenuIndex;
+                    updateSelection(currentIndex);
+                }
+            });
+        });
+
+        // Initialize selection on the main menu
+        updateSelection();
     </script>
 </body>
 </html>

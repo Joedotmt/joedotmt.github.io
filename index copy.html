@@ -1,43 +1,230 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>JOE - Home</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Pangolin&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/png" href="./favicon.png">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Pangolin&display=swap" rel="stylesheet" />
+    <link rel="icon" type="image/png" href="./favicon.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+        a {
+            color: rgb(255, 255, 255);
+            text-decoration: none;
+        }
+
+        a:hover {
+            color: rgb(255, 255, 255);
+            text-decoration: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-size: cover;
+            font-family: 'Pangolin', cursive;
+            background-image: url(IMGGINGINGG.png);
+            /* background-image: url(IMGGINGINGG2.jpg); */
+            background-size: cover;
+            backdrop-filter: blur(50px);
+            background-repeat: round;
+            color: white;
+            display: flex;
+            height: 120dvh;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        .menu-container {
+            width: 430px;
+            margin-left: 50px;
+        }
+
+        .menu-background {
+            position: relative;
+            padding: 20px;
+        }
+
+        .menu-item {
+            color: white;
+            font-size: 2em;
+            margin: 10px 0;
+            padding: 0px 30px;
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+            text-align: left;
+            position: relative;
+            z-index: 2;
+        }
+
+        .selection-background {
+            position: absolute;
+            z-index: 1;
+            width: 450px;
+            height: 60px;
+            background: rgba(0, 0, 0, 0.8);
+            transition: all 0.05s cubic-bezier(0.35, 0, 0, 1);
+            clip-path: polygon(2% 15%, 97% 20%, 100% 80%, 0% 85%);
+        }
+
+        .logo-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 500px;
+            height: 150px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            clip-path: polygon(0 0, 100% 0, 95% 100%, 0 80%);
+        }
+
+        .construction-banner {
+            position: absolute;
+            right: min(3dvw, 50px);
+            width: min(50dvw, 650px);
+            background: rgba(0, 0, 0, 0.6);
+            padding: 50px;
+            text-align: center;
+            font-size: 1.2em;
+            clip-path: polygon(1% 5%, 99% 0, 100% 95%, 5% 100%);
+        }
+
+        .menu-background::before {
+            content: '';
+            position: absolute;
+            z-index: -1;
+            top: 0;
+            left: 0;
+            right: -50px;
+            bottom: -60px;
+            background: rgba(0, 0, 0, 0.6);
+            clip-path: polygon(3% 0%, 90% 5%, 100% 80%, 0% 95%);
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 1000px) {
+            body {
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+                height: 300dvh;
+            }
+
+            .menu-container {
+                translate: -30px;
+            }
+
+            .logo-container {
+                position: relative;
+                width: 100%;
+                height: auto;
+                margin-bottom: 20px;
+            }
+
+            body>.logo-container {
+                order: 0;
+            }
+
+            body>.construction-banner {
+                order: 1;
+            }
+
+            body>.menu-container {
+                order: 2;
+                margin: 0;
+                width: 70%;
+            }
+
+            .construction-banner {
+                position: relative;
+                right: auto;
+                width: 90%;
+                padding: 30px;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <button onclick="sitemap.show()" style="border: none;font-size: 1em; font-family: 'pangolin', 'Comic Sans MS', 'Trebuchet MS', Monospace, sans-serif; position: fixed; left: 0px; top: 0px; border-radius: 5px; font-size: 1.5em;">Sitemap</button>
-    <dialog style="border: none; background: url(map.jpg); background-size: 100% 100%; height: 150px; width: 250px; position: absolute; top: 2em; left: 0em; z-index: 10; border-radius: 5px;" id="sitemap">
-        <a style="color: navy; font-size: 2em; position: absolute; left: 5px; top: 5px;" href="/bombvideo">Bomb</a>
-        <a style="color: navy; font-size: 2em; position: absolute; right: 5px; top: 5px;" href="/veterans">Veterans</a>
-        <a style="color: navy; background:white; padding:0.2em; font-size: 2em; position: absolute; left: 0px; top: 200px;" href="/deconstuctions">Deconstructions</a>
-        <a style="color: navy; background:white; padding:0.2em; font-size: 1.5em; position: absolute; left: 0px; top: 300px;" href="/dejansamazinginteractivepythonthing">Dejansamazinginteractivepythonthing</a>
-        <a style="color: navy; font-size: 2em; position: absolute; left: 75px; bottom: 5px;" href="/">Home</a>
-    </dialog>
-    <div class="container">
-        <div class="header">
-            <a href="/"><img style="aspect-ratio: 1.904;" src="../joe-logo.webp" alt="Joe.mt Logo" class="logo"></a>
-            <h1>Is Under Construction</h1>
-            <p>This is the website for Joe Esposito in Malta. My projects are not on <strong>joe.mt</strong> but on <a href="https://icedjelly.com">icedjelly.com</a>, and so are my contacts. Eventually, <strong>joe.mt</strong> will replace <strong>icedjelly.com</strong>.</p>
+    <div class="logo-container">
+        <a href="/"><img style="aspect-ratio: 1.904; width: 50%; margin: 1em;" src="../joe-logo.webp" alt="Joe.mt Logo" class="logo" /></a>
+    </div>
+    <div class="menu-container">
+        <div class="menu-background">
+            <!-- Moved selection-background inside the menu-background for anchor positioning -->
+            <div class="selection-background"></div>
+            <a href="/" class="menu-item" data-index="0">Home</a>
+            <a href="/bombvideo" class="menu-item" data-index="1">Bomb</a>
+            <a href="/veterans" class="menu-item" data-index="2">Veterans</a>
+            <a href="/deconstuctions" class="menu-item" data-index="3">Deconstructions</a>
+            <a href="/dejansamazinginteractivepythonthing" class="menu-item" data-index="4">Dejan's Python Thing</a>
+            <a href="https://icedjelly.com" class="menu-item" data-index="5">IcedJelly.com</a>
         </div>
+    </div>
+    <div class="construction-banner">
+        <h1>This website is Under Construction</h1>
+        <p>This is the website for Joe Esposito in Malta. My projects are not on <strong>joe.mt</strong> but on <a href="https://icedjelly.com">icedjelly.com</a>, and so are my contacts. Eventually, <strong>joe.mt</strong> will replace <strong>icedjelly.com</strong>.</p>
         <div class="footer">
-            <p>For more information/contacts<br>please visit <a href="https://icedjelly.com" target="_blank">icedjelly.com</a></p>
-            <img src="icedjelly-logo.png" alt="IcedJelly Logo" class="icedjelly-logo">
+            <p>For more information/contacts<br />please visit <a href="https://icedjelly.com" target="_blank">icedjelly.com</a></p>
+            <img src="icedjelly-logo.png" alt="IcedJelly Logo" class="icedjelly-logo" />
         </div>
     </div>
     <script>
-        document.addEventListener("mouseup", (event) =>
+        let currentIndex = 0;
+        const menuItems = document.querySelectorAll('.menu-item');
+        const selectionBackground = document.querySelector('.selection-background');
+
+        function updateSelection(index = currentIndex)
         {
-            if (event.target != sitemap)
+            menuItems.forEach(item => item.classList.remove('selected'));
+            currentIndex = index;
+            const selectedItem = menuItems[currentIndex];
+            selectedItem.classList.add('selected');
+
+            // Use offset positioning relative to the menu-background container (the anchor)
+            const top = selectedItem.offsetTop - 10; // adjust the offset as needed
+            const left = selectedItem.offsetLeft;
+            selectionBackground.style.top = `${top}px`;
+            selectionBackground.style.left = `${left}px`;
+        }
+
+        function handleKeyPress(e)
+        {
+            switch (e.key)
             {
-                sitemap.close();
+                case 'ArrowUp':
+                    currentIndex = (currentIndex - 1 + menuItems.length) % menuItems.length;
+                    break;
+                case 'ArrowDown':
+                    currentIndex = (currentIndex + 1) % menuItems.length;
+                    break;
+                case 'Enter':
+                    menuItems[currentIndex].click();
+                    break;
             }
+            updateSelection();
+        }
+
+        // Add hover listeners to menu items
+        menuItems.forEach((item, index) =>
+        {
+            item.addEventListener('mouseenter', () => updateSelection(index));
         });
+
+        // Initialize first selection
+        updateSelection();
+
+        // Add keyboard controls
+        document.addEventListener('keydown', handleKeyPress);
     </script>
 </body>
 </html>
