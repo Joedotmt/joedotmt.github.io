@@ -1,15 +1,16 @@
-*
-{
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-
-
-body
-{
-    font-family: "pangolin", "Comic Sans MS", 'Trebuchet MS', Monospace, sans-serif;
+body {
+    font-family:
+        "pangolin",
+        "Comic Sans MS",
+        "Trebuchet MS",
+        Monospace,
+        sans-serif;
     background-color: #000;
     background-image: url(background.png);
     background-size: 200%;
@@ -21,8 +22,7 @@ body
     text-align: center;
 }
 
-.container
-{
+.container {
     overflow-y: auto;
     width: min(90vw, 90vh);
     max-height: 90vh;
@@ -37,151 +37,126 @@ body
     justify-content: space-around;
 }
 
-.header .logo
-{
+.header .logo {
     width: 120px;
     margin-bottom: 20px;
     transition: 0.2s cubic-bezier(0.075, 0.82, 0.165, 1);
 }
 
-.header .logo:hover
-{
+.header .logo:hover {
     scale: 1.1;
 }
 
-.header h1
-{
+.header h1 {
     font-size: 2.5rem;
     margin-bottom: 15px;
 }
 
-.header p
-{
+.header p {
     font-size: 1.5rem;
     line-height: 1.5;
 }
 
-a
-{
+a {
     color: rgb(176, 176, 255);
     text-decoration: none;
 }
-a:hover
-{
+a:hover {
     color: rgb(146, 146, 255);
     text-decoration: underline;
 }
 
 /* Footer Section */
-.footer
-{
+.footer {
     overflow: visible;
     margin-top: 20px;
-    background: url('blueprint.webp') repeat center;
+    background: url("blueprint.webp") repeat center;
     background-size: 150%;
     padding: 30px;
-    border-radius: 5px;
     display: flex;
-    box-shadow: -2px 3px 0px 0 #00000045;
     transition: 2s cubic-bezier(0.075, 0.82, 0.165, 1);
     justify-content: space-between;
     align-items: center;
     container: footer / inline-size;
+    clip-path: polygon(1% 5%, 99% 0, 100% 95%, 5% 100%);
 }
 
-button:hover
-{
+button:hover {
     background-color: #fff;
     cursor: pointer;
 }
 
-#sitemap
-{
+#sitemap {
     transition: 0.5s cubic-bezier(0.35, 0.39, 0.54, 1.49);
 }
 
-dialog[open]
-{
+dialog[open] {
     opacity: 1;
     scale: 1;
     translate: 0 0;
 }
 
-dialog
-{
+dialog {
     opacity: 0;
     scale: 1;
     translate: -100% 0;
     transition: all 0.7s allow-discrete;
 }
 
-@starting-style
-{
-    dialog[open]
-    {
+@starting-style {
+    dialog[open] {
         opacity: 0;
         scale: 1;
         translate: -100% 0;
     }
 }
 
-@media (max-width: 575px)
-{
-    .footer
-    {
+@media (max-width: 575px) {
+    .footer {
         flex-direction: column;
     }
 
-    .icedjelly-logo
-    {
+    .icedjelly-logo {
         margin-left: 0;
         margin-top: 1em;
     }
 }
 
-.footer:hover
-{
+.footer:hover {
     background-size: 170%;
 }
 
-.footer p
-{
+.footer p {
     font-size: 1.5rem;
     margin-bottom: 0px;
 }
 
-.icedjelly-logo
-{
+.icedjelly-logo {
     width: 200px;
     margin-left: min(5em, 5vw);
 }
 
-::-webkit-scrollbar
-{
+::-webkit-scrollbar {
     width: 8px;
     height: 8px;
     opacity: 0;
     transition: opacity 0.3s ease;
 }
 
-::-webkit-scrollbar-track
-{
+::-webkit-scrollbar-track {
     background-color: transparent;
 }
 
-::-webkit-scrollbar-thumb
-{
+::-webkit-scrollbar-thumb {
     background-color: rgba(255, 255, 255, 0.1);
     border-radius: 10px;
     transition: background-color 0.3s ease;
 }
 
-::-webkit-scrollbar:hover
-{
+::-webkit-scrollbar:hover {
     opacity: 1;
 }
 
-::-webkit-scrollbar-thumb:hover
-{
+::-webkit-scrollbar-thumb:hover {
     background-color: rgba(255, 255, 255, 0.2);
 }
