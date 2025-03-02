@@ -84,7 +84,7 @@
         .menu-background {
             padding: 20px;
             position: absolute;
-            width: 75%;
+            width: 390px;
             top: 0;
             left: 0;
             transition: transform 0.3s ease;
@@ -110,7 +110,7 @@
         .selection-background {
             position: absolute;
             z-index: 0;
-            width: 90%;
+            width: 450px;
             height: 60px;
             background: rgba(0, 0, 0, 0.8);
             transition: all 0.05s cubic-bezier(0.35, 0, 0, 1);
@@ -183,9 +183,6 @@
             flex-direction: column;
             display: flex;
             width: 50dvw;
-        }
-
-        .left-column.full-width {
         }
 
         .logo {
@@ -321,123 +318,137 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const mainMenu = document.querySelector('.main-menu');
-            const selectionBackground = document.querySelector('.selection-background');
-            const leftColumn = document.querySelector('.left-column');
-            const banners = {
-                construction: document.getElementById('construction-banner'),
-                contact: document.getElementById('contact-banner'),
-                face: document.getElementById('face-banner'),
-                icedjelly: document.getElementById('icedjelly-banner')
-            };
+        window.addEventListener("keydown", function (e) {
+            if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].indexOf(e.code) > -1) {
+                e.preventDefault();
+            }
+        }, false);
 
-            let state = {
-                activeMenu: mainMenu,
-                lastMainMenuIndex: 0,
-                currentIndex: window.location.hash === '#contact' ? 1 : (window.location.hash === '#selfie' ? 4 : 0)
-            };
+        // Track the current active menu and index
+        const mainMenu = document.querySelector('.main-menu');
+        let activeMenu = mainMenu;
+        let lastMainMenuIndex = 0; // To restore main menu selection when leaving a submenu
+        let currentIndex = window.location.hash === '#contact' ? 1 : 0;
+        if (window.location.hash === '#selfie') {
+            currentIndex = 4;
+        }
+        const selectionBackground = document.querySelector('.selection-background');
 
-            const getActiveMenuItems = () => state.activeMenu.querySelectorAll('.menu-item');
+        // Returns menu items from the active menu container
+        function getActiveMenuItems() {
+            return activeMenu.querySelectorAll('.menu-item');
+        }
 
-            const updateSelection = (index = state.currentIndex) => {
-                const items = getActiveMenuItems();
-                items.forEach(item => item.classList.remove('selected'));
-                state.currentIndex = index;
-                const selectedItem = items[state.currentIndex];
-                if (selectedItem) {
-                    selectedItem.classList.add('selected');
-                    selectionBackground.style.top = `${selectedItem.offsetTop - 10}px`;
-                    selectionBackground.style.left = `${selectedItem.offsetLeft}px`;
+        // Update the selection background to follow the currently selected item
+        function updateSelection(index = currentIndex) {
+            const items = getActiveMenuItems();
+            items.forEach(item => item.classList.remove('selected'));
+            currentIndex = index;
+            const selectedItem = items[currentIndex];
+            if (selectedItem) {
+                selectedItem.classList.add('selected');
+                const top = selectedItem.offsetTop - 10;
+                const left = selectedItem.offsetLeft;
+                selectionBackground.style.top = `${top}px`;
+                selectionBackground.style.left = `${left}px`;
 
-                    Object.values(banners).forEach(banner => banner.style.display = 'none');
-                    window.location.hash = '';
-                    leftColumn.classList.add('full-width');
+                // Toggle visibility of banners based on selected index
+                const constructionBanner = document.getElementById('construction-banner');
+                const contactBanner = document.getElementById('contact-banner');
+                const faceBanner = document.getElementById('face-banner');
+                const icedjellyBanner = document.getElementById('icedjelly-banner');
+                contactBanner.style.display = 'none';
+                constructionBanner.style.display = 'none';
+                icedjellyBanner.style.display = 'none';
+                faceBanner.style.display = 'none';
+                window.location.hash = '';
 
-                    switch (selectedItem.textContent.trim()) {
-                        case 'Contact':
-                            banners.contact.style.display = 'block';
-                            window.location.hash = 'contact';
-                            leftColumn.classList.remove('full-width');
-                            break;
-                        case 'Selfie':
-                            banners.face.style.display = 'flex';
-                            window.location.hash = 'selfie';
-                            leftColumn.classList.remove('full-width');
-                            break;
-                        case 'Home':
-                            banners.construction.style.display = 'block';
-                            leftColumn.classList.remove('full-width');
-                            break;
-                        default:
-                            if (selectedItem.textContent.includes('IcedJelly')) {
-                                banners.icedjelly.style.display = 'block';
-                                leftColumn.classList.remove('full-width');
-                            }
-                            break;
-                    }
+
+                if (selectedItem.textContent.trim() === 'Contact') {
+                    contactBanner.style.display = 'block';
+                    window.location.hash = 'contact';
+                } else if (selectedItem.textContent.trim() === 'Selfie') {
+                    contactBanner.style.display = 'none';
+                    document.getElementById('face-banner').style.display = 'flex';
+                    window.location.hash = 'selfie';
                 }
-            };
-
-            document.querySelectorAll('.menu-item').forEach(item => {
-                item.addEventListener('mouseenter', () => {
-                    if (item.closest('.menu-background') === state.activeMenu) {
-                        updateSelection(Array.from(getActiveMenuItems()).indexOf(item));
-                    }
-                });
-            });
-
-            document.addEventListener('keydown', (e) => {
-                const items = getActiveMenuItems();
-                if (state.activeMenu !== mainMenu && (e.key === 'Escape' || e.key === 'ArrowLeft')) {
-                    state.activeMenu.classList.remove('active');
-                    mainMenu.classList.remove('exit');
-                    state.activeMenu = mainMenu;
-                    state.currentIndex = state.lastMainMenuIndex;
-                    updateSelection(state.currentIndex);
-                    return;
+                else if (selectedItem.textContent.trim() === 'Home') {
+                    constructionBanner.style.display = 'block';
+                } else if (selectedItem.textContent[0] === 'I') {
+                    icedjellyBanner.style.display = 'block';
                 }
-                if (e.key === 'ArrowUp') {
-                    state.currentIndex = (state.currentIndex - 1 + items.length) % items.length;
-                } else if (e.key === 'ArrowDown') {
-                    state.currentIndex = (state.currentIndex + 1) % items.length;
-                } else if (e.key === 'Enter') {
-                    items[state.currentIndex].click();
-                }
-                updateSelection(state.currentIndex);
-            });
+            }
+        }
 
-            document.querySelectorAll('.menu-item').forEach(item => {
-                if (item.dataset.submenu) {
-                    item.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        const submenu = document.querySelector(`.submenu[data-parent="${item.dataset.submenu}"]`);
-                        if (submenu) {
-                            state.lastMainMenuIndex = state.currentIndex;
-                            mainMenu.classList.add('exit');
-                            submenu.classList.add('active');
-                            state.activeMenu = submenu;
-                            state.currentIndex = 0;
-                            updateSelection(state.currentIndex);
-                        }
-                    });
+        // Handle mouse hover for all menu items (but only update selection if within active menu)
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('mouseenter', () => {
+                const container = item.closest('.menu-background');
+                if (container === activeMenu) {
+                    const items = Array.from(getActiveMenuItems());
+                    const idx = items.indexOf(item);
+                    updateSelection(idx);
                 }
             });
-
-            document.querySelectorAll('.submenu .close-button').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    if (state.activeMenu !== mainMenu) {
-                        state.activeMenu.classList.remove('active');
-                        mainMenu.classList.remove('exit');
-                        state.activeMenu = mainMenu;
-                        state.currentIndex = state.lastMainMenuIndex;
-                        updateSelection(state.currentIndex);
-                    }
-                });
-            });
-
-            updateSelection();
         });
+
+        // Global keyboard navigation
+        document.addEventListener('keydown', function (e) {
+            const items = getActiveMenuItems();
+            // If in a submenu, Escape or left arrow returns to main menu
+            if (activeMenu !== mainMenu && (e.key === 'Escape' || e.key === 'ArrowLeft')) {
+                activeMenu.classList.remove('active');
+                mainMenu.classList.remove('exit');
+                activeMenu = mainMenu;
+                currentIndex = lastMainMenuIndex;
+                updateSelection(currentIndex);
+                return;
+            }
+            if (e.key === 'ArrowUp') {
+                currentIndex = (currentIndex - 1 + items.length) % items.length;
+            } else if (e.key === 'ArrowDown') {
+                currentIndex = (currentIndex + 1) % items.length;
+            } else if (e.key === 'Enter') {
+                items[currentIndex].click();
+            }
+            updateSelection(currentIndex);
+        });
+
+        // Handle clicks for items with submenus (only in the active menu)
+        document.querySelectorAll('.menu-item').forEach(item => {
+            if (item.dataset.submenu) {
+                item.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const submenuName = item.dataset.submenu;
+                    const submenu = document.querySelector(`.submenu[data-parent="${submenuName}"]`);
+                    if (submenu) {
+                        // Save current main menu index before switching
+                        lastMainMenuIndex = currentIndex;
+                        mainMenu.classList.add('exit');
+                        submenu.classList.add('active');
+                        activeMenu = submenu;
+                        currentIndex = 0; // Default selection in the submenu (e.g. the back button)
+                        updateSelection(currentIndex);
+                    }
+                });
+            }
+        });
+
+        // Close button in the submenu
+        document.querySelectorAll('.submenu .close-button').forEach(btn => {
+            btn.addEventListener('click', function () {
+                if (activeMenu !== mainMenu) {
+                    activeMenu.classList.remove('active');
+                    mainMenu.classList.remove('exit');
+                    activeMenu = mainMenu;
+                    currentIndex = lastMainMenuIndex;
+                    updateSelection(currentIndex);
+                }
+            });
+        });
+
+        // Initialize selection on the main menu
+        updateSelection();
     </script>
 </body>
 
