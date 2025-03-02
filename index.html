@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -190,17 +191,20 @@
         }
     </style>
 </head>
+
 <body>
     <div class="logo-container">
-        <a href="/"><img style="aspect-ratio: 1.904; width: 50%; margin: 1em;" src="../joe-logo.webp" alt="Joe.mt Logo" class="logo" /></a>
+        <a href="/"><img style="aspect-ratio: 1.904; width: 50%; margin: 1em;" src="../joe-logo.webp" alt="Joe.mt Logo"
+                class="logo" /></a>
     </div>
     <div class="menu-container">
         <div class="selection-background"></div>
         <!-- Main Menu -->
         <div class="menu-background main-menu">
-            <a href="/" class="menu-item" data-index="0">Home</a>
-            <a href="#" class="menu-item" data-index="1" data-submenu="things">Things</a>
-            <a href="https://icedjelly.com" class="menu-item" data-index="2">IcedJelly.com</a>
+            <a href="/#" class="menu-item" data-index="0">Home</a>
+            <a href="/#contact" class="menu-item" data-index="1">Contact</a>
+            <a href="#" class="menu-item" data-index="2" data-submenu="things">Things</a>
+            <a href="https://icedjelly.com" class="menu-item" data-index="3">IcedJelly.com</a>
         </div>
         <!-- Submenu for "Things" -->
         <div class="menu-background submenu" data-parent="things">
@@ -211,19 +215,45 @@
             <a href="/dejansamazinginteractivepythonthing" class="menu-item" data-index="3">Dejan's Python Thing</a>
         </div>
     </div>
-    <div class="construction-banner">
+    <div class="construction-banner" id="construction-banner">
         <h1>This website is Under Construction</h1>
-        <p>This is the website for Joe Esposito in Malta. My projects are not on <strong>joe.mt</strong> but on <a href="https://icedjelly.com">icedjelly.com</a>, and so are my contacts. Eventually, <strong>joe.mt</strong> will replace <strong>icedjelly.com</strong>.</p>
+        <p>This is the website for Joe Esposito in Malta. My projects are not on <strong>joe.mt</strong> but on <a
+                href="https://icedjelly.com">icedjelly.com</a>, and so are my contacts. Eventually,
+            <strong>joe.mt</strong> will replace <strong>icedjelly.com</strong>.</p>
         <div class="footer">
-            <p>For more information/contacts<br />please visit <a href="https://icedjelly.com" target="_blank">icedjelly.com</a></p>
+            <p>For more information/contacts<br />please visit <a href="https://icedjelly.com"
+                    target="_blank">icedjelly.com</a></p>
             <img src="icedjelly-logo.png" alt="IcedJelly Logo" class="icedjelly-logo" />
         </div>
     </div>
+
+    <div class="construction-banner" id="contact-banner" style="display: none;">
+        <h1>Contact Me</h1>
+        <div style="text-align: left; font-size: 1.5em;">
+            <ul style="list-style: none; padding: 0;">
+                <li style="margin-bottom: 15px;">
+                    💬 Discord:
+                    <a href="https://discord.com/users/800443682733031485" 
+                       style="color: #5865F2;font-weight: bold;">
+                       @joedotmt
+                    </a>
+                    <p>Response within a day. Preferred option.</p>
+                </li>
+                <li>
+                    📧 Email:
+                    <a href="mailto:joe@joe.mt" 
+                       style="color: #D44638; font-weight: bold;">
+                       joe@joe.mt
+                    </a>
+                    <p>Response takes a while.</p>
+                </li>
+            </ul>
+        </div>
+        
+    </div>
     <script>
-        window.addEventListener("keydown", function (e)
-        {
-            if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].indexOf(e.code) > -1)
-            {
+        window.addEventListener("keydown", function (e) {
+            if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].indexOf(e.code) > -1) {
                 e.preventDefault();
             }
         }, false);
@@ -232,40 +262,45 @@
         const mainMenu = document.querySelector('.main-menu');
         let activeMenu = mainMenu;
         let lastMainMenuIndex = 0; // To restore main menu selection when leaving a submenu
-        let currentIndex = 0;
+        let currentIndex = window.location.hash === '#contact' ? 1 : 0;
         const selectionBackground = document.querySelector('.selection-background');
 
         // Returns menu items from the active menu container
-        function getActiveMenuItems()
-        {
+        function getActiveMenuItems() {
             return activeMenu.querySelectorAll('.menu-item');
         }
 
         // Update the selection background to follow the currently selected item
-        function updateSelection(index = currentIndex)
-        {
+        function updateSelection(index = currentIndex) {
             const items = getActiveMenuItems();
             items.forEach(item => item.classList.remove('selected'));
             currentIndex = index;
             const selectedItem = items[currentIndex];
-            if (selectedItem)
-            {
+            if (selectedItem) {
                 selectedItem.classList.add('selected');
                 const top = selectedItem.offsetTop - 10;
                 const left = selectedItem.offsetLeft;
                 selectionBackground.style.top = `${top}px`;
                 selectionBackground.style.left = `${left}px`;
+
+                // Toggle visibility of banners based on selected index
+                const constructionBanner = document.getElementById('construction-banner');
+                const contactBanner = document.getElementById('contact-banner');
+                if (selectedItem.textContent.trim() === 'Contact') {
+                    constructionBanner.style.display = 'none';
+                    contactBanner.style.display = 'block';
+                } else {
+                    constructionBanner.style.display = 'block';
+                    contactBanner.style.display = 'none';
+                }
             }
         }
 
         // Handle mouse hover for all menu items (but only update selection if within active menu)
-        document.querySelectorAll('.menu-item').forEach(item =>
-        {
-            item.addEventListener('mouseenter', () =>
-            {
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('mouseenter', () => {
                 const container = item.closest('.menu-background');
-                if (container === activeMenu)
-                {
+                if (container === activeMenu) {
                     const items = Array.from(getActiveMenuItems());
                     const idx = items.indexOf(item);
                     updateSelection(idx);
@@ -274,12 +309,10 @@
         });
 
         // Global keyboard navigation
-        document.addEventListener('keydown', function (e)
-        {
+        document.addEventListener('keydown', function (e) {
             const items = getActiveMenuItems();
             // If in a submenu, Escape or left arrow returns to main menu
-            if (activeMenu !== mainMenu && (e.key === 'Escape' || e.key === 'ArrowLeft'))
-            {
+            if (activeMenu !== mainMenu && (e.key === 'Escape' || e.key === 'ArrowLeft')) {
                 activeMenu.classList.remove('active');
                 mainMenu.classList.remove('exit');
                 activeMenu = mainMenu;
@@ -287,31 +320,24 @@
                 updateSelection(currentIndex);
                 return;
             }
-            if (e.key === 'ArrowUp')
-            {
+            if (e.key === 'ArrowUp') {
                 currentIndex = (currentIndex - 1 + items.length) % items.length;
-            } else if (e.key === 'ArrowDown')
-            {
+            } else if (e.key === 'ArrowDown') {
                 currentIndex = (currentIndex + 1) % items.length;
-            } else if (e.key === 'Enter')
-            {
+            } else if (e.key === 'Enter') {
                 items[currentIndex].click();
             }
             updateSelection(currentIndex);
         });
 
         // Handle clicks for items with submenus (only in the active menu)
-        document.querySelectorAll('.menu-item').forEach(item =>
-        {
-            if (item.dataset.submenu)
-            {
-                item.addEventListener('click', function (e)
-                {
+        document.querySelectorAll('.menu-item').forEach(item => {
+            if (item.dataset.submenu) {
+                item.addEventListener('click', function (e) {
                     e.preventDefault();
                     const submenuName = item.dataset.submenu;
                     const submenu = document.querySelector(`.submenu[data-parent="${submenuName}"]`);
-                    if (submenu)
-                    {
+                    if (submenu) {
                         // Save current main menu index before switching
                         lastMainMenuIndex = currentIndex;
                         mainMenu.classList.add('exit');
@@ -325,12 +351,9 @@
         });
 
         // Close button in the submenu
-        document.querySelectorAll('.submenu .close-button').forEach(btn =>
-        {
-            btn.addEventListener('click', function ()
-            {
-                if (activeMenu !== mainMenu)
-                {
+        document.querySelectorAll('.submenu .close-button').forEach(btn => {
+            btn.addEventListener('click', function () {
+                if (activeMenu !== mainMenu) {
                     activeMenu.classList.remove('active');
                     mainMenu.classList.remove('exit');
                     activeMenu = mainMenu;
@@ -344,4 +367,5 @@
         updateSelection();
     </script>
 </body>
+
 </html>
