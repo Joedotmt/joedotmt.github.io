@@ -12,6 +12,12 @@
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=arrow_left_alt,arrow_right_alt,open_in_new" />
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -20,11 +26,11 @@
         }
 
         ::-webkit-scrollbar-track {
-            background-color: transparent;
+            background-color: black;
         }
 
         ::-webkit-scrollbar-thumb {
-            background-color: rgba(255, 255, 255, 0.1);
+            background-color: rgba(255, 255, 255, 0.268);
             border-radius: 10px;
             transition: background-color 0.3s ease;
         }
@@ -77,7 +83,7 @@
             transform: translateX(0px);
             margin-left: 50px;
             overflow: hidden;
-            min-height: 390px;
+            min-height: 345px;
             max-width: 500px;
         }
 
@@ -130,6 +136,16 @@
             z-index: 2;
             display: flex;
             align-items: center;
+            text-wrap:nowrap;
+        }
+
+        .menu-item .material-symbols-outlined {
+            opacity: 0.2;
+            transition: opacity 0.3s ease;
+        }
+
+        .menu-item.selected .material-symbols-outlined {
+            opacity: 0.8;
         }
 
         .logo-container {
@@ -170,23 +186,13 @@
             clip-path: polygon(3% 0%, 90% 5%, 100% 80%, 0% 95%);
         }
 
-        /* Responsive Styles */
-        @media (max-width: 1000px) {
-
-            .left-column,
-            .right-column {
-                width: 100%;
-            }
-        }
-
         .left-column {
             flex-direction: column;
             display: flex;
             width: 50dvw;
         }
 
-        .left-column.full-width {
-        }
+        .left-column.full-width {}
 
         .logo {
             aspect-ratio: 1.904;
@@ -237,6 +243,33 @@
         .icedjelly-logo {
             width: 200px;
             margin-left: min(5em, 5vw);
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 800px) {
+
+            .left-column,
+            .right-column {
+                width: 100%;
+            }
+
+            body {
+                flex-direction: column;
+                height: fit-content;
+                min-height: 100dvh;
+            }
+
+            .menu-container {
+                margin: 1em;
+            }
+            .logo-container{
+                width: 100%;
+            }
+
+            .construction-banner {
+                margin: 1em;
+                width: fit-content;
+            }
         }
     </style>
 </head>
@@ -321,7 +354,7 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+         document.addEventListener('DOMContentLoaded', () => {
             const mainMenu = document.querySelector('.main-menu');
             const selectionBackground = document.querySelector('.selection-background');
             const leftColumn = document.querySelector('.left-column');
