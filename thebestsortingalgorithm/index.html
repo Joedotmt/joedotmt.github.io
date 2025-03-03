@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World's Best Sorting Algorithm</title>
+    <style>
+        body {
+            background: url(../blueprint.webp);
+            color: #ffffff;
+            background-size: cover;
+            font-family: "pangolin", "comic sans ms", Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 1em;
+        }
+
+        pre {
+            background-color: #333;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+
+        textarea {
+            background-color: #333;
+            color: #fff;
+            border-radius: 5px;
+        }
+
+        /* CSS */
+        .button-29 {
+            align-items: center;
+            appearance: none;
+            background-image: radial-gradient(100% 100% at 100% 0, #5adaff 0, #5468ff 100%);
+            border: 0;
+            border-radius: 6px;
+            box-shadow: rgba(45, 35, 66, .4) 0 2px 4px, rgba(45, 35, 66, .3) 0 7px 13px -3px, rgba(58, 65, 111, .5) 0 -3px 0 inset;
+            box-sizing: border-box;
+            color: #fff;
+            cursor: pointer;
+            display: inline-flex;
+            font-family: "JetBrains Mono", monospace;
+            height: 48px;
+            justify-content: center;
+            line-height: 1;
+            list-style: none;
+            overflow: hidden;
+            padding-left: 16px;
+            padding-right: 16px;
+            position: relative;
+            text-align: left;
+            text-decoration: none;
+            transition: box-shadow .15s, transform .15s;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            white-space: nowrap;
+            will-change: box-shadow, transform;
+            font-size: 18px;
+        }
+
+        .button-29:focus {
+            box-shadow: #3c4fe0 0 0 0 1.5px inset, rgba(45, 35, 66, .4) 0 2px 4px, rgba(45, 35, 66, .3) 0 7px 13px -3px, #3c4fe0 0 -3px 0 inset;
+        }
+
+        .button-29:hover {
+            box-shadow: rgba(45, 35, 66, .4) 0 4px 8px, rgba(45, 35, 66, .3) 0 7px 13px -3px, #3c4fe0 0 -3px 0 inset;
+            transform: translateY(-2px);
+        }
+
+        .button-29:active {
+            box-shadow: #3c4fe0 0 3px 7px inset;
+            transform: translateY(2px);
+        }
+
+        .button-29.grayscale {
+            filter: grayscale(100%);
+        }
+
+        .annoying-dot {
+            z-index: 2;
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            width: 20px;
+            height: 20px;
+            scale: 0.25;
+            background-color: rgb(255, 220, 220);
+            border: none;
+            cursor: pointer;
+            transition: all 0.5s linear;
+            border-radius: 100%;
+            color: transparent;
+            font-size: 0.5em;
+        }
+
+        .annoying-dot:hover {
+            scale: 1;
+            left: 0px !important;
+            top: 0px !important;
+            border-radius: 0;
+            width: 100dvw;
+            height: 100dvh;
+            color: black;
+            font-size: 2em;
+            animation: playSound 0s forwards;
+        }
+
+        @keyframes playSound {
+            from {}
+
+            to {}
+        }
+
+        @keyframes springyText {
+            0% {
+                transform: scale(1, 1);
+            }
+
+            20% {
+                transform: scale(1.2, 0.8);
+            }
+
+            40% {
+                transform: scale(0.8, 1.2);
+            }
+
+            60% {
+                transform: scale(1.15, 0.85);
+            }
+
+            80% {
+                transform: scale(0.9, 1.1);
+            }
+
+            100% {
+                transform: scale(1, 1);
+            }
+        }
+
+        .springy {
+            display: inline-block;
+            /* Prevents text from breaking */
+            font-weight: bold;
+            animation: springyText 0.6s ease-in-out infinite;
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Pangolin&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/themes/prism-tomorrow.min.css" />
+</head>
+
+<body>
+    <iframe src="/achivements.html" id="achievementsIframe" style="display: none;"></iframe>
+    <a style="position: fixed; left: 1em; top:1em; z-index: 1;" href="/"><img id="logoimg" src="../joe-logo.webp"
+            width="100" alt="Logo" class="logo" /></a>
+    <h1>World's Best Number Sorting Algorithm</h1>
+    <div
+        style="background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px); display: flex; flex-direction: column; padding: 1em; border-radius: 1em;">
+        <textarea id="arrayInput" rows="4"
+            cols="50">80, 1000, 10, 60.9, 40, 50, 10, 420, 100, 2000, 30, 70, 20, 49.4, 9</textarea>
+        <textarea id="output" rows="4" cols="50" readonly></textarea>
+        <button class="button-29" id="actionButton" onclick="sortArray()">Sort Array</button>
+        <div id="output"></div>
+    </div>
+    <h2 style="margin-bottom: 0;">Sorting Algorithm Code</h2>
+    <pre style="overflow: visible; height: fit-content;">
+<code class="language-javascript">// Big brain code
+list_to_sort = [10,100,20,30,40,50,60.9,420,70,80,9,10,49.4]
+list_to_sort.forEach(number => 
+{
+    setTimeout(() => 
+    {
+        console.log(number)
+    }, number);
+});</code></pre>
+    <button class="annoying-dot" onclick="showHTML()"><div class="springy"><strong>HELLO IM THE ANNOYING DOT</strong><br>PAGE CODE!?!?!?
+        IF!??! YOU??? CLICK NOW????</div></button>
+    <audio id="stupidDotSound" src="stupid dot.mp3"></audio>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/components/prism-javascript.min.js"></script>
+    <script>
+        function sortArray() {
+            document.body.style.backgroundImage = "url('./brain-big-brain.gif')";
+            const input = document.getElementById('arrayInput').value;
+            const list_to_sort = input.split(',').map(Number);
+            const outputTextarea = document.getElementById('output');
+            outputTextarea.value = '';
+            list_to_sort.forEach(number => {
+                setTimeout(() => {
+                    outputTextarea.value += number + ", ";
+                    if (outputTextarea.value.split(',').length - 1 == list_to_sort.length) {
+                        outputTextarea.value = outputTextarea.value.slice(0, -2);
+                        outputTextarea.value += "\nDone!";
+                        actionButton.style.opacity = '';
+                        actionButton.style.pointerEvents = '';
+                        document.body.style.backgroundImage = "";
+                    }
+                }, number);
+            });
+            const actionButton = document.getElementById('actionButton');
+            actionButton.style.opacity = '0';
+            actionButton.style.pointerEvents = 'none';
+            actionButton.textContent = 'Clear Output';
+            actionButton.classList.add('grayscale');
+            actionButton.onclick = clearOutput;
+        }
+
+        function clearOutput() {
+            document.getElementById('output').value = '';
+            const actionButton = document.getElementById('actionButton');
+            actionButton.textContent = 'Sort Array';
+            actionButton.classList.remove('grayscale');
+            actionButton.onclick = sortArray;
+        }
+
+        function showHTML() {
+            achievementsIframe.contentWindow.postMessage({ type: 'registerAchievement', achievement: "annoying_dot" }, '*');
+            const html = fetch("index.html").then(response => response.text()).then(html => {
+                const newWindow = window.open();
+                newWindow.document.write('<pre>' + html.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre>');
+                newWindow.document.close();
+            });
+
+        }
+
+        function randomizeButtonPosition() {
+            const button = document.querySelector('.annoying-dot');
+            const x = Math.random() * (window.innerWidth - button.offsetWidth);
+            const y = Math.random() * (window.innerHeight - button.offsetHeight);
+            button.style.left = `${x}px`;
+            button.style.top = `${y}px`;
+        }
+
+        window.onload = function () {
+            randomizeButtonPosition();
+        };
+
+        const annoyingDot = document.querySelector('.annoying-dot');
+        const stupidDotSound = document.getElementById('stupidDotSound');
+
+        annoyingDot.addEventListener('mouseover', () => {
+            stupidDotSound.play();
+        });
+
+        annoyingDot.addEventListener('mouseout', () => {
+            stupidDotSound.pause();
+            stupidDotSound.currentTime = 0;
+        });
+    </script>
+</body>
+
+</html>

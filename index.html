@@ -83,7 +83,7 @@
             transform: translateX(0px);
             margin-left: 50px;
             overflow: hidden;
-            min-height: 345px;
+            min-height: 400px;
             max-width: 500px;
         }
 
@@ -291,15 +291,16 @@
             <div class="menu-background main-menu">
                 <a href="/#" class="menu-item" data-index="0">Home</a>
                 <a href="/#contact" class="menu-item" data-index="1">Contact</a>
-                <a href="#" class="menu-item" data-index="2" data-submenu="things">Things<span style="margin-left: 5px;"
+                <a href="/#achivements" class="menu-item" data-index="2">Your Achivements</a>
+                <a href="#" class="menu-item" data-index="3" data-submenu="things">Sitemap<span style="margin-left: 5px;"
                         class="material-symbols-outlined">
                         arrow_right_alt
                     </span></a>
-                <a href="https://icedjelly.com" class="menu-item" data-index="3">IcedJelly.com<span
+                <a href="https://icedjelly.com" class="menu-item" data-index="4">IcedJelly.com<span
                         style="margin-left: 5px;" class="material-symbols-outlined arrow">
                         open_in_new
                     </span></a>
-                <a href="/#selfie" class="menu-item" data-index="4">Selfie</a>
+                <a href="/#selfie" class="menu-item" data-index="5">Selfie</a>
             </div>
             <!-- Submenu for "Things" -->
             <div class="menu-background submenu" data-parent="things">
@@ -310,7 +311,8 @@
                 <a href="/bombvideo" class="menu-item" data-index="0">Bomb</a>
                 <a href="/veterans" class="menu-item" data-index="1">Veterans</a>
                 <a href="/deconstuctions" class="menu-item" data-index="2">Deconstructions</a>
-                <a href="/dejansamazinginteractivepythonthing" class="menu-item" data-index="3">Dejan's Python Thing</a>
+                <a href="/thebestsortingalgorithm" class="menu-item" data-index="3">Best sorting algorithm</a>
+                <a href="/dejansamazinginteractivepythonthing" class="menu-item" data-index="4">Dejan's Python Thing</a>
             </div>
         </div>
     </div>
@@ -351,6 +353,9 @@
 
         <div class="construction-banner face-banner" id="face-banner"></div>
         <div class="construction-banner" id="icedjelly-banner" style="font-size: 2em;">Go to IcedJelly.com</div>
+        <div class="construction-banner" id="achievements-banner" style="display: none;">
+            <iframe src="achivements.html" id="achievementsIframe" style="width: 100%; height: 300px;"></iframe>
+        </div>
     </div>
 
     <script>
@@ -362,7 +367,8 @@
                 construction: document.getElementById('construction-banner'),
                 contact: document.getElementById('contact-banner'),
                 face: document.getElementById('face-banner'),
-                icedjelly: document.getElementById('icedjelly-banner')
+                icedjelly: document.getElementById('icedjelly-banner'),
+                achievements: document.getElementById('achievements-banner')
             };
 
             let state = {
@@ -394,12 +400,17 @@
                             leftColumn.classList.remove('full-width');
                             break;
                         case 'Selfie':
+                        achievementsIframe.contentWindow.postMessage({ type: 'registerAchievement', achievement: "saw_face" }, '*');
                             banners.face.style.display = 'flex';
                             window.location.hash = 'selfie';
                             leftColumn.classList.remove('full-width');
                             break;
                         case 'Home':
                             banners.construction.style.display = 'block';
+                            leftColumn.classList.remove('full-width');
+                            break;
+                        case 'Your Achivements':
+                            banners.achievements.style.display = 'block';
                             leftColumn.classList.remove('full-width');
                             break;
                         default:

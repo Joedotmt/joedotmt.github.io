@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Achievements</title>
+    <script>
+        (function () {
+            const achievementsKey = 'siteAchievements';
+            const achievementsList = [
+                { id: 'saw_face', name: 'Saw my face' },
+                { id: 'annoying_dot', name: 'Said hello to the annoying dot' }
+            ];
+
+            function getAchievements() {
+                const achievements = localStorage.getItem(achievementsKey);
+                return achievements ? JSON.parse(achievements) : [];
+            }
+
+            function saveAchievements(achievements) {
+                localStorage.setItem(achievementsKey, JSON.stringify(achievements));
+            }
+
+            function registerAchievement(achievement) {
+                console.log(achievement)
+                const achievements = getAchievements();
+                if (!achievements.includes(achievement)) {
+                    achievements.push(achievement);
+                    saveAchievements(achievements);
+                    console.log(`Achievement unlocked: ${achievement}`);
+                    updateProgressBar();
+                    displayAchievements();
+                }
+            }
+
+            function updateProgressBar() {
+                const achievements = getAchievements();
+                const progress = achievements.length / achievementsList.length;
+                const progressBar = document.querySelector('progress');
+                const progressText = document.getElementById('progress-text');
+                progressBar.value = progress;
+                progressText.textContent = `${achievements.length}/${achievementsList.length}`;
+            }
+
+            function displayAchievements() {
+                const achievementsListElement = document.getElementById('achievements-list');
+                const achievements = getAchievements();
+                achievementsListElement.innerHTML = '';
+                achievementsList.forEach(achievement => {
+                    const li = document.createElement('li');
+                    li.textContent = achievement.name;
+                    if (achievements.includes(achievement.id)) {
+                        li.textContent += ' ✅';
+                    } else {
+                        li.textContent += ' 🔒';
+                    }
+                    achievementsListElement.appendChild(li);
+                });
+                updateProgressBar();
+            }
+
+            window.addEventListener('message', (event) => {
+                if (event.data.type === 'registerAchievement') {
+                    registerAchievement(event.data.achievement);
+                }
+            });
+
+            window.addEventListener('load', displayAchievements);
+            window.addEventListener('storage', displayAchievements);
+
+            window.getAchievements = getAchievements;
+            window.updateProgressBar = updateProgressBar;
+        })();
+    </script>
+    <style>
+        progress[value] {
+            /* Reset the default appearance */
+            -webkit-appearance: none;
+            appearance: none;
+
+            width: 250px;
+            height: 20px;
+
+            margin-left: 5px;
+        }
+
+        progress[value]::-webkit-progress-bar {
+            background-color: #f3f3f3;
+            border-radius: 5px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) inset;
+        }
+
+        progress[value]::-webkit-progress-value {
+            background-color: #4caf50;
+            border-radius: 5px;
+        }
+
+        progress[value]::-moz-progress-bar {
+            background-color: #4caf50;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body style="background: white; font-family: monospace;">
+    <h1>Your Achievements</h1>
+    <p>Explore the website to get achivements</p>
+    <div style="display: flex; align-items: center;">    <span id="progress-text">0%</span>
+        <progress value="0" max="1"></progress></div>
+
+    <ul id="achievements-list"></ul>
+</body>
+
+</html>
