@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>All of My Links</title>
+    <style>
+        /* Basic resets */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        a {
+            text-decoration: none;
+            color: white;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        body {
+            font-size: 1.5em;
+            font-family: "comic sans ms", Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+        }
+
+        button {
+            font-size: 1.5rem;
+        }
+
+        /* HEADER with placeholder background */
+        header {
+            width: 100%;
+            background: url('header.png') no-repeat center center;
+            background-color: rgba(0, 0, 0, 0.5);
+            background-blend-mode: darken;
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding-top: 20px;
+            padding-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            padding: 10px 20px;
+        }
+
+        header p {
+            font-size: 1rem;
+            padding: 6px 10px;
+            max-width: 600px;
+        }
+
+        /* SECTION TITLE with placeholder background #2 */
+        .section-title {
+            background: url('subheader.jpg') no-repeat center center;
+            background-size: cover;
+            backdrop-filter: blur(100px);
+            padding: 12px 20px;
+            font-size: 1.3rem;
+            text-align: center;
+        }
+
+        /* Container for link items in each section */
+        section {
+            margin-bottom: 0px;
+        }
+
+        /* Each link item as a flex container with icon + text on the left,
+       and either a username or an accordion toggle on the right. */
+        .link-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 30px;
+            max-width: 40em;
+            margin: auto;
+            background-color: #000000;
+        }
+
+        /* Icon on the far left */
+        .link-icon {
+            width: 40px;
+            height: 40px;
+            margin-right: 15px;
+            object-fit: contain;
+        }
+
+        /* Text (platform name / channel name) in the middle */
+        .link-text {
+            margin-right: 20px;
+        }
+
+        /* Username or detail on the far right (non-YouTube) */
+        .link-username {
+            margin-left: auto;
+            /* pushes it all the way to the right */
+            color: #ccc;
+        }
+
+        /* Accordion toggle (for YouTube only) on the right */
+        .accordion-toggle {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: #4fc3f7;
+            cursor: pointer;
+            outline: none;
+            text-align: right;
+        }
+
+        .accordion-toggle:hover {
+            text-decoration: underline;
+        }
+
+
+        details {
+            background-color: black;
+            border: none;
+            padding: 10px;
+            width: 15em;
+            margin-left: auto;
+        }
+
+        summary {
+            font-size: 1em;
+            cursor: pointer;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.25);
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem;
+            color: #ccc;
+        }
+
+        summary::marker {
+            display: none;
+            content: "";
+        }
+
+        details[open] summary::after {
+            content: " ▲";
+        }
+
+        details summary::after {
+            content: " ▼";
+        }
+
+        .accordion-content {
+            margin: 0.5rem;
+            font-size: 0.75em;
+        }
+
+        .aa {
+            display: flex;
+            align-items: center;
+        }
+
+        #achievementsIframe {
+            display: none;
+        }
+
+        .fixed-logo {
+            z-index: 1;
+            margin-top: 1em;
+            width: fit-content;
+        }
+
+        .fixed-logo:hover {
+            scale: 1.05;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header>
+        <iframe id="achievementsIframe" src="/achivements.html"></iframe>
+        <a href="/" class="fixed-logo"><img id="logoimg" src="../joe-logo.webp" width="100" alt="Logo" class="logo" /></a>
+        <h1>All of my links (:</h1>
+        <p>Use Ctrl+F to search for any link/website/page/account to do with Joe Esposito</p>
+    </header>
+    <!-- Main Options (Discord, Main Contact) -->
+    <section>
+        <a href="https://discordapp.com/users/800443682733031485">
+            <div class="link-item">
+                <img class="link-icon" src="discord.svg" alt="Icon">
+                <span class="link-text">Discord</span>
+                <span class="link-username">Main Contact Option</span>
+            </div>
+        </a>
+        <a href="mailto:joe@joe.mt">
+            <div class="link-item">
+                <img class="link-icon" src="mail.svg" alt="Icon">
+                <span class="link-text">Mail</span>
+                <span class="link-username">Secondary Contact Option</span>
+            </div>
+        </a>
+    </section>
+
+    <!-- YOUTUBE with accordions -->
+    <section>
+        <div class="section-title">YouTube</div>
+
+        <!-- IcedJelly -->
+
+        <div class="link-item">
+            <a class="aa" href="https://www.youtube.com/@icedjelly">
+                <img class="link-icon" src="youtube.svg" alt="Icon">
+                <span class="link-text">IcedJelly</span>
+            </a>
+            <details>
+                <summary>Info - Main</summary>
+                <div class="accordion-content">
+                    <p>Main and oldest channel.</p>
+
+                </div>
+            </details>
+        </div>
+
+
+        <!-- IcedJelly2 (gringinu2) -->
+
+        <div class="link-item">
+            <a class="aa" href="https://www.youtube.com/@icedjelly2">
+                <img class="link-icon" src="youtube.svg" alt="Icon">
+                <span class="link-text">IcedJelly2</span>
+            </a>
+            <details>
+                <summary>Info - Main Second</summary>
+                <div class="accordion-content">
+                    <p>Main second channel (MOST ACTIVE)</p>
+
+                </div>
+            </details>
+        </div>
+
+        <!-- Unprecautious -->
+        <div class="link-item">
+            <a class="aa" href="https://www.youtube.com/@unpcshow">
+                <img class="link-icon" src="youtube.svg" alt="Icon">
+                <span class="link-text">Unprecautious</span>
+            </a>
+            <details>
+                <summary>Info - 0 videos</summary>
+                <div class="accordion-content">
+                    <p>A channel which seems to be dead ):
+
+                        The idea was meant to be a channel made with my friend about engineering but he was too busy</p>
+
+                </div>
+            </details>
+        </div>
+        <!-- Relaxing Mini Golf -->
+        <div class="link-item">
+            <a class="aa" href="http://youtube.com/@rmggame">
+                <img class="link-icon" src="youtube.svg" alt="Icon">
+                <span class="link-text">Relaxing Mini Golf</span>
+            </a>
+            <details>
+                <summary>Info - 4 videos</summary>
+                <div class="accordion-content">
+                    <p>Channel made to document my dead game "Relaxing Mini Golf"</p>
+                </div>
+            </details>
+        </div>
+
+        <!-- Geah -->
+        <div class="link-item">
+            <a class="aa" href="https://www.youtube.com/channel/UCP91d-CnEX04DtogIXcm0Tg">
+                <img class="link-icon" src="youtube.svg" alt="Icon">
+                <span class="link-text">Geah</span>
+            </a>
+            <details>
+                <summary>Info - 1 video</summary>
+                <div class="accordion-content">
+                    <p>Channel made for me and my friend (elisey) we made one video... then gave up</p>
+                </div>
+            </details>
+        </div>
+
+        <!-- Really Fucking Stupid -->
+        <div class="link-item">
+            <a class="aa" href="http://youtube.com/@reallystupid">
+                <img class="link-icon" src="youtube.svg" alt="Icon">
+                <span class="link-text">Really Fucking Stupid</span>
+            </a>
+            <details>
+                <summary>Info - 10 videos</summary>
+                <div class="accordion-content">
+                    <p>Channel made a long time ago, some stupid videos we all recorded in the same day (apart from one) made with my cousins</p>
+                </div>
+            </details>
+        </div>
+
+        <!-- No Nonsense Tutorials -->
+        <div class="link-item">
+            <a class="aa" href="http://youtube.com/@icedjellytutorials">
+                <img class="link-icon" src="youtube.svg" alt="Icon">
+                <span class="link-text">No Nonsense Tutorials</span>
+            </a>
+            <details>
+                <summary>Info - 5 videos</summary>
+                <div class="accordion-content">
+                    <p>A dead tutorial channel (will upload any tutorials on my second channel now)</p>
+                </div>
+            </details>
+        </div>
+
+        <!-- 0val -->
+        <div class="link-item">
+            <a class="aa" href="https://www.youtube.com/channel/UCLNo3levcVWjD8FMhu7K-DQ/about">
+                <img class="link-icon" src="youtube.svg" alt="Icon">
+                <span class="link-text">0val</span>
+            </a>
+            <details>
+                <summary>Info - 1 video</summary>
+                <div class="accordion-content">
+                    <p>Testing if buying views/subscribers will work or if it will get me banned</p>
+                </div>
+            </details>
+        </div>
+
+        <!-- Vgub -->
+        <div class="link-item">
+            <a class="aa" href="https://www.youtube.com/channel/UCILEAO6Cw3Vk3ONYPkMQiPA">
+                <img class="link-icon" src="youtube.svg" alt="Icon">
+                <span class="link-text">Vgub</span>
+            </a>
+            <details>
+                <summary>Info - 3 videos</summary>
+                <div class="accordion-content">
+                    <p>Idk created it on a random ipad and tried to make it "Mysterious"</p>
+                </div>
+            </details>
+        </div>
+
+        <!-- Joe Esposito 2 -->
+        <div class="link-item">
+            <a class="aa" href="http://youtube.com/@joeesposito2">
+                <img class="link-icon" src="youtube.svg" alt="Icon">
+                <span class="link-text">Joe Esposito 2</span>
+            </a>
+            <details>
+                <summary>Info - 3 videos</summary>
+                <div class="accordion-content">
+                    <p>Created a channel to use for watching (not uploading) youtube videos and by mistake uploaded some videos which where meant to be on my main.</p>
+                </div>
+            </details>
+        </div>
+
+        <!-- @joeespo -->
+        <div class="link-item">
+            <a class="aa" href="https://www.youtube.com/@joeespo">
+                <img class="link-icon" src="youtube.svg" alt="Icon">
+                <span class="link-text">@joeespo</span>
+            </a>
+            <details>
+                <summary>Info - 0 videos</summary>
+                <div class="accordion-content">
+                    <p>Just reserving the handle @joeespo</p>
+                </div>
+            </details>
+        </div>
+    </section>
+
+    <!-- SHORT FORM VIDEOS -->
+    <section>
+        <div class="section-title">Short Form Videos</div>
+        <a href="https://www.tiktok.com/@joemt">
+            <div class="link-item">
+                <img class="link-icon" src="tiktok.webp" alt="Icon">
+                <span class="link-text">Tiktok</span>
+                <span class="link-username">Joedotmt</span>
+            </div>
+        </a>
+        <a href="https://www.tiktok.com/@relaxingminigolf">
+            <div class="link-item">
+                <img class="link-icon" src="tiktok.webp" alt="Icon">
+                <span class="link-text">Tiktok</span>
+                <span class="link-username">Relaxing Mini Golf</span>
+            </div>
+        </a>
+        <a href="https://www.tiktok.com/@joe3516">
+            <div class="link-item">
+                <img class="link-icon" src="tiktok.webp" alt="Icon">
+                <span class="link-text">Tiktok</span>
+                <span class="link-username">J O E</span>
+            </div>
+        </a>
+        <div class="link-item">
+            <img class="link-icon" src="funimate.png" alt="Icon">
+            <span class="link-text">Funimate</span>
+            <span class="link-username">Jellymalta</span>
+        </div>
+
+    </section>
+
+    <!-- TWITCH -->
+    <section>
+        <div class="section-title">Twitch</div>
+        <a href="https://www.twitch.tv/joedotmt">
+            <div class="link-item">
+                <img class="link-icon" src="twitch.svg" alt="Icon">
+                <span class="link-text">Twitch</span>
+                <span class="link-username">Joedotmt</span>
+            </div>
+        </a>
+    </section>
+
+    <!-- SOCIAL MEDIA -->
+    <section>
+        <div class="section-title">Social Media</div>
+        <a href="https://twitter.com/joedotmt">
+            <div class="link-item">
+                <img class="link-icon" src="twitter.svg" alt="Icon">
+                <span class="link-text">X, formerly known as Twitter (garbage)</span>
+                <span class="link-username">Joedotmt</span>
+            </div>
+        </a>
+        <a href="https://bsky.app/profile/joe.mt">
+            <div class="link-item">
+
+                <img class="link-icon" src="bsky.svg" alt="Icon">
+                <span class="link-text">Bluesky (skibidi)</span>
+                <span class="link-username">joe.mt</span>
+            </div>
+        </a>
+        <a href="http://instagram.com/Joedotmt">
+            <div class="link-item">
+                <img class="link-icon" src="instagram.svg" alt="Icon">
+                <span class="link-text">Instagram</span>
+                <span class="link-username">Joedotmt</span>
+            </div>
+        </a>
+    </section>
+
+    <!-- COMMUNITY -->
+    <section>
+        <!-- MISCELLANEOUS -->
+        <section>
+            <div class="section-title">Miscellaneous</div>
+            <a href="https://www.deviantart.com/icedjelly">
+                <div class="link-item">
+                    <img class="link-icon" src="deviantart.svg" alt="Icon">
+                    <span class="link-text">Deviantart</span>
+                    <span class="link-username">IcedJelly</span>
+                </div>
+            </a>
+            <a href="https://code.videolan.org/icedjelly">
+                <div class="link-item">
+                    <img class="link-icon" src="videolan.png" alt="Icon">
+                    <span class="link-text">VLC Media Player</span>
+                    <span class="link-username">IcedJelly</span>
+                </div>
+            </a>
+            <a href="https://www.blogger.com/profile/13110919698905040277">
+                <div class="link-item">
+                    <img class="link-icon" src="blogger.svg" alt="Icon">
+                    <span class="link-text">Blogspot</span>
+                    <span class="link-username">IcedJelly</span>
+                </div>
+            </a>
+            <a href="https://forum.yoyogames.com/index.php?members/icedjelly.82588/">
+                <div class="link-item">
+                    <img class="link-icon" src="gamemaker.png" alt="Icon">
+                    <span class="link-text">Gamemaker Forum</span>
+                    <span class="link-username">IcedJelly</span>
+                </div>
+            </a>
+            <a href="http://linkedin.com/in/joe-esposito-1ab772241">
+                <div class="link-item">
+                    <img class="link-icon" src="linkedin.png" alt="Icon">
+                    <span class="link-text">Linkdin</span>
+                    <span class="link-username">Joe Esposito</span>
+                </div>
+            </a>
+            <div class="link-item">
+                <img class="link-icon" src="wix.png" alt="Icon">
+                <span class="link-text">Wix Websites</span>
+                <details>
+                    <summary>icedjelly.wixsite.com/</summary>
+                    <div style="display: flex; flex-direction: column;" class="accordion-content">
+                        <a href="https://icedjelly.wixsite.com/techsupport">/techsupport</a>
+                        <a href="https://icedjelly.wixsite.com/strg">/strg</a>
+                        <a href="https://icedjelly.wixsite.com/spidercraft">/spidercraft</a>
+                        <a href="https://icedjelly.wixsite.com/muccu-club">/muccu-club</a>
+                        <a href="https://icedjelly.wixsite.com/website">/website</a>
+                        <a href="https://icedjelly.wixsite.com/mysite">/mysite</a>
+                    </div>
+                </details>
+            </div>
+            <a href="https://mega.nz/C!rv5jnQRL">
+                <div class="link-item">
+                    <img class="link-icon" src="mega.svg" alt="Icon">
+                    <span class="link-text">Mega</span>
+                    <span class="link-username">Joe Esposito</span>
+                </div>
+            </a>
+
+            <a href="https://open.spotify.com/user/eykgm1sv7jo2yr2in7frylp00?si=0c30ff10c9a74320">
+                <div class="link-item">
+                    <img class="link-icon" src="spotify.png" alt="Icon">
+                    <span class="link-text">Spotify</span>
+                    <span class="link-username">IcedJelly</span>
+                </div>
+            </a>
+            <a href="https://en.wikipedia.org/wiki/User:gringinu">
+                <div class="link-item">
+                    <img class="link-icon" src="wikipedia.png" alt="Icon">
+                    <span class="link-text">Wikipedia</span>
+                    <span class="link-username">gringinu</span>
+                </div>
+            </a>
+            <a href="https://freesound.org/people/Joemt/">
+                <div class="link-item">
+                    <img class="link-icon" src="freesound.png" alt="Icon">
+                    <span class="link-text">Freesound</span>
+                    <span class="link-username">Joemt</span>
+                </div>
+            </a>
+            <a href="https://soundcloud.com/icedjelly">
+                <div class="link-item">
+                    <img class="link-icon" src="soundcloud.png" alt="Icon">
+                    <span class="link-text">SoundCloud</span>
+                    <span class="link-username">Joemt</span>
+                </div>
+            </a>
+        </section>
+
+        <!-- GAMING -->
+        <section>
+            <div class="section-title">Gaming</div>
+            <a href="https://socialclub.rockstargames.com/member/Joedotmt">
+                <div class="link-item">
+                    <img class="link-icon" src="rockstar.svg" alt="Icon">
+                    <span class="link-text">Rockstar Games</span>
+                    <span class="link-username">Joedotmt</span>
+                </div>
+            </a>
+            <a href="https://steamcommunity.com/profiles/76561198263112435/">
+                <div class="link-item">
+                    <img class="link-icon" src="steam.svg" alt="Icon">
+                    <span class="link-text">Steam</span>
+                    <span class="link-username">Joemt</span>
+                </div>
+            </a>
+            <a href="https://games.app.goo.gl/NTMzhgkVavC93WEj6">
+                <div class="link-item">
+                    <img class="link-icon" src="playgames.svg" alt="Icon">
+                    <span class="link-text">Google Play Games</span>
+                    <span class="link-username">JoeJellyJoe</span>
+                </div>
+            </a>
+            <a href="https://games.app.goo.gl/T3gPBvkUDA8uFCA49">
+                <div class="link-item">
+                    <img class="link-icon" src="playgames.svg" alt="Icon">
+                    <span class="link-text">Google Play Games [ALT]</span>
+                    <span class="link-username">mowmewmawmeow</span>
+                </div>
+            </a>
+            <a href="https://www.roblox.com/users/1484654237/profile">
+                <div class="link-item">
+                    <img class="link-icon" src="roblox.png" alt="Icon">
+                    <span class="link-text">Roblox</span>
+                    <span class="link-username">Joemt</span>
+                </div>
+            </a>
+            <a href="https://www.xbox.com/play/user/IcedJelly2217">
+                <div class="link-item">
+                    <img class="link-icon" src="xbox.svg" alt="Icon">
+                    <span class="link-text">Xbox</span>
+                    <span class="link-username">IcedJelly2217</span>
+                </div>
+            </a>
+            <a href="https://www.planetminecraft.com/member/j_esposito_malta/">
+                <div class="link-item">
+                    <img class="link-icon" src="pmc.webp" alt="Icon">
+                    <span class="link-text">Planet Minecraft</span>
+                    <span class="link-username">J_esposito_malta</span>
+                </div>
+            </a>
+            <a href="https://www.speedrun.com/users/Joemt">
+                <div class="link-item">
+                    <img class="link-icon" src="speedrun.com.png" alt="Icon">
+                    <span class="link-text">Speedrun.com</span>
+                    <span class="link-username">Joemt</span>
+                </div>
+            </a>
+        </section>
+        <div style="background-color: rgb(34, 34, 34); padding: 1em; margin-top: 1em;">you reached the end (:</div>
+
+        <!-- Simple JavaScript for the YouTube accordions -->
+        <script>
+            document.addEventListener("DOMContentLoaded", function ()
+            {
+                const toggles = document.querySelectorAll('.accordion-toggle');
+                toggles.forEach(toggle =>
+                {
+                    toggle.addEventListener('click', function ()
+                    {
+                        const content = toggle.nextElementSibling;
+                        content.classList.toggle('show');
+                    });
+                });
+            });
+        </script>
+</body>
+</html>

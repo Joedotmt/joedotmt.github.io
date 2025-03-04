@@ -267,12 +267,19 @@
                 width: 100%;
             }
 
-
-
             .banner {
                 margin: 1em;
                 width: auto;
             }
+        }
+
+        .smo {
+            padding: 0.2em;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .smo:hover {
+            background-color: black;
         }
     </style>
 </head>
@@ -332,6 +339,11 @@
                     </a><br>
                     Response takes a while.
                 </div>
+                <div>
+                    <a class="smo" href="/links">
+                        Show more options
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -342,6 +354,7 @@
         </div>
         <div class="banner" id="SitemapBanner">
             <h1>All pages</h1>
+            <a href="/links" class="menu-item">All links</a>
             <a href="/bombvideo" class="menu-item">Bomb</a>
             <a href="/veterans" class="menu-item">Veterans</a>
             <a href="/deconstuctions" class="menu-item">Deconstructions</a>

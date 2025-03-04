@@ -13,9 +13,9 @@
             font-family: "pangolin", "comic sans ms", Arial, sans-serif;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin: 1em;
+            margin: auto;
+            padding: 1em;
+            max-width: 700px;
         }
 
         pre {
@@ -84,8 +84,8 @@
         .annoying-dot {
             z-index: 2;
             position: fixed;
-            bottom: 10px;
-            right: 10px;
+            bottom: -10px;
+            right: -10px;
             width: 20px;
             height: 20px;
             scale: 0.25;
@@ -98,7 +98,7 @@
             font-size: 0.5em;
         }
 
-        .annoying-dot:hover {
+        .annoying-dot.expanded {
             scale: 1;
             left: 0px !important;
             top: 0px !important;
@@ -148,6 +148,35 @@
             font-weight: bold;
             animation: springyText 0.6s ease-in-out infinite;
         }
+
+        /* New CSS moved from inline styles */
+        #achievementsIframe {
+            display: none;
+        }
+
+        .fixed-logo {
+            z-index: 1;
+            margin-top: 1em;
+            width: fit-content;
+        }
+
+        .fixed-logo:hover {
+            scale: 1.05;
+        }
+
+        .input-container {
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            display: flex;
+            flex-direction: column;
+            padding: 1em;
+            border-radius: 1em;
+        }
+
+        .code-output {
+            overflow: visible;
+            height: fit-content;
+        }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -156,45 +185,54 @@
 </head>
 
 <body>
-    <iframe src="/achivements.html" id="achievementsIframe" style="display: none;"></iframe>
-    <a style="position: fixed; left: 1em; top:1em; z-index: 1;" href="/"><img id="logoimg" src="../joe-logo.webp"
-            width="100" alt="Logo" class="logo" /></a>
+    <iframe id="achievementsIframe" src="/achivements.html"></iframe>
+    <a href="/" class="fixed-logo"><img id="logoimg" src="../joe-logo.webp" width="100" alt="Logo" class="logo" /></a>
     <h1>World's Best Number Sorting Algorithm</h1>
-    <div
-        style="background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px); display: flex; flex-direction: column; padding: 1em; border-radius: 1em;">
-        <textarea id="arrayInput" rows="4"
-            cols="50">80, 1000, 10, 60.9, 40, 50, 10, 420, 100, 2000, 30, 70, 20, 49.4, 9</textarea>
+    <div class="input-container">
+        <textarea id="arrayInput" rows="4" cols="50">80, 1000, 10, 60.9, 40, 50, 10, 420, 100, 2000, 30, 70, 20, 49.4, 9</textarea>
         <textarea id="output" rows="4" cols="50" readonly></textarea>
         <button class="button-29" id="actionButton" onclick="sortArray()">Sort Array</button>
         <div id="output"></div>
     </div>
     <h2 style="margin-bottom: 0;">Sorting Algorithm Code</h2>
-    <pre style="overflow: visible; height: fit-content;">
-<code class="language-javascript">// Big brain code
-list_to_sort = [10,100,20,30,40,50,60.9,420,70,80,9,10,49.4]
-list_to_sort.forEach(number => 
-{
-    setTimeout(() => 
-    {
-        console.log(number)
-    }, number);
-});</code></pre>
-    <button class="annoying-dot" onclick="showHTML()"><div class="springy"><strong>HELLO IM THE ANNOYING DOT</strong><br>PAGE CODE!?!?!?
-        IF!??! YOU??? CLICK NOW????</div></button>
+    <pre class="code-output">
+        <code id="ijeijeijuwi" class="language-javascript" data-prismjs-copy>
+
+        </code>
+    </pre>
+    <button class="annoying-dot" onclick="toggleDot()">
+        <div class="springy"><strong>HELLO IM THE ANNOYING DOT</strong><br>PAGE CODE!?!?!?
+            IF!??! YOU??? CLICK NOW????</div>
+    </button>
     <audio id="stupidDotSound" src="stupid dot.mp3"></audio>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/prism.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/components/prism-javascript.min.js"></script>
     <script>
-        function sortArray() {
+        ijeijeijuwi.innerHTML = `
+// Big brain code
+list_to_sort = [10, 100, 20, 30, 40, 50, 60.9, 420, 70, 80, 9, 10, 49.4];
+list_to_sort.forEach(number =>
+{
+    setTimeout(() =>
+    {
+        console.log(number);
+    }, number);
+});`;
+
+        function sortArray()
+        {
             document.body.style.backgroundImage = "url('./brain-big-brain.gif')";
             const input = document.getElementById('arrayInput').value;
             const list_to_sort = input.split(',').map(Number);
             const outputTextarea = document.getElementById('output');
             outputTextarea.value = '';
-            list_to_sort.forEach(number => {
-                setTimeout(() => {
+            list_to_sort.forEach(number =>
+            {
+                setTimeout(() =>
+                {
                     outputTextarea.value += number + ", ";
-                    if (outputTextarea.value.split(',').length - 1 == list_to_sort.length) {
+                    if (outputTextarea.value.split(',').length - 1 == list_to_sort.length)
+                    {
                         outputTextarea.value = outputTextarea.value.slice(0, -2);
                         outputTextarea.value += "\nDone!";
                         actionButton.style.opacity = '';
@@ -211,7 +249,8 @@ list_to_sort.forEach(number =>
             actionButton.onclick = clearOutput;
         }
 
-        function clearOutput() {
+        function clearOutput()
+        {
             document.getElementById('output').value = '';
             const actionButton = document.getElementById('actionButton');
             actionButton.textContent = 'Sort Array';
@@ -219,9 +258,25 @@ list_to_sort.forEach(number =>
             actionButton.onclick = sortArray;
         }
 
-        function showHTML() {
+        const annoyingDot = document.querySelector('.annoying-dot');
+        const stupidDotSound = document.getElementById('stupidDotSound');
+        function toggleDot()
+        {
+            stupidDotSound.play();
+            if (annoyingDot.classList.contains("expanded"))
+            {
+                showHTML();
+                stupidDotSound.pause();
+                stupidDotSound.currentTime = 0;
+            }
+            annoyingDot.classList.toggle('expanded');
+        }
+
+        function showHTML()
+        {
             achievementsIframe.contentWindow.postMessage({ type: 'registerAchievement', achievement: "annoying_dot" }, '*');
-            const html = fetch("index.html").then(response => response.text()).then(html => {
+            const html = fetch("index.html").then(response => response.text()).then(html =>
+            {
                 const newWindow = window.open();
                 newWindow.document.write('<pre>' + html.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre>');
                 newWindow.document.close();
@@ -229,7 +284,9 @@ list_to_sort.forEach(number =>
 
         }
 
-        function randomizeButtonPosition() {
+
+        function randomizeButtonPosition()
+        {
             const button = document.querySelector('.annoying-dot');
             const x = Math.random() * (window.innerWidth - button.offsetWidth);
             const y = Math.random() * (window.innerHeight - button.offsetHeight);
@@ -237,21 +294,10 @@ list_to_sort.forEach(number =>
             button.style.top = `${y}px`;
         }
 
-        window.onload = function () {
+        window.onload = function ()
+        {
             randomizeButtonPosition();
         };
-
-        const annoyingDot = document.querySelector('.annoying-dot');
-        const stupidDotSound = document.getElementById('stupidDotSound');
-
-        annoyingDot.addEventListener('mouseover', () => {
-            stupidDotSound.play();
-        });
-
-        annoyingDot.addEventListener('mouseout', () => {
-            stupidDotSound.pause();
-            stupidDotSound.currentTime = 0;
-        });
     </script>
 </body>
 
