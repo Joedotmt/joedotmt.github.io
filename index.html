@@ -73,6 +73,7 @@
             background-repeat: round;
             color: white;
             display: flex;
+            min-height: fit-content;
             height: 100dvh;
             align-items: flex-start;
             justify-content: flex-start;
@@ -81,7 +82,7 @@
 
         .menu-container {
             transform: translateX(0px);
-            margin-left: 50px;
+            margin-left: min(3vw, 50px);
             overflow: hidden;
             min-height: 400px;
             max-width: 500px;
@@ -168,11 +169,15 @@
             background: rgba(0, 0, 0, 0.6);
             padding: 50px;
             margin: auto;
-            margin-right: 1em;
-            margin-top: 1em;
+            margin: 1em;
+            margin-left: 0;
             text-align: center;
             font-size: 1.2em;
             clip-path: polygon(1% 5%, 99% 0, 100% 95%, 5% 100%);
+        }
+
+        .longbanner {
+            clip-path: polygon(4px 31px, 99% 0, 100% calc(100% - 23px), 5% 100%)
         }
 
         .menu-background::before {
@@ -190,7 +195,7 @@
         .left-column {
             flex-direction: column;
             display: flex;
-            width: 50dvw;
+            width: 40dvw;
         }
 
         .left-column.full-width {}
@@ -203,8 +208,7 @@
 
         .right-column {
             display: flex;
-            flex-direction: column;
-            width: 50dvw;
+            width: 60dvw;
         }
 
         .contact-banner-content {
@@ -243,6 +247,13 @@
         .icedjelly-logo {
             width: 200px;
             margin-left: min(5em, 5vw);
+        }
+
+        @media (max-width: 1000px) {
+            .footer {
+                display: flex;
+                flex-direction: column;
+            }
         }
 
         /* Responsive Styles */
@@ -311,14 +322,36 @@
     </div>
 
     <div class="right-column">
-        <div class="banner" id="ConstructionBanner">
-            <h1>This website is Under Construction</h1>
-            <p>This is the website for Joe Esposito in Malta. My projects are not on <strong>joe.mt</strong> but on <a href="https://icedjelly.com">icedjelly.com</a>, and so are my contacts. Eventually,
-                <strong>joe.mt</strong> will replace <strong>icedjelly.com</strong>.
+        <div style="width: 100%; font-size: 2em;" class="banner longbanner" id="ConstructionBanner">
+            <!-- <h1>This website is Under Construction</h1>
+            <p>This is the website for Joe Esposito in Malta. Some things may still be on icedjelly.com as I work on migrating.
             </p>
             <div class="footer">
                 <p>For more information/contacts<br />please visit <a href="https://icedjelly.com" target="_blank">icedjelly.com</a></p>
                 <img src="icedjelly-logo.png" alt="IcedJelly Logo" class="icedjelly-logo" />
+            </div> -->
+            <h1 style="font-size: 1em">I make games, videos, and software</h1>
+            <div style="background-position: 50% 50%; background-size: cover;" class="footer">
+                <p>Latest video (S7 final project)</p>
+                <iframe height="220" width="350" src="https://www.youtube.com/embed/Q5lFmHLFia4" title="DON&#39;T PRESS THE BUTTON" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+            </div>
+            <div style="background: url(hopdodge.png); background-position: 50% 50%; background-size: cover;" class="footer">
+                <p>HopDodge is a 3D puzzle platforming game. Create and share levels using the steam workshop. You have all the freedom you need to create your own adventures.</p>
+                <embed src="hdb.html" style="width: 20vw; aspect-ratio: 1.8;">
+            </div>
+            <div style="background: url(rmg.jpg); background-position: 50% 50%; background-size: cover; background-color: rgba(0, 0, 0, 0.2); background-blend-mode: darken;" class="footer">
+                <p>Relaxing Mini Golf is a work-in-progress 2D puzzle game that combines the fun of mini golf with engaging puzzle mechanics. Well- if you can even call it golf.</p>
+                <embed src="rmgb.html" style="width: 20vw; aspect-ratio: 1.8;">
+            </div>
+            <div style="background: url(SASSLS.png); background-position: 50% 50%; background-size: cover; color: black;" class="footer">
+                <p>SASSLS is a free, open-source Library Management System designed to help Maltese schools manage their libraries efficiently, in an effort to promote reading among secondary schools in Malta. <a style="color: blue;" href="https://github.com/Joedotmt/SASSLS">Available on GitHub</a>
+                </p>
+            </div>
+            <div style="background: url(vdmt.jpg); background-position: 50% 50%; background-size: cover;" class="footer">
+                <img width="100" src="https://raw.githubusercontent.com/Joedotmt/mva/refs/heads/main/branding/Logo%20Pack/seal%20black.png">
+                <p>Veterans.mt is a website commissioned by the Malta Veterans Association, to organize, and provide an official source of information for the veterans of the Malta Armed Forces
+                </p>
+
             </div>
         </div>
 
@@ -341,7 +374,7 @@
                 </div>
                 <div>
                     <a class="smo" href="/links">
-                        Show more options
+                        All my links
                     </a>
                 </div>
             </div>
@@ -360,6 +393,7 @@
             <a href="/deconstuctions" class="menu-item">Deconstructions</a>
             <a href="/thebestsortingalgorithm" class="menu-item">Best sorting algorithm</a>
             <a href="/dejansamazinginteractivepythonthing" class="menu-item">Dejan's Python Thing</a>
+            <a href="https://joe.mt/SASSLS" class="menu-item">Library System</a>
         </div>
     </div>
 
