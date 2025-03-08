@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        if (Math.random() < 0.5 && window.location.hash == "")
+        {
+            window.location.replace("../#c");
+        }
+        else
+        {
+            window.location.hash = "";
+        }
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact</title>
@@ -152,13 +162,5 @@
         <a class="buton mail" href="mailto:joe@joe.mt">
         </a>
     </div>
-    <script>
-        document.addEventListener('keypress', logAnyKey);
-
-        function logAnyKey()
-        {
-            window.location.href = "../";
-        }
-    </script>
 </body>
 </html>
