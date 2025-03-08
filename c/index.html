@@ -45,11 +45,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@600&display=swap" rel="stylesheet">
 </head>
 <body style="height: 100dvh; overflow: hidden;">
-    <a style=" background: url(../sliema.webp); z-index: 2; height: 7em;" href="/">
+    <div style="z-index: 2; height: fit-content; background: url(../background.png);">
+        <a style=" height: 7em;" href="/">
 
-        <img height="80%" class="scale" src="../joe-logo.webp">
-
-    </a>
+            <img height="80%" class="scale" src="../joe-logo.webp">
+        </a>
+    </div>
     <div style="height: 100%; width: 100%;">
         <a href="https://discord.com/users/800443682733031485">
             <div class="scale" style="background-color: #5865F2; width: 100%; flex-direction: column;">
@@ -64,5 +65,13 @@
             </div>
         </a>
     </div>
+    <script>
+        document.addEventListener('keypress', logAnyKey);
+
+        function logAnyKey()
+        {
+            window.location.href = "./x";
+        }
+    </script>
 </body>
 </html>
