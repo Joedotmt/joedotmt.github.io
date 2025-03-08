@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact</title>
+    <link rel="prefetch" href="discord hovered1.png" />
+    <link rel="prefetch" href="discord hovered2.png" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=mail" />
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            font-family: "roboto mono", monospace;
+            background-image: url(../../background.png);
+            backdrop-filter: invert();
+        }
+
+        div,
+        a {
+            display: flex;
+            margin: 0;
+            align-items: center;
+            align-content: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        a {
+            text-decoration: none;
+            width: 100%;
+            color: black;
+        }
+
+        .buton {
+            scale: 0.5;
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain;
+            image-rendering: pixelated;
+        }
+
+        .buton:hover {
+
+            animation-direction: forward;
+            scale: 0.6;
+        }
+
+        .discord {
+            background-image: url("discord unhovered.png");
+
+        }
+
+        .discord:hover {
+            background-image: url("discord hovered1.png");
+            animation: discordswap 300ms infinite;
+        }
+
+        .mail {
+            background-image: url("mail unhovered.png");
+
+        }
+
+        .mail:hover {
+            background-image: url("mail hovered1.png");
+            animation: mailswap 300ms infinite;
+        }
+
+        @keyframes discordswap {
+            0% {
+                background-image: url("discord hovered1.png");
+                rotate: 0deg;
+            }
+
+            49% {
+                background-image: url("discord hovered1.png");
+                rotate: 0deg;
+            }
+
+            50% {
+                background-image: url("discord hovered2.png");
+                rotate: 3deg;
+            }
+
+            99% {
+                background-image: url("discord hovered2.png");
+                rotate: 3deg;
+            }
+
+            100% {
+                background-image: url("discord hovered1.png");
+                rotate: 0deg;
+            }
+        }
+
+        @keyframes mailswap {
+            0% {
+                background-image: url("mail hovered1.png");
+                rotate: 0deg;
+            }
+
+            49% {
+                background-image: url("mail hovered1.png");
+                rotate: 0deg;
+            }
+
+            50% {
+                background-image: url("mail hovered2.png");
+                rotate: 3deg;
+            }
+
+            99% {
+                background-image: url("mail hovered2.png");
+                rotate: 3deg;
+            }
+
+            100% {
+                background-image: url("mail hovered1.png");
+                rotate: 0deg;
+            }
+        }
+
+        .scale:hover {
+            scale: 1.1;
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@600&display=swap" rel="stylesheet">
+</head>
+<body style="height: 100dvh; overflow: hidden;">
+    <div style="height: 0;">
+        <div style="background: url(discord\ hovered1.png);"></div>
+        <div style="background: url(discord\ hovered2.png);"></div>
+        <div style="background: url(discord\ unhovered.png);"></div>
+        <div style="background: url(mail\ hovered1.png);"></div>
+        <div style="background: url(mail\ hovered2.png);"></div>
+        <div style="background: url(mail\ unhovered.png);"></div>
+    </div>
+    <div style="z-index: 2; height: 7em;">
+        <a style="width: fit-content; height: 7em; position: fixed; left: 0;" href="/">
+            <img height="80%" style="image-rendering: pixelated;" class="scale" src="home.png">
+        </a>
+        <img height="80%" style="image-rendering: pixelated;" src="title.png">
+
+    </div>
+
+    <div style="height: 100%; width: 100%;">
+        <a class="buton discord" href="https://discord.com/users/800443682733031485">
+        </a>
+        <a class="buton mail" href="mailto:joe@joe.mt">
+        </a>
+    </div>
+</body>
+</html>
