@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=mail" />
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            font-family: "roboto mono", monospace;
+        }
+
+        div,
+        a {
+            display: flex;
+            margin: 0;
+            align-items: center;
+            align-content: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .scale {
+            transition: all 200ms cubic-bezier(0.075, 0.82, 0.165, 1);
+        }
+
+        @media (hover: hover) {
+            .scale:hover {
+                z-index: 1;
+                scale: 1.05;
+            }
+        }
+
+        a {
+            text-decoration: none;
+            width: 100%;
+            color: black;
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@600&display=swap" rel="stylesheet">
+</head>
+<body style="height: 100dvh; overflow: hidden;">
+    <a style=" background: url(../sliema.webp); z-index: 2; height: 7em;" href="/">
+
+        <img height="80%" class="scale" src="../joe-logo.webp">
+
+    </a>
+    <div style="height: 100%; width: 100%;">
+        <a href="https://discord.com/users/800443682733031485">
+            <div class="scale" style="background-color: #5865F2; width: 100%; flex-direction: column;">
+                <img src="discord.svg" alt="Discord" style="width: 80%; margin-right: 1em;">
+                <span style="color: white;">(Preferred)</span>
+            </div>
+        </a>
+        <a href="mailto:joe@joe.mt">
+            <div class="scale" style="background-color: white; width: 100%;">
+                <span style="font-size: 10vw; user-select: none;" class="material-symbols-outlined"> mail </span>
+                <span style="font-size: 6vw; margin-left: 0.1em; user-select: none;">Email</span>
+            </div>
+        </a>
+    </div>
+</body>
+</html>
