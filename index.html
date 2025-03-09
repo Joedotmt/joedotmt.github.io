@@ -486,6 +486,17 @@
         });
 
         setInterval(usp, 500);
+
+        document.querySelectorAll('a').forEach(link =>
+        {
+            link.addEventListener('mousedown', () =>
+            {
+                if (navigator.vibrate)
+                {
+                    navigator.vibrate(50);
+                }
+            });
+        });
     </script>
 </body>
 
