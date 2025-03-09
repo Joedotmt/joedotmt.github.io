@@ -14,12 +14,18 @@
         a {
             text-decoration: none;
             color: inherit;
+            -webkit-tap-highlight-color: transparent;
+            transform-origin: 50px 50%;
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+        }
+
+        a:active {
+            scale: 0.9;
         }
 
         ::-webkit-scrollbar {
@@ -53,8 +59,11 @@
             transition: 0.2s cubic-bezier(0.075, 0.82, 0.165, 1);
         }
 
-        .logo:hover {
-            scale: 1.1;
+
+        @media (hover: hover) {
+            .logo:hover {
+                scale: 1.1;
+            }
         }
 
         div.list {
@@ -185,8 +194,10 @@
             clip-path: polygon(1% 5%, 99% 0, 100% 95%, 5% 100%);
         }
 
-        .footer:hover {
-            background-size: 170%;
+        @media (hover: hover) {
+            .footer:hover {
+                background-size: 170%;
+            }
         }
 
         .icedjelly-logo {
@@ -199,6 +210,61 @@
                 display: flex;
                 flex-direction: column;
             }
+        }
+
+        .link-list>a {
+            color: white;
+            font-size: 32px;
+            margin: 10px 0;
+            padding: 0px 30px;
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+            text-align: left;
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            text-wrap: nowrap;
+            transition: translate 0.5s cubic-bezier(0.075, 0.82, 0.165, 1);
+        }
+
+        @media (hover: hover) {
+            .link-list>a:hover {
+                translate: 5px;
+                text-decoration: underline;
+            }
+
+            .link-list>a:hover .material-symbols-outlined {
+                opacity: 1;
+            }
+
+            .smo:hover {
+                background-color: black;
+            }
+        }
+
+        .link-list>a .material-symbols-outlined {
+            opacity: 0.2;
+            margin-left: 5px;
+            transition: opacity 0s ease;
+        }
+
+        .smo {
+            padding: 0.2em;
+            background-color: rgba(0, 0, 0, 0.5);
+            margin: 0;
+            text-decoration: none;
+            color: white;
+        }
+
+        #SitemapBanner {
+            font-size: 1em;
+        }
+
+        embed {
+            width: 20dvw;
+            aspect-ratio: 2;
         }
 
         /* Responsive Styles */
@@ -215,8 +281,8 @@
                 min-height: 100dvh;
             }
 
-            .main-menu {
-                margin: 1em;
+            .selection-background {
+                width: 90dvw;
             }
 
             .logo-container {
@@ -224,60 +290,34 @@
             }
 
             .banner {
-                margin: 1em;
-                width: auto;
+                margin: 0em;
+                width: 100dvw;
+                padding: 50px 20px;
+                clip-path: polygon(0% 30px, 100% 0, 100% 100%, 0% 100%);
             }
-        }
 
+            .link-list>a {
+                padding: 0;
+                overflow-x: auto;
+            }
 
+            p {
+                font-size: 0.7em;
+            }
 
-        .link-list>a {
-            color: white;
-            font-size: 32px;
-            margin: 10px 0;
-            padding: 0px 30px;
-            cursor: pointer;
-            text-decoration: none;
-            display: block;
-            text-align: left;
-            position: relative;
-            z-index: 2;
-            display: flex;
-            align-items: center;
-            text-wrap: nowrap;
-            transition: all 0.5s cubic-bezier(0.075, 0.82, 0.165, 1);
-        }
+            embed {
+                width: auto;
+                height: 20dvh;
+            }
 
-        .link-list>a:hover {
-            translate: 5px;
-            text-decoration: underline;
-        }
+            .main-menu {
+                margin: 1dvw;
+                width: 98dvw;
+            }
 
-        .link-list>a .material-symbols-outlined {
-            opacity: 0.2;
-            margin-left: 5px;
-            transition: opacity 0s ease;
-        }
-
-        .link-list>a:hover .material-symbols-outlined {
-            opacity: 1;
-        }
-
-
-        .smo {
-            padding: 0.2em;
-            background-color: rgba(0, 0, 0, 0.5);
-            margin: 0;
-            text-decoration: none;
-            color: white;
-        }
-
-        .smo:hover {
-            background-color: black;
-        }
-
-        #SitemapBanner {
-            font-size: 1em;
+            .main-menu>a {
+                padding-left: 0.5em;
+            }
         }
     </style>
 </head>
@@ -318,11 +358,11 @@
             </div>
             <div style="background: url(hopdodge.png); background-position: 50% 50%; background-size: cover;" class="footer">
                 <p>HopDodge is a 3D puzzle platforming game. Create and share levels using the steam workshop. You have all the freedom you need to create your own adventures.</p>
-                <embed src="hdb.html" style="width: 20vw; aspect-ratio: 1.8;" />
+                <embed src="hdb.html" />
             </div>
             <div style="background: url(rmg.jpg); background-position: 50% 50%; background-size: cover; background-color: rgba(0, 0, 0, 0.2); background-blend-mode: darken;" class="footer">
                 <p>Relaxing Mini Golf is a work-in-progress 2D puzzle game that combines the fun of mini golf with engaging puzzle mechanics. Well- if you can even call it golf.</p>
-                <embed src="rmgb.html" style="width: 20vw; aspect-ratio: 1.8;" />
+                <embed src="rmgb.html" />
             </div>
             <div style="background: url(SASSLS.png); background-position: 50% 50%; background-size: cover; color: black;" class="footer">
                 <p>SASSLS is a free, open-source Library Management System designed to help Maltese schools manage their libraries efficiently, in an effort to promote reading among secondary schools in Malta.
