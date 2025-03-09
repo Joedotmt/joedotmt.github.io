@@ -430,53 +430,62 @@
         </div>
     </div>
     <script>
-        document.addEventListener('DOMContentLoaded', () =>
+        const mainMenu = document.querySelector('.main-menu');
+        const selectionBackground = document.querySelector('.selection-background');
+        const leftColumn = document.querySelector('.left-column');
+
+        let selectedItemNow = null;
+
+        function updateSelection(selectedItem)
         {
-            const mainMenu = document.querySelector('.main-menu');
-            const selectionBackground = document.querySelector('.selection-background');
-            const leftColumn = document.querySelector('.left-column');
+            selectedItemNow = selectedItem;
+            document.querySelectorAll('main-menu > a').forEach(i => i.classList.remove('selected'));
+            selectedItem.classList.add('selected');
 
-            function updateSelection(selectedItem)
+            usp(); // Update selection background
+
+            document.querySelectorAll(".banner").forEach(b => b.style.display = "none");
+
+            const text = selectedItem.textContent.trim();
+            if (text.includes("Contact"))
             {
-                document.querySelectorAll('main-menu > a').forEach(i => i.classList.remove('selected'));
-                selectedItem.classList.add('selected');
-                selectionBackground.style.top = (selectedItem.offsetTop - 10) + "px";
-                selectionBackground.style.left = selectedItem.offsetLeft + "px";
-                document.querySelectorAll(".banner").forEach(b => b.style.display = "none");
-
-                const text = selectedItem.textContent.trim();
-                if (text.includes("Contact"))
-                {
-                    ContactBanner.style.display = "block";
-                } else if (text.includes("Selfie"))
-                {
-                    let iframe = document.getElementById("AchievementsBanner")?.querySelector("iframe");
-                    if (iframe) iframe.contentWindow.postMessage({ type: "registerAchievement", achievement: "saw_face" }, "*");
-                    FaceBanner.style.display = "flex";
-                } else if (text.includes("Achievement"))
-                {
-                    AchievementsBanner.style.display = "block";
-                } else if (text.includes("All Pages"))
-                {
-                    SitemapBanner.style.display = "block";
-                } else if (text.includes("IcedJelly"))
-                {
-                    IcedJellyBanner.style.display = "block";
-                } else
-                {
-                    ConstructionBanner.style.display = "block";
-                }
+                ContactBanner.style.display = "block";
+            } else if (text.includes("Selfie"))
+            {
+                let iframe = document.getElementById("AchievementsBanner")?.querySelector("iframe");
+                if (iframe) iframe.contentWindow.postMessage({ type: "registerAchievement", achievement: "saw_face" }, "*");
+                FaceBanner.style.display = "flex";
+            } else if (text.includes("Achievement"))
+            {
+                AchievementsBanner.style.display = "block";
+            } else if (text.includes("All Pages"))
+            {
+                SitemapBanner.style.display = "block";
+            } else if (text.includes("IcedJelly"))
+            {
+                IcedJellyBanner.style.display = "block";
+            } else
+            {
+                ConstructionBanner.style.display = "block";
             }
+        }
 
-            const initialItem = document.querySelector(`a[href="${window.location.hash}"]`) || document.querySelector(".menu-item");
-            updateSelection(initialItem);
+        function usp()
+        {
+            selectionBackground.style.top = (selectedItemNow.offsetTop - 10) + "px";
+            selectionBackground.style.left = selectedItemNow.offsetLeft + "px";
+        }
 
-            window.addEventListener("hashchange", () =>
-            {
-                const item = document.querySelector(`a[href="${window.location.hash}"]`);
-                if (item) updateSelection(item);
-            });
+        const initialItem = document.querySelector(`a[href="${window.location.hash}"]`) || document.querySelector(".menu-item");
+        updateSelection(initialItem);
+
+        window.addEventListener("hashchange", () =>
+        {
+            const item = document.querySelector(`a[href="${window.location.hash}"]`);
+            if (item) updateSelection(item);
         });
+
+        setInterval(usp, 500);
     </script>
 </body>
 
