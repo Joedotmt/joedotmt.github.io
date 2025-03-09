@@ -164,7 +164,7 @@
             flex-direction: column;
         }
 
-        .face-banner {
+        #FaceBanner {
             background: url(face2.png);
             height: 400px;
             width: 400px;
@@ -285,69 +285,78 @@
 <body>
     <noscript>
         <div style="position: fixed; left: 0; top:0; z-index: 100; background-color: black; width: 100%; height: 100%; padding: 2em;">
-            Why do you have javascript disabled??????<br>no website for you!
+            Why do you have javascript disabled??????
+            <br />no website for you!
+
         </div>
     </noscript>
-
     <div class="left-column">
         <div class="logo-container">
-            <a href="/"><img src="joe-logo.webp" alt="Joe.mt Logo" class="logo" /></a>
+            <a href="/">
+                <img src="joe-logo.webp" alt="Joe.mt Logo" class="logo" />
+            </a>
         </div>
-
         <div class="selection-background"></div>
         <div class="main-menu link-list">
             <a href="#home">Home</a>
             <a href="#contact">Contact & Links</a>
             <a href="#achivements">Your Achievements</a>
             <a href="#sitemap">All Pages</a>
-            <a href="https://icedjelly.com" target="_blank" rel="noopener noreferrer">IcedJelly.com<span class="material-symbols-outlined">open_in_new</span></a>
+            <a href="https://icedjelly.com" target="_blank" rel="noopener noreferrer">IcedJelly.com
+                <span class="material-symbols-outlined">open_in_new</span>
+            </a>
             <a href="#selfie">Selfie</a>
         </div>
     </div>
-
     <div class="right-column">
         <div style="width: 100%; font-size: 2em;" class="banner longbanner" id="ConstructionBanner">
             <h1 style="font-size: 1em">I make games, videos, and software</h1>
             <h5>This is the website for Joe Esposito in Malta. Some things may still be on icedjelly.com as I work on migrating.</h5>
             <div style="background-position: 50% 50%; background-size: cover;" class="footer">
                 <p>Latest video (S7 final project)</p>
-                <iframe height="220" width="350" src="https://www.youtube.com/embed/Q5lFmHLFia4" title="DON&#39;T PRESS THE BUTTON" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                <iframe height="220" width="350" src="https://www.youtube.com/embed/Q5lFmHLFia4" title="DON&#39;T PRESS THE BUTTON" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen="true"></iframe>
             </div>
             <div style="background: url(hopdodge.png); background-position: 50% 50%; background-size: cover;" class="footer">
                 <p>HopDodge is a 3D puzzle platforming game. Create and share levels using the steam workshop. You have all the freedom you need to create your own adventures.</p>
-                <embed src="hdb.html" style="width: 20vw; aspect-ratio: 1.8;">
+                <embed src="hdb.html" style="width: 20vw; aspect-ratio: 1.8;" />
             </div>
             <div style="background: url(rmg.jpg); background-position: 50% 50%; background-size: cover; background-color: rgba(0, 0, 0, 0.2); background-blend-mode: darken;" class="footer">
                 <p>Relaxing Mini Golf is a work-in-progress 2D puzzle game that combines the fun of mini golf with engaging puzzle mechanics. Well- if you can even call it golf.</p>
-                <embed src="rmgb.html" style="width: 20vw; aspect-ratio: 1.8;">
+                <embed src="rmgb.html" style="width: 20vw; aspect-ratio: 1.8;" />
             </div>
             <div style="background: url(SASSLS.png); background-position: 50% 50%; background-size: cover; color: black;" class="footer">
-                <p>SASSLS is a free, open-source Library Management System designed to help Maltese schools manage their libraries efficiently, in an effort to promote reading among secondary schools in Malta. <a style="color: blue;" href="https://github.com/Joedotmt/SASSLS">Available on GitHub</a>
+                <p>SASSLS is a free, open-source Library Management System designed to help Maltese schools manage their libraries efficiently, in an effort to promote reading among secondary schools in Malta.
+                    <a style="color: blue;" href="https://github.com/Joedotmt/SASSLS">Available on GitHub</a>
                 </p>
             </div>
             <div style="background: url(vdmt.jpg); background-position: 50% 50%; background-size: cover;" class="footer">
-                <img width="100" src="https://raw.githubusercontent.com/Joedotmt/mva/refs/heads/main/branding/Logo%20Pack/seal%20black.png">
+                <img width="100" src="https://raw.githubusercontent.com/Joedotmt/mva/refs/heads/main/branding/Logo%20Pack/seal%20black.png" />
                 <p>Veterans.mt is a website commissioned by the Malta Veterans Association, to organize, and provide an official source of information for the veterans of the Malta Armed Forces
                 </p>
             </div>
         </div>
-
         <div class="banner" id="ContactBanner">
             <h1>Contact Me</h1>
             <div class="contact-banner-content">
                 <div>
                     💬 Discord:
+
                     <a href="https://discord.com/users/800443682733031485" style="color: #5865F2;">
                         @joedotmt
-                    </a><br>
+                    </a>
+                    <br />
                     Response within a day. Preferred option.
+
                 </div>
                 <div>
                     📧 Email:
+
                     <a href="mailto:joe@joe.mt" style="color: #D44638;">
                         joe@joe.mt
-                    </a><br>
+                    </a>
+                    <br />
                     Response takes a while.
+
                 </div>
                 <div style="flex-direction: column; display: flex; gap: 5px;">
                     <a class="menu-item smo" href="/links">
@@ -357,8 +366,7 @@
                 </div>
             </div>
         </div>
-
-        <div class="banner face-banner" id="FaceBanner"></div>
+        <div class="banner" id="FaceBanner"></div>
         <div class="banner" id="IcedJellyBanner" style="font-size: 2em;">Go to IcedJelly.com</div>
         <div class="banner" id="AchievementsBanner" style="display: none;">
             <iframe src="achivements.html" id="achievementsIframe" style="width: 100%; height: 300px;"></iframe>
@@ -381,7 +389,6 @@
             </div>
         </div>
     </div>
-
     <script>
         document.addEventListener('DOMContentLoaded', () =>
         {
