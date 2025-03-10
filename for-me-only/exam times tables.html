@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Timetable</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+        }
+
+        h2 {
+            text-align: left;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid black;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        .study-day {
+            background-color: #d3d3d3;
+            text-align: center;
+        }
+
+        .weekend {
+            background-color: #b0c4de !important;
+            text-align: center;
+        }
+
+        .current-day {
+            background-color: #ffcccb;
+        }
+    </style>
+</head>
+<body>
+    <h2>Secondary Certificate Examinations - Main Session Timetable 2025</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Subject</th>
+                <th>Venue</th>
+                <th>Room</th>
+            </tr>
+        </thead>
+        <tbody id="schedule">
+        </tbody>
+    </table>
+    <script>
+        // Define exam events keyed by ISO date (YYYY-MM-DD)
+        const examEvents = {
+            "2025-03-20": { time: "Morning", subject: "ICT C3", venue: "San Andrea School", room: "" },
+            "2025-03-27": { time: "4:10 PM", subject: "SEC Il-Malti Oral", venue: "Giovanni Curmi Higher Secondary, Naxxar", room: "NB103, New Block Level 1" },
+            "2025-03-28": { time: "4:30 PM", subject: "SEC English Language Oral", venue: "Giovanni Curmi Higher Secondary, Naxxar", room: "BB211, Belvedere Block Second Floor" },
+            "2025-04-02": { time: "6:10 PM", subject: "SEC Italian Oral", venue: "Giovanni Curmi Higher Secondary, Naxxar", room: "BB210, Belvedere Block Second Floor" },
+            "2025-04-03": { time: "Morning", subject: "IT VET", venue: "San Andrea School", room: "" },
+            "2025-04-26": { time: "4:00 PM", subject: "SEC English Language Paper II Level 2-3", venue: "St. Theresa College Secondary School, Mriehel", room: "G8, Ground Floor Computer Labs" },
+            "2025-04-28": { time: "4:00 PM", subject: "SEC Environmental Studies Paper II Level 2-3", venue: "St Thomas More College, Zejtun", room: "3123, Block 3 First Floor" },
+            "2025-05-03": { time: "4:00 PM", subject: "SEC Mathematics Paper II Level 3", venue: "St. Theresa College Secondary School, Mriehel", room: "W16, Wingacourt Block" },
+            "2025-05-10": { time: "4:00 PM", subject: "SEC Il-Malti Paper II Level 2-3", venue: "St. Theresa College Secondary School, Mriehel", room: "G7, Ground Floor Computer Labs" },
+            "2025-05-13": { time: "4:00 PM", subject: "SEC Italian Paper II & List Comp. Level 2-3", venue: "St Theresa College, Birkirkara", room: "224, Second Floor Computer Labs" },
+            "2025-05-15": { time: "4:00 PM", subject: "SEC English Literature Paper II Level 2-3", venue: "St Theresa College, Birkirkara", room: "223, Second Floor Computer Labs" },
+            "2025-05-16": { time: "4:00 PM", subject: "SEC Ethics Paper II Level 2-3", venue: "St Theresa College, Birkirkara", room: "223, Second Floor Computer Labs" },
+            "2025-05-17": { time: "4:00 PM", subject: "SEC Physics Paper II Level 2-3", venue: "St. Theresa College Secondary School, Mriehel", room: "M10, Middle Floor" },
+            "2025-05-20": { time: "4:00 PM", subject: "SEC Computing Paper II Level 2-3", venue: "St Thomas More College, Zejtun", room: "2024, Computer Labs Block 2 Ground Floor" }
+        };
+
+        // Utility to format a Date object as "D Month YYYY (Weekday)"
+        function formatDate(date)
+        {
+            return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', weekday: 'long' });
+        }
+
+        const scheduleBody = document.getElementById('schedule');
+        const startDate = new Date(Date.UTC(2025, 2, 10)); // March 10, 2025 (UTC)
+        const endDate = new Date(Date.UTC(2025, 4, 20));   // May 20, 2025 (UTC)
+        const today = new Date().toISOString().split('T')[0]; // Get today's date in ISO format
+
+        for (let d = new Date(startDate); d <= endDate; d.setUTCDate(d.getUTCDate() + 1))
+        {
+            const iso = d.toISOString().split('T')[0];
+            let row = document.createElement('tr');
+            if (examEvents[iso])
+            {
+                let event = examEvents[iso];
+                row.innerHTML = `<td>${formatDate(new Date(d))}</td>
+                                <td>${event.time}</td>
+                                <td>${event.subject}</td>
+                                <td>${event.venue}</td>
+                                <td>${event.room}</td>`;
+            } else
+            {
+                row.innerHTML = `<td>${formatDate(new Date(d))}</td>
+                                <td colspan="4" class="study-day">Study Day</td>`;
+            }
+            // Add weekend class for Saturdays and Sundays
+            if (d.getDay() === 6 || d.getDay() === 0)
+            {
+                row.classList.add('weekend');
+                row.querySelector('.study-day')?.classList.add('weekend');
+            }
+            // Add current-day class for today
+            if (iso === today)
+            {
+                row.classList.add('current-day');
+            }
+            scheduleBody.appendChild(row);
+        }
+    </script>
+</body>
+</html>
