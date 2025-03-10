@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Weight Loss Competition Tracker</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pocketbase/0.25.0/pocketbase.umd.js"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/beercss@3.9.7/dist/cdn/beer.min.css" rel="stylesheet">
+    <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.9.7/dist/cdn/beer.min.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header style="flex-direction: row; align-items: center; justify-content: space-between; padding: 0;">
+        <h1 style="margin-left: 1em;">Weight Loss Competition Tracker</h1>
+        <button id="signinbutton" onclick="signindialog.showModal(); localStorage.clear()">Sign Out</button>
+    </header>
+
+    <dialog class="max" style="justify-content: center; align-items: center; align-content: center;" id="signindialog">
+        <h5 style="text-align: center;">Who are you?</h5>
+        <nav class="center-align">
+            <button onclick="updateParticipant('5x6744i0788k6z5')">Joe</button>
+            <button onclick="updateParticipant('37z84ak7lj61igj')">Gabriel</button>
+        </nav>
+    </dialog>
+
+    <main style="gap: 1em; display: flex; flex-direction: column;">
+        <h1 id="welcomeText">Hello </h1>
+
+        <button style="display: none; width: fit-content; margin: 0;" onclick="weightFormDialog.showModal()" id='logweightbutton'>Log Weight</button>
+        <div style="width: 100%; background-color: white; border-radius: 10px;"><canvas id="ProgressGraph"></canvas></div>
+        <ul id="recordList" class="list border">
+        </ul>
+    </main>
+
+    <dialog id="weightFormDialog" class="max">
+        <h2 style="margin-bottom: 1em;">Log Weight</h2>
+
+        <div style="padding: 1em; gap: 1em; display: flex; flex-direction: column;">
+
+            <div style="margin: 0;" class="field label suffix border">
+                <input type="number" id="weightInput" step="0.1" min="71" required>
+                <label>Weight (kg)</label>
+                <i>scale</i>
+            </div>
+
+        </div>
+
+        <nav class="right-align">
+            <button onclick="weightFormDialog.close()" class="border">Cancel</button>
+            <button style="margin: 0;" id="submitButton">Submit</button>
+        </nav>
+    </dialog>
+
+    <script src="app.js"></script>
+</body>
+</html>

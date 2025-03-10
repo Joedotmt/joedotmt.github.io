@@ -1,0 +1,68 @@
+/* styles.css */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    width: 100dvw;
+}
+
+main {
+    padding: 20px;
+}
+
+section {
+    margin-bottom: 40px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 400px;
+    margin: auto;
+}
+
+label {
+    font-weight: bold;
+}
+
+input, select {
+    padding: 10px;
+    font-size: 1em;
+}
+
+.chart-container {
+    max-width: 600px;
+    margin: auto;
+    margin-bottom: 20px;
+}
+
+.log {
+    display: flex;
+    gap: 1em;
+    color: white;
+    padding: 1em;
+    width: fit-content;
+    border-radius: 1em;
+    margin: 1em;
+    background-color: #368356;
+}
+
+h1 {
+    font-size: 20px !important;
+}
+
+h2 {
+    font-size: 20px !important;
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
+    .chart-container {
+        width: 100%;
+    }
+}
+
+li:hover {
+    background-color: var(--surface-bright);
+}
