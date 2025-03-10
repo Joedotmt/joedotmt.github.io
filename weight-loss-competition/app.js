@@ -115,8 +115,8 @@ async function updateCharts()
                         }
                     },
                     y: {
-                        min: 70, // Set the minimum Y value to 70
-                        max: 120, // Set the maximum Y value to 120
+                        min: 70,
+                        max: 130,
                         title: {
                             display: true,
                             text: 'Weight (kg)'
