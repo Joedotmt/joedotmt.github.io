@@ -7,8 +7,10 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
-            padding: 20px;
+            min-width: fit-content;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
         }
 
         h2 {
@@ -48,20 +50,22 @@
     </style>
 </head>
 <body>
-    <h2>Secondary Certificate Examinations - Main Session Timetable 2025</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Time</th>
-                <th>Subject</th>
-                <th>Venue</th>
-                <th>Room</th>
-            </tr>
-        </thead>
-        <tbody id="schedule">
-        </tbody>
-    </table>
+    <div style="padding: 15px;">
+        <h2>Joe Esposito - Secondary Certificate Examinations - Main Session Timetable 2025</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Subject</th>
+                    <th>Venue</th>
+                    <th>Room</th>
+                </tr>
+            </thead>
+            <tbody id="schedule">
+            </tbody>
+        </table>
+    </div>
     <script>
         // Define exam events keyed by ISO date (YYYY-MM-DD)
         const examEvents = {
