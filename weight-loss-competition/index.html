@@ -6,6 +6,10 @@
     <meta http-equiv="Cache-Control" content="no-cache">
     <title>Weight Loss Competition Tracker</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@600&display=swap" rel="stylesheet">
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pocketbase/0.25.0/pocketbase.umd.js"></script>
 
     <link href="https://cdn.jsdelivr.net/npm/beercss@3.9.7/dist/cdn/beer.min.css" rel="stylesheet">
@@ -22,8 +26,8 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <header style="flex-direction: row; align-items: center; justify-content: space-between; padding: 0;">
-        <h1 style="margin-left: 1em;">Weight Loss Competition Tracker</h1>
+    <header style="flex-direction: row; align-items: center; justify-content: space-between;">
+        <h1>Weight Loss Competition Tracker</h1>
         <button id="signinbutton" onclick="signindialog.showModal(); localStorage.clear()">Sign Out</button>
     </header>
 
@@ -39,7 +43,7 @@
         <h1 id="welcomeText">Hello </h1>
 
         <button style="display: none; width: fit-content; margin: 0;" onclick="weightFormDialog.showModal()" id='logweightbutton'>Log Weight</button>
-        <div style="width: 100%; background-color: white; border-radius: 10px;"><canvas id="ProgressGraph"></canvas></div>
+        <div style="width: 100%; background-color: white; border-radius: 10px; max-height: 50dvh;"><canvas id="ProgressGraph"></canvas></div>
         <ul id="recordList" class="list border">
         </ul>
     </main>

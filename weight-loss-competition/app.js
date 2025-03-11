@@ -38,19 +38,6 @@ async function updateCharts()
     const weightsData = await loadWeights();
     if (!weightsData || !Array.isArray(weightsData)) return;
 
-    // Update record list
-    const records = weightsData.map(e =>
-    {
-        const formattedDate = new Date(e.updated).toLocaleDateString('en-GB', {
-            weekday: 'short',
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric'
-        });
-        return `<li>${e.weight}kg ${e.expand.participant.name} - ${formattedDate}</li>`;
-    }).join('');
-    recordList.innerHTML = records;
-
     // Group data by participant name
     let groupedData = {};
     weightsData.forEach(e =>
@@ -62,6 +49,26 @@ async function updateCharts()
         }
         groupedData[name].push(e);
     });
+
+    // New: Update record list with separate lists per participant
+    let htmlContent = '';
+    Object.keys(groupedData).forEach(name =>
+    {
+        const records = groupedData[name];
+        // Changed: add emoji to the top weight record
+        const listItems = records.map((e, index) =>
+        {
+            const formattedDate = new Date(e.updated).toLocaleDateString('en-GB', {
+                weekday: 'short',
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
+            return `<li style="${index === 0 ? 'font-size: 1.5em; background-color: var(--inverse-primary);' : ''}">${index === 0 ? '' : ''}${e.weight}kg<div style="font-size: 0.75em">${formattedDate}</div></li>`;
+        }).join('');
+        htmlContent += `<h3>${name}</h3><ul class="list border">${listItems}</ul>`;
+    });
+    recordList.innerHTML = htmlContent;
 
     // Create datasets for Chart.js, one per participant
     const datasets = [];
@@ -151,17 +158,15 @@ async function updateCharts()
                                 type: 'line',
                                 yMin: 80,
                                 yMax: 80,
-                                borderColor: 'rgba(0, 0, 0, 0.8)', // Red dashed line
+                                borderColor: 'rgba(0, 0, 0, 0.8)',
                                 borderWidth: 2,
-                                borderDash: [5, 5], // Dashed style
-                                label: {
-                                    content: '80kg Target',
-                                    enabled: true,
-                                    position: 'end',
-                                    backgroundColor: 'rgba(255, 99, 132, 0.8)',
-                                    color: 'white',
-                                    padding: 4
-                                }
+                                borderDash: [5, 5],
+                            },
+                            box1: {
+                                type: 'box',
+                                yMin: 0,
+                                yMax: 80,
+                                backgroundColor: 'rgba(0, 0, 0, 0.25)'
                             }
                         }
                     }

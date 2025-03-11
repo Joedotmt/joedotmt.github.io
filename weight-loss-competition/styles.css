@@ -1,6 +1,6 @@
 /* styles.css */
 body {
-    font-family: Arial, sans-serif;
+    font-family: "Roboto Mono", monospace, Arial, sans-serif;
     margin: 0;
     padding: 0;
     width: 100dvw;
@@ -61,6 +61,12 @@ h2 {
     .chart-container {
         width: 100%;
     }
+}
+
+li {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0 !important;
 }
 
 li:hover {
