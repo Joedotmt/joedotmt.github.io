@@ -7,7 +7,7 @@ body {
 }
 
 main {
-    padding: 20px;
+    padding: 0px;
 }
 
 section {
@@ -64,11 +64,14 @@ h2 {
 }
 
 li {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 0 !important;
+    justify-content: space-between !important;
+    padding-right: 2.5em !important;
 }
 
 li:hover {
     background-color: var(--surface-bright);
+}
+
+::-webkit-scrollbar {
+    display: none;
 }

@@ -59,12 +59,10 @@ async function updateCharts()
         const listItems = records.map((e, index) =>
         {
             const formattedDate = new Date(e.updated).toLocaleDateString('en-GB', {
-                weekday: 'short',
                 day: '2-digit',
-                month: 'short',
-                year: 'numeric'
+                month: 'long',
             });
-            return `<li style="${index === 0 ? 'font-size: 1.5em; background-color: var(--inverse-primary);' : ''}">${index === 0 ? '' : ''}${e.weight}kg<div style="font-size: 0.75em">${formattedDate}</div></li>`;
+            return `<li class="ripple" style="${index === 0 ? 'background-color: var(--inverse-primary);' : ''}"><div>${formattedDate}</div>${e.weight}kg</li>`;
         }).join('');
         htmlContent += `<h3>${name}</h3><ul class="list border">${listItems}</ul>`;
     });
@@ -101,6 +99,8 @@ async function updateCharts()
                 datasets: datasets
             },
             options: {
+                responsive: true,
+                maintainAspectRatio: false,
                 scales: {
                     x: {
                         type: 'time',
@@ -112,8 +112,7 @@ async function updateCharts()
                             tooltipFormat: 'dd MMM yyyy'
                         },
                         title: {
-                            display: true,
-                            text: 'Date'
+                            display: false
                         },
                         ticks: {
                             autoSkip: true,
@@ -122,8 +121,8 @@ async function updateCharts()
                         }
                     },
                     y: {
-                        min: 70,
-                        max: 130,
+                        min: 75,
+                        max: 126,
                         title: {
                             display: true,
                             text: 'Weight (kg)'
@@ -131,23 +130,6 @@ async function updateCharts()
                     }
                 },
                 plugins: {
-                    zoom: {
-                        pan: {
-                            enabled: true,
-                            mode: 'x', // Allow horizontal panning only
-                            drag: { enabled: true } // Enable mouse drag panning
-                        },
-                        zoom: {
-                            wheel: {
-                                enabled: true
-                            },
-                            pinch: {
-                                enabled: true
-                            },
-                            mode: 'x' // Allow horizontal zooming only
-                        },
-                        mode: 'x'
-                    },
                     legend: {
                         display: true,
                         position: 'top'

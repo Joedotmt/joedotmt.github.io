@@ -19,13 +19,12 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
 
 
     <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="light">
     <header style="flex-direction: row; align-items: center; justify-content: space-between;">
         <h1>Weight Loss Competition Tracker</h1>
         <button id="signinbutton" onclick="signindialog.showModal(); localStorage.clear()">Sign Out</button>
@@ -39,11 +38,11 @@
         </nav>
     </dialog>
 
-    <main style="gap: 1em; display: flex; flex-direction: column;">
-        <h1 id="welcomeText">Hello </h1>
+    <main style="display: flex; flex-direction: column;">
+        <h1 style="text-align: center; width: 100%;" id="welcomeText">Hello </h1>
 
-        <button style="display: none; width: fit-content; margin: 0;" onclick="weightFormDialog.showModal()" id='logweightbutton'>Log Weight</button>
-        <div style="width: 100%; background-color: white; border-radius: 10px; max-height: 50dvh;"><canvas id="ProgressGraph"></canvas></div>
+        <button style="display: none; width: calc(100% - 2em); margin: 0 1em; box-sizing: border-box;" onclick="weightFormDialog.showModal()" id='logweightbutton'>Log Weight</button>
+        <div style="width: 100%; height: 100dvh; max-width: 98dvw;"><canvas id="ProgressGraph"></canvas></div>
         <ul id="recordList" class="list border">
         </ul>
     </main>
