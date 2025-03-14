@@ -143,6 +143,26 @@ const logWeight = async () =>
     await updateCharts();
 };
 
+// New function: Load all participants from the collection
+const loadParticipants = async () =>
+{
+    return await pb.collection('participants').getFullList()
+        .catch(e => { console.error("Error loading participants:", e); return []; });
+};
+
+// New function: Render sign‑in buttons dynamically
+const renderSignInButtons = async () =>
+{
+    const participants = await loadParticipants();
+    const container = document.getElementById("participantButtons");
+    if (container)
+    {
+        container.innerHTML = participants.map(p =>
+            `<button onclick="refreshParticipant('${p.id}')">${p.name}</button>`
+        ).join('');
+    }
+};
+
 const init = async () =>
 {
     if (currentParticipantId)
@@ -152,6 +172,7 @@ const init = async () =>
     } else
     {
         signindialog.showModal();
+        await renderSignInButtons();
         await updateCharts();
     }
     pb.collection("weights").subscribe('*', () => updateCharts());
