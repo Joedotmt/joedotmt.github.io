@@ -31,11 +31,17 @@
     </header>
 
     <dialog class="max" style="justify-content: center; align-items: center; align-content: center;" id="signindialog">
-        <h5 style="text-align: center;">Who are you?</h5>
-        <nav class="center-align">
-            <button onclick="updateParticipant('5x6744i0788k6z5')">Joe</button>
-            <button onclick="updateParticipant('37z84ak7lj61igj')">Gabriel</button>
-        </nav>
+        <div id="sid_progress">
+            <progress id="sid_progressbar" class="circle large"></progress>
+            <div>LOADING...</div>
+        </div>
+        <div id="sid_words" style="display: contents;">
+            <h5 style="text-align: center;">Who are you?</h5>
+            <nav class="center-align">
+                <button onclick="refreshParticipant('5x6744i0788k6z5')">Joe</button>
+                <button onclick="refreshParticipant('37z84ak7lj61igj')">Gabriel</button>
+            </nav>
+        </div>
     </dialog>
 
     <main style="display: flex; flex-direction: column;">

@@ -14,12 +14,19 @@ const getParticipant = async id =>
 
 const refreshParticipant = async id =>
 {
+    sid_progress.style.display = "block";
+    sid_words.style.display = "none";
     const p = await getParticipant(id);
     if (!p) return;
     welcomeText.innerText = `Hello ${p.name}`;
     await updateCharts();
     logweightbutton.style.display = "";
     signindialog.close();
+    setTimeout(() =>
+    {
+        sid_words.style.display = "";
+        sid_progress.style.display = "";
+    }, 500);
 };
 
 const loadWeights = async () =>
@@ -44,9 +51,9 @@ const renderRecordList = g =>
         // Sort records by date to determine initial and latest weight
         const sorted = e.slice().sort((a, b) => Date.parse(a.updated) - Date.parse(b.updated));
         const weightLost = (sorted[0].weight - sorted[sorted.length - 1].weight).toFixed(1);
-        return `<h3>${n}</h3>
+        return `<h3 style="margin:0em 1rem; border-bottom: 1px solid black;">${n}</h3>
         <ul class="list border">
-            <li>Total weight lost: ${weightLost}kg</li>
+            <li class="ripple">Total weight lost: ${weightLost}kg</li>
             ${sorted.map((x, i) =>
             `<li class="ripple" style="${i ? '' : 'background-color: var(--inverse-primary);'}">
                     <div>${new Date(x.updated).toLocaleDateString('en-GB', { day: '2-digit', month: 'long' })}</div>
