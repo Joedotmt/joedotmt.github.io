@@ -1,205 +1,154 @@
-// Initialize the PocketBase client.
-// Change the URL to your PocketBase instance.
-// const pb = new PocketBase('http://127.0.0.1:8090');
+"use strict";
 const pb = new PocketBase('https://petition.pockethost.io/');
+const currentParticipantId = localStorage.getItem("participant") ?? "";
+let chartInstance = null;
 
-let participants = {};
-let chartInstance = null; // Added global Chart.js instance variable
-
-GLOBALParticipant = localStorage.getItem("participant") || "";
-
-function updateParticipant(id)
+const getParticipant = async id =>
 {
-    GLOBALParticipant = id;
+    const pid = id || currentParticipantId;
+    if (!pid) return null;
+    localStorage.setItem("participant", pid);
+    return await pb.collection('participants').getOne(pid)
+        .catch(e => (console.error("Error fetching participant:", e), null));
+};
+
+const refreshParticipant = async id =>
+{
+    const p = await getParticipant(id);
+    if (!p) return;
+    welcomeText.innerText = `Hello ${p.name}`;
+    await updateCharts();
     logweightbutton.style.display = "";
-    localStorage.setItem("participant", GLOBALParticipant);
-    welcomeText.innerText = "Hello " + GLOBALParticipant.name;
     signindialog.close();
-}
+};
 
-// Load all weight entries from the "Weights" collection.
-async function loadWeights()
+const loadWeights = async () =>
+    pb.collection("weights").getFullList({ sort: "-created", expand: "participant" })
+        .catch(e => (console.error("Error loading weights:", e), []));
+
+const groupWeights = w => w.reduce((a, e) =>
+    ((a[e.expand.participant.name] ??= []).push(e), a), {});
+
+const createDatasets = g => Object.entries(g).map(([n, e], i) => ({
+    label: n,
+    data: e.sort((a, b) => Date.parse(a.updated) - Date.parse(b.updated))
+        .map(x => ({ x: new Date(x.updated), y: x.weight })),
+    borderColor: ['#5297ff', '#52ff5a', 'green', 'orange', 'purple'][i % 5],
+    fill: false
+}));
+
+const renderRecordList = g =>
 {
-    try
+    recordList.innerHTML = Object.entries(g).map(([n, e]) =>
     {
-        // Retrieves all records sorted by created time.
-        const records = await pb.collection("Weights").getFullList({ sort: "-created", expand: "participant" });
-        return records;
-    } catch (error)
-    {
-        console.error("Error loading weights:", error);
-        return [];
-    }
-}
+        // Sort records by date to determine initial and latest weight
+        const sorted = e.slice().sort((a, b) => Date.parse(a.updated) - Date.parse(b.updated));
+        const weightLost = (sorted[0].weight - sorted[sorted.length - 1].weight).toFixed(1);
+        return `<h3>${n}</h3>
+        <ul class="list border">
+            <li>Total weight lost: ${weightLost}kg</li>
+            ${sorted.map((x, i) =>
+            `<li class="ripple" style="${i ? '' : 'background-color: var(--inverse-primary);'}">
+                    <div>${new Date(x.updated).toLocaleDateString('en-GB', { day: '2-digit', month: 'long' })}</div>
+                    ${x.weight}kg
+                </li>`).join('')
+            }
+        </ul>`;
+    }).join('');
+};
 
-async function updateCharts()
+const updateCharts = async () =>
 {
-    // Load the weights data
-    const weightsData = await loadWeights();
-    if (!weightsData || !Array.isArray(weightsData)) return;
-
-    // Group data by participant name
-    let groupedData = {};
-    weightsData.forEach(e =>
-    {
-        const name = e.expand.participant.name;
-        if (!groupedData[name])
-        {
-            groupedData[name] = [];
-        }
-        groupedData[name].push(e);
-    });
-
-    // New: Update record list with separate lists per participant
-    let htmlContent = '';
-    Object.keys(groupedData).forEach(name =>
-    {
-        const records = groupedData[name];
-        // Changed: add emoji to the top weight record
-        const listItems = records.map((e, index) =>
-        {
-            const formattedDate = new Date(e.updated).toLocaleDateString('en-GB', {
-                day: '2-digit',
-                month: 'long',
-            });
-            return `<li class="ripple" style="${index === 0 ? 'background-color: var(--inverse-primary);' : ''}"><div>${formattedDate}</div>${e.weight}kg</li>`;
-        }).join('');
-        htmlContent += `<h3>${name}</h3><ul class="list border">${listItems}</ul>`;
-    });
-    recordList.innerHTML = htmlContent;
-
-    // Create datasets for Chart.js, one per participant
-    const datasets = [];
-    const colorPalette = ['#5297ff', '#52ff5a', 'green', 'orange', 'purple'];
-    Object.keys(groupedData).forEach((name, index) =>
-    {
-        // Sort each participant's data by the update date and format for Chart.js
-        const data = groupedData[name]
-            .sort((a, b) => new Date(a.updated) - new Date(b.updated))
-            .map(e => ({ x: new Date(e.updated), y: e.weight }));
-        datasets.push({
-            label: name,
-            data: data,
-            borderColor: colorPalette[index % colorPalette.length],
-            fill: false,
-        });
-    });
-
-    // Render or update the Chart.js line chart
+    const weights = await loadWeights();
+    const grouped = groupWeights(weights);
+    renderRecordList(grouped);
+    const pw = currentParticipantId ? weights.filter(w => w.expand.participant.id === currentParticipantId) : [];
+    const start = pw[pw.length - 1]?.weight || 0;
     const ctx = document.getElementById("ProgressGraph").getContext('2d');
+    const datasets = createDatasets(grouped);
+
     if (chartInstance)
     {
         chartInstance.data.datasets = datasets;
+        const l = chartInstance.options.plugins.annotation.annotations.lineStart;
+        l.yMin = l.yMax = start;
         chartInstance.update();
-    } else
-    {
-        chartInstance = new Chart(ctx, {
-            type: 'line',
-            data: {
-                datasets: datasets
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        type: 'time',
-                        time: {
-                            unit: 'day', // Show data day-by-day
-                            displayFormats: {
-                                day: 'dd MMM' // Example: 01 Jan, 02 Jan, etc.
-                            },
-                            tooltipFormat: 'dd MMM yyyy'
-                        },
-                        title: {
-                            display: false
-                        },
-                        ticks: {
-                            autoSkip: true,
-                            maxRotation: 0,
-                            minRotation: 0
-                        }
-                    },
-                    y: {
-                        min: 75,
-                        max: 126,
-                        title: {
-                            display: true,
-                            text: 'Weight (kg)'
-                        }
-                    }
+    } else chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: { datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    type: 'time',
+                    time: { unit: 'day', displayFormats: { day: 'dd MMM' }, tooltipFormat: 'dd MMM yyyy' },
+                    title: { display: false },
+                    ticks: { autoSkip: true, maxRotation: 0, minRotation: 0 }
                 },
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top'
-                    },
-                    annotation: {
-                        annotations: {
-                            line80kg: {
-                                type: 'line',
-                                yMin: 80,
-                                yMax: 80,
-                                borderColor: 'rgba(0, 0, 0, 0.8)',
-                                borderWidth: 2,
-                                borderDash: [5, 5],
-                            },
-                            box1: {
-                                type: 'box',
-                                yMin: 0,
-                                yMax: 80,
-                                backgroundColor: 'rgba(0, 0, 0, 0.25)'
-                            }
+                y: {
+                    min: 75,
+                    max: 126,
+                    title: { display: true, text: 'Weight (kg)' }
+                }
+            },
+            plugins: {
+                legend: { display: true, position: 'top' },
+                annotation: {
+                    annotations: {
+                        lineStart: {
+                            type: 'line',
+                            yMin: start,
+                            yMax: start,
+                            borderColor: 'rgba(0,0,0,0.2)',
+                            borderWidth: 2,
+                            borderDash: [5, 5]
+                        },
+                        line80kg: {
+                            type: 'line',
+                            yMin: 80,
+                            yMax: 80,
+                            borderColor: 'rgba(0,0,0,0.8)',
+                            borderWidth: 2,
+                            borderDash: [5, 5]
+                        },
+                        box1: {
+                            type: 'box',
+                            yMin: 0,
+                            yMax: 80,
+                            backgroundColor: 'rgba(0,0,0,0.25)'
                         }
                     }
                 }
             }
-        });
-    }
-}
+        }
+    });
+};
 
-
-submitButton.addEventListener("pointerup", async (e) =>
+const logWeight = async () =>
 {
     weightFormDialog.close();
-    const participantId = GLOBALParticipant;
-    const weightValue = document.getElementById("weightInput").value;
-    if (!participantId || !weightValue) return;
-    try
-    {
-        // Create a new record in the "Weights" collection.
-        await pb.collection("Weights").create({
-            weight: parseFloat(weightValue),
-            participant: participantId
-        });
-        document.getElementById("weightInput").value = '';
-        // Update the charts after adding a new record.
-        await updateCharts();
-    } catch (error)
-    {
-        console.error("Error logging weight:", error);
-    }
-});
+    const w = +document.getElementById("weightInput").value;
+    if (!currentParticipantId || isNaN(w)) return;
+    await pb.collection("weights").create({ weight: w, participant: currentParticipantId })
+        .catch(e => console.error("Error logging weight:", e));
+    document.getElementById("weightInput").value = '';
+    await updateCharts();
+};
 
-// Initialize the app by loading participants, charts, and setting up realtime updates.
-async function init()
+const init = async () =>
 {
-    if (GLOBALParticipant != "")
+    if (currentParticipantId)
     {
         logweightbutton.style.display = "";
-        let participant = await pb.collection('participants').getOne(GLOBALParticipant);
-        welcomeText.innerText = "Hello " + participant.name;
+        await refreshParticipant();
     } else
     {
         signindialog.showModal();
-    }
-    await updateCharts();
-    // Setup realtime subscription for the "Weights" collection.
-    pb.collection("Weights").subscribe('*', async function (e)
-    {
-        console.log("Realtime event:", e);
         await updateCharts();
-    });
-}
+    }
+    pb.collection("weights").subscribe('*', () => updateCharts());
+    submitButton.addEventListener("pointerup", logWeight);
+};
 
 init();

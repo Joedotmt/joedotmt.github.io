@@ -8,7 +8,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Pangolin&display=swap" rel="stylesheet" />
-    <link rel="icon" type="image/png" href="./favicon.png" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=arrow_left_alt,arrow_right_alt,open_in_new" />
     <style>
         a {
@@ -422,71 +421,82 @@
                 <a target="_blank" href="/dejansamazinginteractivepythonthing">Dejan's Python Thing</a>
                 <a target="_blank" href="https://joe.mt/SASSLS">Library System</a>
                 <a target="_blank" href="/c">Minimal Contact</a>
-                <a target="_blank" href="https://joe.mt/image-converter">Evil Image Converter</a>
+                <a target="_blank" href="https://joe.mt/evil-image-converter">Evil Image Converter</a>
                 <a target="_blank" href="/minecraft-entity-detection-maker">Minecraft Entity Detection Generator</a>
                 <a target="_blank" href="https://joe.mt/gun">Gun for 2d</a>
                 <a target="_blank" href="https://joe.mt/imnotaskingyoutowatchthisvideo">INAYTWTV</a>
                 <a target="_blank" href="https://joe.mt/ics-location-image-gen">.ics Timetable Locations to Image</a>
+                <a target="_blank" href="https://mpc-hc.uk.mt">MPC-HC New Website</a>
             </div>
         </div>
     </div>
     <script>
-        const mainMenu = document.querySelector('.main-menu');
-        const selectionBackground = document.querySelector('.selection-background');
-        const leftColumn = document.querySelector('.left-column');
+        const menu = document.querySelector('.main-menu');
+        const selectionBg = document.querySelector('.selection-background');
+        let activeItem = null;
 
-        let selectedItemNow = null;
-
-        function updateSelection(selectedItem)
+        function selectItem(item)
         {
-            selectedItemNow = selectedItem;
+            activeItem = item;
+
+            // Clear selections and hide banners
             document.querySelectorAll('main-menu > a').forEach(i => i.classList.remove('selected'));
-            selectedItem.classList.add('selected');
-
-            usp(); // Update selection background
-
+            item.classList.add('selected');
             document.querySelectorAll(".banner").forEach(b => b.style.display = "none");
 
-            const text = selectedItem.textContent.trim();
-            if (text.includes("Contact"))
+            // Update selection position
+            updateSelectionPosition();
+
+            // Determine which banner to show
+            const text = item.textContent.trim();
+            const banners = {
+                Contact: ContactBanner,
+                Selfie: {
+                    element: FaceBanner, action: () =>
+                        document.getElementById("AchievementsBanner")
+                            ?.querySelector("iframe")
+                            ?.contentWindow?.postMessage({
+                                type: "registerAchievement",
+                                achievement: "saw_face"
+                            }, "*")
+                },
+                Achievement: AchievementsBanner,
+                'All Pages': SitemapBanner,
+                IcedJelly: IcedJellyBanner
+            };
+
+            const match = Object.entries(banners).find(([key]) => text.includes(key));
+
+            if (match)
             {
-                ContactBanner.style.display = "block";
-            } else if (text.includes("Selfie"))
-            {
-                let iframe = document.getElementById("AchievementsBanner")?.querySelector("iframe");
-                if (iframe) iframe.contentWindow.postMessage({ type: "registerAchievement", achievement: "saw_face" }, "*");
-                FaceBanner.style.display = "flex";
-            } else if (text.includes("Achievement"))
-            {
-                AchievementsBanner.style.display = "block";
-            } else if (text.includes("All Pages"))
-            {
-                SitemapBanner.style.display = "block";
-            } else if (text.includes("IcedJelly"))
-            {
-                IcedJellyBanner.style.display = "block";
+                const [key, config] = match;
+                if (config.action) config.action();
+                (config.element || config).style.display = config.element ? 'flex' : 'block';
             } else
             {
-                ConstructionBanner.style.display = "block";
+                ConstructionBanner.style.display = 'block';
             }
         }
 
-        function usp()
+        function updateSelectionPosition()
         {
-            selectionBackground.style.top = (selectedItemNow.offsetTop - 10) + "px";
-            selectionBackground.style.left = selectedItemNow.offsetLeft + "px";
+            selectionBg.style.top = `${activeItem.offsetTop - 10}px`;
+            selectionBg.style.left = `${activeItem.offsetLeft}px`;
         }
 
-        const initialItem = document.querySelector(`a[href="${window.location.hash}"]`) || document.querySelector(".menu-item");
-        updateSelection(initialItem);
+        // Initial setup
+        const initialItem = document.querySelector(`a[href="${location.hash || "#home"}"]`)
+            || document.querySelector(".menu-item");
+        selectItem(initialItem);
 
+        // Event listeners
         window.addEventListener("hashchange", () =>
         {
-            const item = document.querySelector(`a[href="${window.location.hash}"]`);
-            if (item) updateSelection(item);
+            const targetItem = document.querySelector(`a[href="${location.hash || "#home"}"]`);
+            targetItem && selectItem(targetItem);
         });
 
-        setInterval(usp, 500);
+        setInterval(updateSelectionPosition, 500);
     </script>
 </body>
 
