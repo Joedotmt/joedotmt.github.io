@@ -1,14 +1,14 @@
 "use strict";
-const pb = new PocketBase('https://petition.pockethost.io/');
+const pocketBase = new PocketBase('https://petition.pockethost.io/');
 const currentParticipantId = localStorage.getItem("participant") ?? "";
 let chartInstance = null;
 
 const getParticipant = async id =>
 {
-    const pid = id || currentParticipantId;
-    if (!pid) return null;
-    localStorage.setItem("participant", pid);
-    return await pb.collection('participants').getOne(pid)
+    const participantId = id || currentParticipantId;
+    if (!participantId) return null;
+    localStorage.setItem("participant", participantId);
+    return await pocketBase.collection('participants').getOne(participantId)
         .catch(e => (console.error("Error fetching participant:", e), null));
 };
 
@@ -16,9 +16,9 @@ const refreshParticipant = async id =>
 {
     sid_progress.style.display = "block";
     sid_words.style.display = "none";
-    const p = await getParticipant(id);
-    if (!p) return;
-    welcomeText.innerText = `Hello ${p.name}`;
+    const participant = await getParticipant(id);
+    if (!participant) return;
+    welcomeText.innerText = `Hello ${participant.name}`;
     await updateCharts();
     logweightbutton.style.display = "";
     signindialog.close();
@@ -30,31 +30,29 @@ const refreshParticipant = async id =>
 };
 
 const loadWeights = async () =>
-    pb.collection("weights").getFullList({ sort: "-created", expand: "participant" })
+    pocketBase.collection("weights").getFullList({ sort: "-created", expand: "participant" })
         .catch(e => (console.error("Error loading weights:", e), []));
 
-const groupWeights = w => w.reduce((a, e) =>
-    ((a[e.expand.participant.name] ??= []).push(e), a), {});
+const groupWeights = weights => weights.reduce((accumulator, element) =>
+    ((accumulator[element.expand.participant.name] ??= []).push(element), accumulator), {});
 
-const createDatasets = g => Object.entries(g).map(([n, e], i) => ({
-    label: n,
-    data: e.sort((a, b) => Date.parse(a.updated) - Date.parse(b.updated))
+const createDatasets = groupedWeights => Object.entries(groupedWeights).map(([name, elements], i) => ({
+    label: name,
+    data: elements.sort((a, b) => Date.parse(a.updated) - Date.parse(b.updated))
         .map(x => ({ x: new Date(x.updated), y: x.weight })),
     borderColor: ['#5297ff', '#52ff5a', 'green', 'orange', 'purple'][i % 5],
     fill: false
 }));
 
-const renderRecordList = g =>
+const renderRecordList = groupedWeights =>
 {
-    recordList.innerHTML = Object.entries(g).map(([n, e]) =>
+    recordList.innerHTML = Object.entries(groupedWeights).map(([name, elements]) =>
     {
-        // Sort records by date to determine initial and latest weight
-        const sorted = e.slice().sort((a, b) => Date.parse(a.updated) - Date.parse(b.updated));
-        const weightLost = (sorted[0].weight - sorted[sorted.length - 1].weight).toFixed(1);
-        return `<h3 style="margin:0em 1rem; border-bottom: 1px solid black;">${n}</h3>
+        const weightLost = (elements[0].weight - elements[elements.length - 1].weight).toFixed(1);
+        return `<h3 style="margin:0em 1rem; border-bottom: 1px solid black;">${name}</h3>
         <ul class="list border">
             <li class="ripple">Total weight lost: ${weightLost}kg</li>
-            ${sorted.map((x, i) =>
+            ${elements.map((x, i) =>
             `<li class="ripple" style="${i ? '' : 'background-color: var(--inverse-primary);'}">
                     <div>${new Date(x.updated).toLocaleDateString('en-GB', { day: '2-digit', month: 'long' })}</div>
                     ${x.weight}kg
@@ -69,8 +67,8 @@ const updateCharts = async () =>
     const weights = await loadWeights();
     const grouped = groupWeights(weights);
     renderRecordList(grouped);
-    const pw = currentParticipantId ? weights.filter(w => w.expand.participant.id === currentParticipantId) : [];
-    const start = pw[pw.length - 1]?.weight || 0;
+    const participantWeights = currentParticipantId ? weights.filter(w => w.expand.participant.id === currentParticipantId) : [];
+    const start = participantWeights[participantWeights.length - 1]?.weight || 0;
     const ctx = document.getElementById("ProgressGraph").getContext('2d');
     const datasets = createDatasets(grouped);
 
@@ -135,9 +133,9 @@ const updateCharts = async () =>
 const logWeight = async () =>
 {
     weightFormDialog.close();
-    const w = +document.getElementById("weightInput").value;
-    if (!currentParticipantId || isNaN(w)) return;
-    await pb.collection("weights").create({ weight: w, participant: currentParticipantId })
+    const weight = +document.getElementById("weightInput").value;
+    if (!currentParticipantId || isNaN(weight)) return;
+    await pocketBase.collection("weights").create({ weight: weight, participant: currentParticipantId })
         .catch(e => console.error("Error logging weight:", e));
     document.getElementById("weightInput").value = '';
     await updateCharts();
@@ -146,7 +144,7 @@ const logWeight = async () =>
 // New function: Load all participants from the collection
 const loadParticipants = async () =>
 {
-    return await pb.collection('participants').getFullList()
+    return await pocketBase.collection('participants').getFullList()
         .catch(e => { console.error("Error loading participants:", e); return []; });
 };
 
@@ -157,8 +155,8 @@ const renderSignInButtons = async () =>
     const container = document.getElementById("participantButtons");
     if (container)
     {
-        container.innerHTML = participants.map(p =>
-            `<button onclick="refreshParticipant('${p.id}')">${p.name}</button>`
+        container.innerHTML = participants.map(participant =>
+            `<button onclick="refreshParticipant('${participant.id}')">${participant.name}</button>`
         ).join('');
     }
 };
@@ -175,7 +173,7 @@ const init = async () =>
         await renderSignInButtons();
         await updateCharts();
     }
-    pb.collection("weights").subscribe('*', () => updateCharts());
+    pocketBase.collection("weights").subscribe('*', () => updateCharts());
     submitButton.addEventListener("pointerup", logWeight);
 };
 
