@@ -17,6 +17,7 @@
             transition: background-color 0.5s;
             font-family: monospace;
             color: white;
+            flex-direction: column;
         }
 
         #awakeStatus {
@@ -32,20 +33,34 @@
             font-size: 20px;
             cursor: pointer;
         }
+
+        #photo {
+            padding-top: 10px;
+            max-width: 100%;
+            height: 50dvh;
+        }
+
+        #photoInput {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <button style="display: none;" id="wakeUpButton">tell the database you are awake</button>
-
+    <input type="file" capture="user" id="photoInput" style="display: none;" accept="image/*">
     <div id="awakeStatus">Loading...</div>
+    <img id="photo" style="display: none;">
 
     <script>
-        const pb = new PocketBase("https://petition.pockethost.io");
+        const pbURL = "https://petition.pockethost.io/";
+        const pb = new PocketBase(pbURL);
         const collectionName = "joe_awake";
 
-        async function createRecord()
+        async function createRecord(photoFile)
         {
-            await pb.collection(collectionName).create({});
+            const formData = new FormData();
+            formData.append("photo", photoFile);
+            await pb.collection(collectionName).create(formData);
         }
 
         async function checkLatestRecord()
@@ -53,8 +68,10 @@
             const records = await pb.collection(collectionName).getList(1, 1, { sort: "-created" });
             if (records.items.length > 0)
             {
-                const latestRecordTime = new Date(records.items[0].created);
+                const latestRecord = records.items[0];
+                const latestRecordTime = new Date(latestRecord.created);
                 updateBackground(latestRecordTime);
+                displayPhoto(latestRecord.photo, latestRecord.id);
             }
         }
 
@@ -79,12 +96,41 @@
             awakeStatusDiv.textContent = isAwake ? "Joe is awake right now!" : "Joe is currently not awake.";
         }
 
+        function displayPhoto(filename, record_id)
+        {
+            const photoElement = document.getElementById("photo");
+            let photoUrl = `${pbURL}/api/files/${collectionName}/${record_id}/${filename}`;
+            if (photoUrl)
+            {
+                photoElement.src = photoUrl;
+                photoElement.style.display = "block";
+            } else
+            {
+                photoElement.style.display = "none";
+            }
+        }
 
         if (window.location.hash == "#joe")
         {
             const wakeUpButton = document.getElementById("wakeUpButton");
-            wakeUpButton.addEventListener("click", createRecord);
+            const photoInput = document.getElementById("photoInput");
+
+            wakeUpButton.addEventListener("click", () =>
+            {
+                photoInput.click();
+            });
+
+            photoInput.addEventListener("change", (event) =>
+            {
+                const file = event.target.files[0];
+                if (file)
+                {
+                    createRecord(file);
+                }
+            });
+
             wakeUpButton.style.display = "";
+            photoInput.style.display = "";
         }
 
         pb.collection(collectionName).subscribe("*", function (e)
