@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joe Awake?</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pocketbase/0.25.0/pocketbase.umd.js"></script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: rgb(24, 24, 24);
+            transition: background-color 0.5s;
+            font-family: monospace;
+            color: white;
+        }
+
+        #awakeStatus {
+            font-size: 24px;
+            margin-top: 20px;
+        }
+
+        button {
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 15px 30px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <button style="display: none;" id="wakeUpButton">tell the database you are awake</button>
+
+    <div id="awakeStatus">Loading...</div>
+
+    <script>
+        const pb = new PocketBase("https://petition.pockethost.io");
+        const collectionName = "joe_awake";
+
+        async function createRecord()
+        {
+            await pb.collection(collectionName).create({});
+        }
+
+        async function checkLatestRecord()
+        {
+            const records = await pb.collection(collectionName).getList(1, 1, { sort: "-created" });
+            if (records.items.length > 0)
+            {
+                const latestRecordTime = new Date(records.items[0].created);
+                updateBackground(latestRecordTime);
+            }
+        }
+
+        function updateBackground(latestTime)
+        {
+            const now = new Date();
+            let isAwake = false;
+            if (
+                latestTime.getDate() === now.getDate() &&
+                latestTime.getHours() >= 4
+            )
+            {
+                document.body.style.backgroundColor = "green";
+                isAwake = true;
+            } else
+            {
+                document.body.style.backgroundColor = "red";
+                isAwake = false;
+            }
+
+            const awakeStatusDiv = document.getElementById("awakeStatus");
+            awakeStatusDiv.textContent = isAwake ? "Joe is awake right now!" : "Joe is currently not awake.";
+        }
+
+
+        if (window.location.hash == "#joe")
+        {
+            const wakeUpButton = document.getElementById("wakeUpButton");
+            wakeUpButton.addEventListener("click", createRecord);
+            wakeUpButton.style.display = "";
+        }
+
+        pb.collection(collectionName).subscribe("*", function (e)
+        {
+            checkLatestRecord();
+        });
+
+        checkLatestRecord();
+    </script>
+</body>
+</html>
