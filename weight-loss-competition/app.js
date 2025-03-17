@@ -20,7 +20,7 @@ const refreshParticipant = async id =>
     if (!participant) return;
     welcomeText.innerText = `Hello ${participant.name}`;
     await updateCharts();
-    logweightbutton.style.display = "";
+    logweightbutton.style.display = window.location.hash === "#admin" ? "" : "none";
     signindialog.close();
     setTimeout(() =>
     {
@@ -132,6 +132,11 @@ const updateCharts = async () =>
 
 const logWeight = async () =>
 {
+    if (window.location.hash !== "#admin")
+    {
+        console.error("Unauthorized: Only admin can log weights.");
+        return;
+    }
     weightFormDialog.close();
     const weight = +document.getElementById("weightInput").value;
     if (!currentParticipantId || isNaN(weight)) return;
@@ -165,7 +170,7 @@ const init = async () =>
 {
     if (currentParticipantId)
     {
-        logweightbutton.style.display = "";
+        logweightbutton.style.display = window.location.hash === "#admin" ? "" : "none";
         await refreshParticipant();
     } else
     {
