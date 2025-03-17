@@ -1,6 +1,7 @@
 interface Participant {
     id: string;
     name: string;
+    goal: number; // Added goal property
 }
 
 interface Weight {
@@ -73,7 +74,12 @@ const createDatasets = (groupedWeights: Record<string, Weight[]>, mode: string):
         return {
             label: name,
             data: elements.sort((a, b) => Date.parse(a.updated) - Date.parse(b.updated))
-                .map(x => ({ x: new Date(x.updated), y: x.weight - (mode == "Relative" ? startWeight : (mode == "Progress" ? x.weight/participant.goal : 0))})),
+                .map(x => ({
+                    x: new Date(x.updated),
+                    y: mode === "Relative" ? x.weight - startWeight :
+                       mode === "Progress" ? -((startWeight - x.weight) / elements[0].expand.participant.goal) * 100 :
+                       x.weight
+                })),
             borderColor: ['#5297ff', '#52ff5a', 'green', 'orange', 'purple'][i % 5],
             fill: false
         };
@@ -127,28 +133,28 @@ const updateCharts = async (): Promise<void> => {
                 legend: { display: true, position: 'top' },
                 annotation: {
                     annotations: {
-                        // lineStart: {
-                        //     type: 'line',
-                        //     yMin: 0, // Adjusted to 0 for weight lost
-                        //     yMax: 0, // Adjusted to 0 for weight lost
-                        //     borderColor: 'rgba(0,0,0,0.2)',
-                        //     borderWidth: 2,
-                        //     borderDash: [5, 5]
-                        // },
+                        lineStart: {
+                            type: 'line',
+                            yMin: 0, // Adjusted to 0 for weight lost
+                            yMax: 0, // Adjusted to 0 for weight lost
+                            borderColor: 'rgba(0,0,0,0.2)',
+                            borderWidth: 2,
+                            borderDash: [5, 5]
+                        },
                         goalLine: {
                             type: 'line',
-                            yMin: -30,
-                            yMax: -30,
+                            yMin: 80,
+                            yMax: 80,
                             borderColor: 'rgba(0,0,0,0.8)',
                             borderWidth: 2,
                             borderDash: [5, 5]
                         },
-                        // box1: {
-                        //     type: 'box',
-                        //     yMin: 0,
-                        //     yMax: 80,
-                        //     backgroundColor: 'rgba(0,0,0,0.25)'
-                        // }
+                        box1: {
+                            type: 'box',
+                            yMin: 0,
+                            yMax: 80,
+                            backgroundColor: 'rgba(0,0,0,0.25)'
+                        }
                     }
                 }
             }

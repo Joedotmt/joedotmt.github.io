@@ -125,7 +125,12 @@ var createDatasets = function (groupedWeights, mode) {
         return {
             label: name,
             data: elements.sort(function (a, b) { return Date.parse(a.updated) - Date.parse(b.updated); })
-                .map(function (x) { return ({ x: new Date(x.updated), y: x.weight - (mode == "Relative" ? startWeight : 0) }); }),
+                .map(function (x) { return ({
+                x: new Date(x.updated),
+                y: mode === "Relative" ? x.weight - startWeight :
+                    mode === "Progress" ? -((startWeight - x.weight) / elements[0].expand.participant.goal) * 100 :
+                        x.weight
+            }); }),
             borderColor: ['#5297ff', '#52ff5a', 'green', 'orange', 'purple'][i % 5],
             fill: false
         };
@@ -141,7 +146,7 @@ var renderRecordList = function (groupedWeights) {
     }).join('');
 };
 var updateCharts = function () { return __awaiter(_this, void 0, void 0, function () {
-    var weights, grouped, participantWeights, start, ctx, datasets, l;
+    var weights, grouped, participantWeights, start, ctx, datasets;
     var _a;
     return __generator(this, function (_b) {
         switch (_b.label) {
@@ -156,9 +161,6 @@ var updateCharts = function () { return __awaiter(_this, void 0, void 0, functio
                 datasets = createDatasets(grouped, GLOBALmode);
                 if (chartInstance) {
                     chartInstance.data.datasets = datasets;
-                    l = chartInstance.options.plugins.annotation.annotations.lineStart;
-                    //l.yMin = 0;
-                    //l.yMax = 0; // Adjusted to 0 for weight lost
                     chartInstance.update();
                 }
                 else
@@ -183,28 +185,28 @@ var updateCharts = function () { return __awaiter(_this, void 0, void 0, functio
                                 legend: { display: true, position: 'top' },
                                 annotation: {
                                     annotations: {
-                                        // lineStart: {
-                                        //     type: 'line',
-                                        //     yMin: 0, // Adjusted to 0 for weight lost
-                                        //     yMax: 0, // Adjusted to 0 for weight lost
-                                        //     borderColor: 'rgba(0,0,0,0.2)',
-                                        //     borderWidth: 2,
-                                        //     borderDash: [5, 5]
-                                        // },
+                                        lineStart: {
+                                            type: 'line',
+                                            yMin: 0, // Adjusted to 0 for weight lost
+                                            yMax: 0, // Adjusted to 0 for weight lost
+                                            borderColor: 'rgba(0,0,0,0.2)',
+                                            borderWidth: 2,
+                                            borderDash: [5, 5]
+                                        },
                                         goalLine: {
                                             type: 'line',
-                                            yMin: -30,
-                                            yMax: -30,
+                                            yMin: 80,
+                                            yMax: 80,
                                             borderColor: 'rgba(0,0,0,0.8)',
                                             borderWidth: 2,
                                             borderDash: [5, 5]
                                         },
-                                        // box1: {
-                                        //     type: 'box',
-                                        //     yMin: 0,
-                                        //     yMax: 80,
-                                        //     backgroundColor: 'rgba(0,0,0,0.25)'
-                                        // }
+                                        box1: {
+                                            type: 'box',
+                                            yMin: 0,
+                                            yMax: 80,
+                                            backgroundColor: 'rgba(0,0,0,0.25)'
+                                        }
                                     }
                                 }
                             }
