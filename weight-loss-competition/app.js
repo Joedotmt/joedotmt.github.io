@@ -60,7 +60,7 @@ GraphTabs.querySelectorAll("a").forEach(function (e) {
         });
     }); });
 });
-var pocketBase = new PocketBase('https://petition.pockethost.io/');
+var pocketBase = new PocketBase("https://petition.pockethost.io/");
 var currentParticipantId = (_a = localStorage.getItem("participant")) !== null && _a !== void 0 ? _a : "";
 var chartInstance = null;
 var getParticipant = function (id) { return __awaiter(_this, void 0, void 0, function () {
@@ -72,7 +72,7 @@ var getParticipant = function (id) { return __awaiter(_this, void 0, void 0, fun
                 if (!participantId)
                     return [2 /*return*/, null];
                 localStorage.setItem("participant", participantId);
-                return [4 /*yield*/, pocketBase.collection('participants').getOne(participantId)
+                return [4 /*yield*/, pocketBase.collection("participants").getOne(participantId)
                         .catch(function (e) { return (console.error("Error fetching participant:", e), null); })];
             case 1: return [2 /*return*/, _a.sent()];
         }
@@ -94,7 +94,9 @@ var refreshParticipant = function (id) { return __awaiter(_this, void 0, void 0,
                 return [4 /*yield*/, updateCharts()];
             case 2:
                 _a.sent();
-                logweightbutton.style.display = window.location.hash === "#admin" ? "" : "none";
+                logweightbutton.style.display = window.location.hash === "#admin"
+                    ? ""
+                    : "none";
                 signindialog.close();
                 setTimeout(function () {
                     sid_words.style.display = "";
@@ -106,7 +108,10 @@ var refreshParticipant = function (id) { return __awaiter(_this, void 0, void 0,
 }); };
 var loadWeights = function () { return __awaiter(_this, void 0, void 0, function () {
     return __generator(this, function (_a) {
-        return [2 /*return*/, pocketBase.collection("weights").getFullList({ sort: "-created", expand: "participant" })
+        return [2 /*return*/, pocketBase.collection("weights").getFullList({
+                sort: "-created",
+                expand: "participant",
+            })
                 .catch(function (e) { return (console.error("Error loading weights:", e), []); })];
     });
 }); };
@@ -124,29 +129,39 @@ var createDatasets = function (groupedWeights, mode) {
         var startWeight = elements[elements.length - 1].weight;
         return {
             label: name,
-            data: elements.sort(function (a, b) { return Date.parse(a.updated) - Date.parse(b.updated); })
+            data: elements.sort(function (a, b) {
+                return Date.parse(a.updated) - Date.parse(b.updated);
+            })
                 .map(function (x) { return ({
                 x: new Date(x.updated),
-                y: mode === "Relative" ? x.weight - startWeight :
-                    mode === "Progress" ? -((startWeight - x.weight) / elements[0].expand.participant.goal) * 100 :
-                        x.weight
+                y: mode === "Relative"
+                    ? x.weight - startWeight
+                    : mode === "Progress"
+                        ? ((x.weight - startWeight) /
+                            (elements[0].expand.participant.goal -
+                                startWeight)) * 100
+                        : x.weight,
             }); }),
-            borderColor: ['#5297ff', '#52ff5a', 'green', 'orange', 'purple'][i % 5],
-            fill: false
+            borderColor: ["#5297ff", "#52ff5a", "green", "orange", "purple"][i % 5],
+            fill: false,
         };
     });
 };
 var renderRecordList = function (groupedWeights) {
     recordList.innerHTML = Object.entries(groupedWeights).map(function (_a) {
         var name = _a[0], elements = _a[1];
-        var weightLost = (elements[0].weight - elements[elements.length - 1].weight).toFixed(1);
+        var weightLost = (elements[0].weight - elements[elements.length - 1].weight)
+            .toFixed(1);
         return "<h3 style=\"margin:0em 1rem; border-bottom: 1px solid black;\">".concat(name, "</h3>\n        <ul class=\"list border\">\n            <li class=\"ripple\">Total weight lost: ").concat(weightLost, "kg</li>\n            ").concat(elements.map(function (x, i) {
-            return "<li class=\"ripple\" style=\"".concat(i ? '' : 'background-color: var(--inverse-primary);', "\">\n                    <div>").concat(new Date(x.updated).toLocaleDateString('en-GB', { day: '2-digit', month: 'long' }), "</div>\n                    ").concat(x.weight, "kg\n                </li>");
-        }).join(''), "\n        </ul>");
-    }).join('');
+            return "<li class=\"ripple\" style=\"".concat(i ? "" : "background-color: var(--inverse-primary);", "\">\n                    <div>").concat(new Date(x.updated).toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "long",
+            }), "</div>\n                    ").concat(x.weight, "kg\n                </li>");
+        }).join(""), "\n        </ul>");
+    }).join("");
 };
 var updateCharts = function () { return __awaiter(_this, void 0, void 0, function () {
-    var weights, grouped, participantWeights, start, ctx, datasets;
+    var weights, grouped, participantWeights, start, goalLineValue, lineStartValue, participantGoal, startWeight, ctx, datasets, highestValue, yAxisReverse, margin;
     var _a;
     return __generator(this, function (_b) {
         switch (_b.label) {
@@ -155,63 +170,136 @@ var updateCharts = function () { return __awaiter(_this, void 0, void 0, functio
                 weights = _b.sent();
                 grouped = groupWeights(weights);
                 renderRecordList(grouped);
-                participantWeights = currentParticipantId ? weights.filter(function (w) { return w.expand.participant.id === currentParticipantId; }) : [];
-                start = ((_a = participantWeights[participantWeights.length - 1]) === null || _a === void 0 ? void 0 : _a.weight) || 0;
-                ctx = document.getElementById("ProgressGraph").getContext('2d');
+                participantWeights = currentParticipantId
+                    ? weights.filter(function (w) {
+                        return w.expand.participant.id === currentParticipantId;
+                    })
+                    : [];
+                start = ((_a = participantWeights[participantWeights.length - 1]) === null || _a === void 0 ? void 0 : _a.weight) ||
+                    0;
+                goalLineValue = 0;
+                lineStartValue = start;
+                if (currentParticipantId && participantWeights.length > 0) {
+                    participantGoal = participantWeights[0].expand.participant.goal;
+                    startWeight = participantWeights[participantWeights.length - 1].weight;
+                    if (GLOBALmode === "Absolute") {
+                        goalLineValue = participantGoal;
+                        lineStartValue = startWeight;
+                    }
+                    else if (GLOBALmode === "Relative") {
+                        goalLineValue = -(startWeight - participantGoal);
+                        lineStartValue = 0;
+                    }
+                    else if (GLOBALmode === "Progress") {
+                        goalLineValue = 100;
+                        lineStartValue = 0;
+                    }
+                }
+                ctx = document.getElementById("ProgressGraph")
+                    .getContext("2d");
                 datasets = createDatasets(grouped, GLOBALmode);
+                yAxisReverse = GLOBALmode === "Progress";
+                if (yAxisReverse) {
+                    highestValue = Math.min.apply(Math, datasets.flatMap(function (dataset) {
+                        return dataset.data.map(function (point) { return point.y; });
+                    }));
+                }
+                else {
+                    highestValue = Math.max.apply(Math, datasets.flatMap(function (dataset) {
+                        return dataset.data.map(function (point) { return point.y; });
+                    }));
+                }
+                margin = 5;
                 if (chartInstance) {
                     chartInstance.data.datasets = datasets;
+                    if (chartInstance.options.plugins &&
+                        chartInstance.options.plugins.annotation &&
+                        chartInstance.options.plugins.annotation.annotations) {
+                        chartInstance.options.plugins.annotation.annotations.lineStart
+                            .yMin = lineStartValue;
+                        chartInstance.options.plugins.annotation.annotations.lineStart
+                            .yMax = lineStartValue;
+                        chartInstance.options.plugins.annotation.annotations.goalLine.yMin =
+                            goalLineValue;
+                        chartInstance.options.plugins.annotation.annotations.goalLine.yMax =
+                            goalLineValue;
+                        chartInstance.options.plugins.annotation.annotations.box1.yMax =
+                            goalLineValue;
+                        chartInstance.options.plugins.annotation.annotations.box1.yMin =
+                            goalLineValue + (yAxisReverse ? margin : -margin);
+                    }
+                    if (yAxisReverse) {
+                        chartInstance.options.scales.y.max = goalLineValue + margin;
+                        chartInstance.options.scales.y.min = highestValue - margin;
+                    }
+                    else {
+                        chartInstance.options.scales.y.max = highestValue + margin;
+                        chartInstance.options.scales.y.min = goalLineValue - margin;
+                    }
+                    chartInstance.options.scales.y.reverse = yAxisReverse;
                     chartInstance.update();
                 }
-                else
+                else {
                     chartInstance = new Chart(ctx, {
-                        type: 'line',
+                        type: "line",
                         data: { datasets: datasets },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
                             scales: {
                                 x: {
-                                    type: 'time',
-                                    time: { unit: 'day', displayFormats: { day: 'dd MMM' }, tooltipFormat: 'dd MMM yyyy' },
+                                    type: "time",
+                                    time: {
+                                        unit: "day",
+                                        displayFormats: { day: "dd MMM" },
+                                        tooltipFormat: "dd MMM yyyy",
+                                    },
                                     title: { display: false },
-                                    ticks: { autoSkip: true, maxRotation: 0, minRotation: 0 }
+                                    ticks: {
+                                        autoSkip: true,
+                                        maxRotation: 0,
+                                        minRotation: 0,
+                                    },
                                 },
                                 y: {
-                                    title: { display: true, text: 'Weight Lost (kg)' } // Updated title
-                                }
+                                    title: { display: true, text: "Weight Lost (kg)" },
+                                    reverse: yAxisReverse,
+                                    min: goalLineValue - 5,
+                                    max: highestValue + 5,
+                                },
                             },
                             plugins: {
-                                legend: { display: true, position: 'top' },
+                                legend: { display: true, position: "top" },
                                 annotation: {
                                     annotations: {
                                         lineStart: {
-                                            type: 'line',
-                                            yMin: 0, // Adjusted to 0 for weight lost
-                                            yMax: 0, // Adjusted to 0 for weight lost
-                                            borderColor: 'rgba(0,0,0,0.2)',
+                                            type: "line",
+                                            yMin: lineStartValue,
+                                            yMax: lineStartValue,
+                                            borderColor: "rgba(0,0,0,0.2)",
                                             borderWidth: 2,
-                                            borderDash: [5, 5]
+                                            borderDash: [5, 5],
                                         },
                                         goalLine: {
-                                            type: 'line',
-                                            yMin: 80,
-                                            yMax: 80,
-                                            borderColor: 'rgba(0,0,0,0.8)',
+                                            type: "line",
+                                            yMin: goalLineValue,
+                                            yMax: goalLineValue,
+                                            borderColor: "rgba(0,0,0,0.8)",
                                             borderWidth: 2,
-                                            borderDash: [5, 5]
+                                            borderDash: [5, 5],
                                         },
                                         box1: {
-                                            type: 'box',
-                                            yMin: 0,
-                                            yMax: 80,
-                                            backgroundColor: 'rgba(0,0,0,0.25)'
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                                            type: "box",
+                                            yMin: goalLineValue - 5,
+                                            yMax: goalLineValue,
+                                            backgroundColor: "rgba(0,0,0,0.25)",
+                                        },
+                                    },
+                                },
+                            },
+                        },
                     });
+                }
                 return [2 /*return*/];
         }
     });
@@ -226,14 +314,18 @@ var logWeight = function () { return __awaiter(_this, void 0, void 0, function (
                     return [2 /*return*/];
                 }
                 weightFormDialog.close();
-                weight = +document.getElementById("weightInput").value;
+                weight = +document.getElementById("weightInput")
+                    .value;
                 if (!currentParticipantId || isNaN(weight))
                     return [2 /*return*/];
-                return [4 /*yield*/, pocketBase.collection("weights").create({ weight: weight, participant: currentParticipantId })
+                return [4 /*yield*/, pocketBase.collection("weights").create({
+                        weight: weight,
+                        participant: currentParticipantId,
+                    })
                         .catch(function (e) { return console.error("Error logging weight:", e); })];
             case 1:
                 _a.sent();
-                document.getElementById("weightInput").value = '';
+                document.getElementById("weightInput").value = "";
                 return [4 /*yield*/, updateCharts()];
             case 2:
                 _a.sent();
@@ -245,8 +337,11 @@ var logWeight = function () { return __awaiter(_this, void 0, void 0, function (
 var loadParticipants = function () { return __awaiter(_this, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, pocketBase.collection('participants').getFullList()
-                    .catch(function (e) { console.error("Error loading participants:", e); return []; })];
+            case 0: return [4 /*yield*/, pocketBase.collection("participants").getFullList()
+                    .catch(function (e) {
+                    console.error("Error loading participants:", e);
+                    return [];
+                })];
             case 1: return [2 /*return*/, _a.sent()];
         }
     });
@@ -263,7 +358,7 @@ var renderSignInButtons = function () { return __awaiter(_this, void 0, void 0, 
                 if (container) {
                     container.innerHTML = participants.map(function (participant) {
                         return "<button onclick=\"refreshParticipant('".concat(participant.id, "')\">").concat(participant.name, "</button>");
-                    }).join('');
+                    }).join("");
                 }
                 return [2 /*return*/];
         }
@@ -274,7 +369,9 @@ var init = function () { return __awaiter(_this, void 0, void 0, function () {
         switch (_a.label) {
             case 0:
                 if (!currentParticipantId) return [3 /*break*/, 2];
-                logweightbutton.style.display = window.location.hash === "#admin" ? "" : "none";
+                logweightbutton.style.display = window.location.hash === "#admin"
+                    ? ""
+                    : "none";
                 return [4 /*yield*/, refreshParticipant()];
             case 1:
                 _a.sent();
@@ -289,7 +386,7 @@ var init = function () { return __awaiter(_this, void 0, void 0, function () {
                 _a.sent();
                 _a.label = 5;
             case 5:
-                pocketBase.collection("weights").subscribe('*', function () { return updateCharts(); });
+                pocketBase.collection("weights").subscribe("*", function () { return updateCharts(); });
                 submitButton.addEventListener("pointerup", logWeight);
                 return [2 /*return*/];
         }
