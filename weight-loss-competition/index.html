@@ -46,6 +46,17 @@
         <h1 style="text-align: center; width: 100%;" id="welcomeText">Hello </h1>
 
         <button style="display: none; width: calc(100% - 2em); margin: 0 1em; box-sizing: border-box;" onclick="weightFormDialog.showModal()" id='logweightbutton'>Log Weight</button>
+        <div class="tabs" id="GraphTabs">
+            <a class="active ripple" data-ui="#tab1">Absolute</a>
+            <a class="ripple" data-ui="#tab2">Relative</a>
+            <a class="ripple" data-ui="#tab3">Progress</a>
+        </div>
+        <div id="tab1" class="page">
+        </div>
+        <div id="tab2" class="page">
+        </div>
+        <div id="tab3" class="page">
+        </div>
         <div style="width: 100%; height: 100dvh; max-width: 98dvw;"><canvas id="ProgressGraph"></canvas></div>
         <ul id="recordList" class="list border">
         </ul>
