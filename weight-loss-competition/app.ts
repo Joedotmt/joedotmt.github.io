@@ -17,7 +17,7 @@ const sid_progress = document.getElementById("sid_progress");
 const sid_words = document.getElementById("sid_words");
 const welcomeText = document.getElementById("welcomeText");
 const recordList = document.getElementById("recordList");
-const submitButton = document.getElementById("weightFormDialog");
+const submitButton = document.getElementById("submitButton");
 const weightFormDialog: HTMLDialogElement = document.getElementById(
     "weightFormDialog",
 );
@@ -25,12 +25,6 @@ const signindialog: HTMLDialogElement = document.getElementById("signindialog");
 const GraphTabs = document.getElementById("GraphTabs");
 
 let GLOBALmode = "Absolute";
-GraphTabs.querySelectorAll("a").forEach((e) => {
-    e.addEventListener("click", async () => {
-        GLOBALmode = e.innerText;
-        await updateCharts();
-    });
-});
 
 const pocketBase = new PocketBase("https://petition.pockethost.io/");
 const currentParticipantId: string = localStorage.getItem("participant") ?? "";
@@ -130,151 +124,150 @@ const renderRecordList = (groupedWeights: Record<string, Weight[]>): void => {
     ).join("");
 };
 
-const updateCharts = async (): Promise<void> => {
-    const weights = await loadWeights();
-    const grouped = groupWeights(weights);
-    renderRecordList(grouped);
-    const participantWeights = currentParticipantId
-        ? weights.filter((w) =>
-            w.expand.participant.id === currentParticipantId
-        )
-        : [];
-    const start = participantWeights[participantWeights.length - 1]?.weight ||
-        0;
-
-    // Compute goalLineValue based on GLOBALmode and current participant's data
-    let goalLineValue = 0;
-    let lineStartValue = start;
-    if (currentParticipantId && participantWeights.length > 0) {
-        const participantGoal = participantWeights[0].expand.participant.goal;
-        const startWeight =
-            participantWeights[participantWeights.length - 1].weight;
-        if (GLOBALmode === "Absolute") {
-            goalLineValue = participantGoal;
-            lineStartValue = startWeight;
-        } else if (GLOBALmode === "Relative") {
-            goalLineValue = -(startWeight - participantGoal);
+// New helper function to compute goal and line start values
+const calculateGoalLineValues = (
+    participantWeights: Weight[],
+    mode: string,
+) => {
+    const lastWeight =
+        participantWeights[participantWeights.length - 1]?.weight || 0;
+    let goalLineValue = 0,
+        lineStartValue = lastWeight;
+    if (participantWeights.length > 0) {
+        const { goal } = participantWeights[0].expand.participant;
+        if (mode === "Absolute") {
+            goalLineValue = goal;
+            lineStartValue = lastWeight;
+        } else if (mode === "Relative") {
+            goalLineValue = -(lastWeight - goal);
             lineStartValue = 0;
-        } else if (GLOBALmode === "Progress") {
+        } else if (mode === "Progress") {
             goalLineValue = 100;
             lineStartValue = 0;
         }
     }
+    return { goalLineValue, lineStartValue };
+};
 
-    const ctx = (document.getElementById("ProgressGraph") as HTMLCanvasElement)
-        .getContext("2d");
-    const datasets = createDatasets(grouped, GLOBALmode);
-
-    // Calculate the highest value in the datasets
-    let highestValue;
-    const yAxisReverse = GLOBALmode === "Progress";
-
-    if (yAxisReverse) {
-        highestValue = Math.min(
-            ...datasets.flatMap((dataset) =>
-                dataset.data.map((point) => point.y)
-            ),
+// Refactored updateCharts with error handling and computed values
+const updateCharts = async (): Promise<void> => {
+    try {
+        const weights = await loadWeights();
+        const grouped = groupWeights(weights);
+        renderRecordList(grouped);
+        const participantWeights = currentParticipantId
+            ? weights.filter((w) =>
+                w.expand.participant.id === currentParticipantId
+            )
+            : [];
+        const { goalLineValue, lineStartValue } = calculateGoalLineValues(
+            participantWeights,
+            GLOBALmode,
         );
-    } else {
-        highestValue = Math.max(
-            ...datasets.flatMap((dataset) =>
-                dataset.data.map((point) => point.y)
-            ),
-        );
-    }
-    const margin = 5;
 
-    if (chartInstance) {
-        chartInstance.data.datasets = datasets;
-        if (
-            chartInstance.options.plugins &&
-            chartInstance.options.plugins.annotation &&
-            chartInstance.options.plugins.annotation.annotations
-        ) {
-            chartInstance.options.plugins.annotation.annotations.lineStart
-                .yMin = lineStartValue;
-            chartInstance.options.plugins.annotation.annotations.lineStart
-                .yMax = lineStartValue;
-            chartInstance.options.plugins.annotation.annotations.goalLine.yMin =
-                goalLineValue;
-            chartInstance.options.plugins.annotation.annotations.goalLine.yMax =
-                goalLineValue;
-            chartInstance.options.plugins.annotation.annotations.box1.yMax =
-                goalLineValue;
-            chartInstance.options.plugins.annotation.annotations.box1.yMin =
-                goalLineValue + (yAxisReverse ? margin : -margin);
-        }
-
+        // ...existing code to initialize Chart context and datasets...
+        const ctx =
+            (document.getElementById("ProgressGraph") as HTMLCanvasElement)
+                .getContext("2d");
+        const datasets = createDatasets(grouped, GLOBALmode);
+        const margin = 5;
+        let highestValue: number;
+        const yAxisReverse = GLOBALmode === "Progress";
         if (yAxisReverse) {
-            chartInstance.options.scales.y.max = goalLineValue + margin;
-            chartInstance.options.scales.y.min = highestValue - margin;
+            highestValue = Math.min(
+                ...datasets.flatMap((ds) => ds.data.map((pt: any) => pt.y)),
+            );
         } else {
-            chartInstance.options.scales.y.max = highestValue + margin;
-            chartInstance.options.scales.y.min = goalLineValue - margin;
+            highestValue = Math.max(
+                ...datasets.flatMap((ds) => ds.data.map((pt: any) => pt.y)),
+            );
         }
 
-        chartInstance.options.scales.y.reverse = yAxisReverse;
-        chartInstance.update();
-    } else {
-        chartInstance = new Chart(ctx, {
-            type: "line",
-            data: { datasets },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        type: "time",
-                        time: {
-                            unit: "day",
-                            displayFormats: { day: "dd MMM" },
-                            tooltipFormat: "dd MMM yyyy",
+        if (chartInstance) {
+            chartInstance.data.datasets = datasets;
+            if (chartInstance.options.plugins?.annotation?.annotations) {
+                const ann =
+                    chartInstance.options.plugins.annotation.annotations;
+                ann.lineStart.yMin = lineStartValue;
+                ann.lineStart.yMax = lineStartValue;
+                ann.goalLine.yMin = goalLineValue;
+                ann.goalLine.yMax = goalLineValue;
+                ann.box1.yMax = goalLineValue;
+                ann.box1.yMin = goalLineValue +
+                    (yAxisReverse ? margin : -margin);
+            }
+            chartInstance.options.scales!.y.reverse = yAxisReverse;
+            if (yAxisReverse) {
+                chartInstance.options.scales!.y.max = goalLineValue + margin;
+                chartInstance.options.scales!.y.min = highestValue - margin;
+            } else {
+                chartInstance.options.scales!.y.max = highestValue + margin;
+                chartInstance.options.scales!.y.min = goalLineValue - margin;
+            }
+            chartInstance.update();
+        } else {
+            chartInstance = new Chart(ctx, {
+                type: "line",
+                data: { datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: "time",
+                            time: {
+                                unit: "day",
+                                displayFormats: { day: "dd MMM" },
+                                tooltipFormat: "dd MMM yyyy",
+                            },
+                            title: { display: false },
+                            ticks: {
+                                autoSkip: true,
+                                maxRotation: 0,
+                                minRotation: 0,
+                            },
                         },
-                        title: { display: false },
-                        ticks: {
-                            autoSkip: true,
-                            maxRotation: 0,
-                            minRotation: 0,
+                        y: {
+                            title: { display: true, text: "Weight Lost (kg)" },
+                            reverse: yAxisReverse,
+                            min: goalLineValue - 5,
+                            max: highestValue + 5,
                         },
                     },
-                    y: {
-                        title: { display: true, text: "Weight Lost (kg)" },
-                        reverse: yAxisReverse,
-                        min: goalLineValue - 5,
-                        max: highestValue + 5,
+                    plugins: {
+                        legend: { display: true, position: "top" },
+                        annotation: {
+                            annotations: {
+                                lineStart: {
+                                    type: "line",
+                                    yMin: lineStartValue,
+                                    yMax: lineStartValue,
+                                    borderColor: "rgba(0,0,0,0.2)",
+                                    borderWidth: 2,
+                                    borderDash: [5, 5],
+                                },
+                                goalLine: {
+                                    type: "line",
+                                    yMin: goalLineValue,
+                                    yMax: goalLineValue,
+                                    borderColor: "rgba(0,0,0,0.8)",
+                                    borderWidth: 2,
+                                    borderDash: [5, 5],
+                                },
+                                box1: {
+                                    type: "box",
+                                    yMin: goalLineValue - 5,
+                                    yMax: goalLineValue,
+                                    backgroundColor: "rgba(0,0,0,0.25)",
+                                },
+                            },
+                        },
                     },
                 },
-                plugins: {
-                    legend: { display: true, position: "top" },
-                    annotation: {
-                        annotations: {
-                            lineStart: {
-                                type: "line",
-                                yMin: lineStartValue,
-                                yMax: lineStartValue,
-                                borderColor: "rgba(0,0,0,0.2)",
-                                borderWidth: 2,
-                                borderDash: [5, 5],
-                            },
-                            goalLine: {
-                                type: "line",
-                                yMin: goalLineValue,
-                                yMax: goalLineValue,
-                                borderColor: "rgba(0,0,0,0.8)",
-                                borderWidth: 2,
-                                borderDash: [5, 5],
-                            },
-                            box1: {
-                                type: "box",
-                                yMin: goalLineValue - 5,
-                                yMax: goalLineValue,
-                                backgroundColor: "rgba(0,0,0,0.25)",
-                            },
-                        },
-                    },
-                },
-            },
-        });
+            });
+        }
+    } catch (error) {
+        console.error("Error in updateCharts:", error);
     }
 };
 
@@ -316,7 +309,21 @@ const renderSignInButtons = async (): Promise<void> => {
     }
 };
 
+// New function: Centralize DOM event listener assignments
+const attachEventListeners = (): void => {
+    GraphTabs.querySelectorAll("a").forEach((e) => {
+        e.addEventListener("click", async () => {
+            GLOBALmode = e.innerText;
+            await updateCharts();
+        });
+    });
+    submitButton.addEventListener("click", logWeight);
+    //pocketBase.collection("weights").subscribe("*", updateCharts);
+};
+
+// Refactored init function to use centralized event listener setup
 const init = async (): Promise<void> => {
+    attachEventListeners();
     if (currentParticipantId) {
         logweightbutton.style.display = window.location.hash === "#admin"
             ? ""
@@ -327,8 +334,6 @@ const init = async (): Promise<void> => {
         await renderSignInButtons();
         await updateCharts();
     }
-    pocketBase.collection("weights").subscribe("*", () => updateCharts());
-    submitButton.addEventListener("pointerup", logWeight);
 };
 
 init();

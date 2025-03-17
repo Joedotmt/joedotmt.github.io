@@ -41,25 +41,11 @@ var sid_progress = document.getElementById("sid_progress");
 var sid_words = document.getElementById("sid_words");
 var welcomeText = document.getElementById("welcomeText");
 var recordList = document.getElementById("recordList");
-var submitButton = document.getElementById("weightFormDialog");
+var submitButton = document.getElementById("submitButton");
 var weightFormDialog = document.getElementById("weightFormDialog");
 var signindialog = document.getElementById("signindialog");
 var GraphTabs = document.getElementById("GraphTabs");
 var GLOBALmode = "Absolute";
-GraphTabs.querySelectorAll("a").forEach(function (e) {
-    e.addEventListener("click", function () { return __awaiter(_this, void 0, void 0, function () {
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    GLOBALmode = e.innerText;
-                    return [4 /*yield*/, updateCharts()];
-                case 1:
-                    _a.sent();
-                    return [2 /*return*/];
-            }
-        });
-    }); });
-});
 var pocketBase = new PocketBase("https://petition.pockethost.io/");
 var currentParticipantId = (_a = localStorage.getItem("participant")) !== null && _a !== void 0 ? _a : "";
 var chartInstance = null;
@@ -160,14 +146,39 @@ var renderRecordList = function (groupedWeights) {
         }).join(""), "\n        </ul>");
     }).join("");
 };
-var updateCharts = function () { return __awaiter(_this, void 0, void 0, function () {
-    var weights, grouped, participantWeights, start, goalLineValue, lineStartValue, participantGoal, startWeight, ctx, datasets, highestValue, yAxisReverse, margin;
+// New helper function to compute goal and line start values
+var calculateGoalLineValues = function (participantWeights, mode) {
     var _a;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
-            case 0: return [4 /*yield*/, loadWeights()];
+    var lastWeight = ((_a = participantWeights[participantWeights.length - 1]) === null || _a === void 0 ? void 0 : _a.weight) || 0;
+    var goalLineValue = 0, lineStartValue = lastWeight;
+    if (participantWeights.length > 0) {
+        var goal = participantWeights[0].expand.participant.goal;
+        if (mode === "Absolute") {
+            goalLineValue = goal;
+            lineStartValue = lastWeight;
+        }
+        else if (mode === "Relative") {
+            goalLineValue = -(lastWeight - goal);
+            lineStartValue = 0;
+        }
+        else if (mode === "Progress") {
+            goalLineValue = 100;
+            lineStartValue = 0;
+        }
+    }
+    return { goalLineValue: goalLineValue, lineStartValue: lineStartValue };
+};
+// Refactored updateCharts with error handling and computed values
+var updateCharts = function () { return __awaiter(_this, void 0, void 0, function () {
+    var weights, grouped, participantWeights, _a, goalLineValue, lineStartValue, ctx, datasets, margin, highestValue, yAxisReverse, ann, error_1;
+    var _b, _c;
+    return __generator(this, function (_d) {
+        switch (_d.label) {
+            case 0:
+                _d.trys.push([0, 2, , 3]);
+                return [4 /*yield*/, loadWeights()];
             case 1:
-                weights = _b.sent();
+                weights = _d.sent();
                 grouped = groupWeights(weights);
                 renderRecordList(grouped);
                 participantWeights = currentParticipantId
@@ -175,59 +186,32 @@ var updateCharts = function () { return __awaiter(_this, void 0, void 0, functio
                         return w.expand.participant.id === currentParticipantId;
                     })
                     : [];
-                start = ((_a = participantWeights[participantWeights.length - 1]) === null || _a === void 0 ? void 0 : _a.weight) ||
-                    0;
-                goalLineValue = 0;
-                lineStartValue = start;
-                if (currentParticipantId && participantWeights.length > 0) {
-                    participantGoal = participantWeights[0].expand.participant.goal;
-                    startWeight = participantWeights[participantWeights.length - 1].weight;
-                    if (GLOBALmode === "Absolute") {
-                        goalLineValue = participantGoal;
-                        lineStartValue = startWeight;
-                    }
-                    else if (GLOBALmode === "Relative") {
-                        goalLineValue = -(startWeight - participantGoal);
-                        lineStartValue = 0;
-                    }
-                    else if (GLOBALmode === "Progress") {
-                        goalLineValue = 100;
-                        lineStartValue = 0;
-                    }
-                }
+                _a = calculateGoalLineValues(participantWeights, GLOBALmode), goalLineValue = _a.goalLineValue, lineStartValue = _a.lineStartValue;
                 ctx = document.getElementById("ProgressGraph")
                     .getContext("2d");
                 datasets = createDatasets(grouped, GLOBALmode);
+                margin = 5;
+                highestValue = void 0;
                 yAxisReverse = GLOBALmode === "Progress";
                 if (yAxisReverse) {
-                    highestValue = Math.min.apply(Math, datasets.flatMap(function (dataset) {
-                        return dataset.data.map(function (point) { return point.y; });
-                    }));
+                    highestValue = Math.min.apply(Math, datasets.flatMap(function (ds) { return ds.data.map(function (pt) { return pt.y; }); }));
                 }
                 else {
-                    highestValue = Math.max.apply(Math, datasets.flatMap(function (dataset) {
-                        return dataset.data.map(function (point) { return point.y; });
-                    }));
+                    highestValue = Math.max.apply(Math, datasets.flatMap(function (ds) { return ds.data.map(function (pt) { return pt.y; }); }));
                 }
-                margin = 5;
                 if (chartInstance) {
                     chartInstance.data.datasets = datasets;
-                    if (chartInstance.options.plugins &&
-                        chartInstance.options.plugins.annotation &&
-                        chartInstance.options.plugins.annotation.annotations) {
-                        chartInstance.options.plugins.annotation.annotations.lineStart
-                            .yMin = lineStartValue;
-                        chartInstance.options.plugins.annotation.annotations.lineStart
-                            .yMax = lineStartValue;
-                        chartInstance.options.plugins.annotation.annotations.goalLine.yMin =
-                            goalLineValue;
-                        chartInstance.options.plugins.annotation.annotations.goalLine.yMax =
-                            goalLineValue;
-                        chartInstance.options.plugins.annotation.annotations.box1.yMax =
-                            goalLineValue;
-                        chartInstance.options.plugins.annotation.annotations.box1.yMin =
-                            goalLineValue + (yAxisReverse ? margin : -margin);
+                    if ((_c = (_b = chartInstance.options.plugins) === null || _b === void 0 ? void 0 : _b.annotation) === null || _c === void 0 ? void 0 : _c.annotations) {
+                        ann = chartInstance.options.plugins.annotation.annotations;
+                        ann.lineStart.yMin = lineStartValue;
+                        ann.lineStart.yMax = lineStartValue;
+                        ann.goalLine.yMin = goalLineValue;
+                        ann.goalLine.yMax = goalLineValue;
+                        ann.box1.yMax = goalLineValue;
+                        ann.box1.yMin = goalLineValue +
+                            (yAxisReverse ? margin : -margin);
                     }
+                    chartInstance.options.scales.y.reverse = yAxisReverse;
                     if (yAxisReverse) {
                         chartInstance.options.scales.y.max = goalLineValue + margin;
                         chartInstance.options.scales.y.min = highestValue - margin;
@@ -236,7 +220,6 @@ var updateCharts = function () { return __awaiter(_this, void 0, void 0, functio
                         chartInstance.options.scales.y.max = highestValue + margin;
                         chartInstance.options.scales.y.min = goalLineValue - margin;
                     }
-                    chartInstance.options.scales.y.reverse = yAxisReverse;
                     chartInstance.update();
                 }
                 else {
@@ -251,8 +234,8 @@ var updateCharts = function () { return __awaiter(_this, void 0, void 0, functio
                                     type: "time",
                                     time: {
                                         unit: "day",
-                                        displayFormats: { day: "dd MMM" },
-                                        tooltipFormat: "dd MMM yyyy",
+                                        displayFormats: { day: "dd MMM" },
+                                        tooltipFormat: "dd MMM yyyy",
                                     },
                                     title: { display: false },
                                     ticks: {
@@ -300,7 +283,12 @@ var updateCharts = function () { return __awaiter(_this, void 0, void 0, functio
                         },
                     });
                 }
-                return [2 /*return*/];
+                return [3 /*break*/, 3];
+            case 2:
+                error_1 = _d.sent();
+                console.error("Error in updateCharts:", error_1);
+                return [3 /*break*/, 3];
+            case 3: return [2 /*return*/];
         }
     });
 }); };
@@ -309,6 +297,7 @@ var logWeight = function () { return __awaiter(_this, void 0, void 0, function (
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
+                console.log("enjunueihehuyehuy");
                 if (window.location.hash !== "#admin") {
                     console.error("Unauthorized: Only admin can log weights.");
                     return [2 /*return*/];
@@ -364,10 +353,31 @@ var renderSignInButtons = function () { return __awaiter(_this, void 0, void 0, 
         }
     });
 }); };
+// New function: Centralize DOM event listener assignments
+var attachEventListeners = function () {
+    GraphTabs.querySelectorAll("a").forEach(function (e) {
+        e.addEventListener("click", function () { return __awaiter(_this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        GLOBALmode = e.innerText;
+                        return [4 /*yield*/, updateCharts()];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        }); });
+    });
+    submitButton.addEventListener("click", logWeight);
+    //pocketBase.collection("weights").subscribe("*", updateCharts);
+};
+// Refactored init function to use centralized event listener setup
 var init = function () { return __awaiter(_this, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
+                attachEventListeners();
                 if (!currentParticipantId) return [3 /*break*/, 2];
                 logweightbutton.style.display = window.location.hash === "#admin"
                     ? ""
@@ -385,10 +395,7 @@ var init = function () { return __awaiter(_this, void 0, void 0, function () {
             case 4:
                 _a.sent();
                 _a.label = 5;
-            case 5:
-                pocketBase.collection("weights").subscribe("*", function () { return updateCharts(); });
-                submitButton.addEventListener("pointerup", logWeight);
-                return [2 /*return*/];
+            case 5: return [2 /*return*/];
         }
     });
 }); };
