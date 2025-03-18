@@ -7,7 +7,7 @@ body {
 }
 
 #sid_progress {
-    display: none;
+    display: block;
     position: fixed;
     top: 50%;
     left: 50%;
@@ -15,6 +15,9 @@ body {
     z-index: 10;
     animation: stupidScale 2000ms cubic-bezier(0.075, 0.82, 0.165, 1) 0s
         infinite forwards;
+}
+#sid_words {
+    display: contents;
 }
 
 main {

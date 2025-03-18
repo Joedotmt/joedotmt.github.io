@@ -1,158 +1,92 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
+const logweightbutton = document.getElementById("logweightbutton");
+const sid_progress = document.getElementById("sid_progress");
+const sid_words = document.getElementById("sid_words");
+const welcomeText = document.getElementById("welcomeText");
+const recordList = document.getElementById("recordList");
+const submitButton = document.getElementById("submitButton");
+const weightFormDialog = document.getElementById("weightFormDialog");
+const signindialog = document.getElementById("signindialog");
+const GraphTabs = document.getElementById("GraphTabs");
+let GLOBALmode = "Absolute";
+signindialog.showModal();
+const pocketBase = new PocketBase("https://petition.pockethost.io/");
+const currentParticipantId = localStorage.getItem("participant") ?? "";
+let chartInstance = null;
+const getParticipant = async (id) => {
+    const participantId = id || currentParticipantId;
+    if (!participantId)
+        return null;
+    localStorage.setItem("participant", participantId);
+    return await pocketBase.collection("participants").getOne(participantId)
+        .catch((e) => (console.error("Error fetching participant:", e), null));
 };
-var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (g && (g = 0, op[0] && (_ = 0)), _) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
+const refreshParticipant = async (id) => {
+    sid_progress.style.display = "block";
+    sid_words.style.display = "none";
+    const participant = await getParticipant(id);
+    if (!participant)
+        return;
+    welcomeText.innerText = `Hello ${participant.name}`;
+    await updateCharts();
+    logweightbutton.style.display = window.location.hash === "#admin"
+        ? ""
+        : "none";
+    signindialog.close();
+    setTimeout(() => {
+        sid_words.style.display = "";
+        sid_progress.style.display = "";
+    }, 500);
 };
-var _a;
-var _this = this;
-var logweightbutton = document.getElementById("logweightbutton");
-var sid_progress = document.getElementById("sid_progress");
-var sid_words = document.getElementById("sid_words");
-var welcomeText = document.getElementById("welcomeText");
-var recordList = document.getElementById("recordList");
-var submitButton = document.getElementById("submitButton");
-var weightFormDialog = document.getElementById("weightFormDialog");
-var signindialog = document.getElementById("signindialog");
-var GraphTabs = document.getElementById("GraphTabs");
-var GLOBALmode = "Absolute";
-var pocketBase = new PocketBase("https://petition.pockethost.io/");
-var currentParticipantId = (_a = localStorage.getItem("participant")) !== null && _a !== void 0 ? _a : "";
-var chartInstance = null;
-var getParticipant = function (id) { return __awaiter(_this, void 0, void 0, function () {
-    var participantId;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                participantId = id || currentParticipantId;
-                if (!participantId)
-                    return [2 /*return*/, null];
-                localStorage.setItem("participant", participantId);
-                return [4 /*yield*/, pocketBase.collection("participants").getOne(participantId)
-                        .catch(function (e) { return (console.error("Error fetching participant:", e), null); })];
-            case 1: return [2 /*return*/, _a.sent()];
-        }
-    });
-}); };
-var refreshParticipant = function (id) { return __awaiter(_this, void 0, void 0, function () {
-    var participant;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                sid_progress.style.display = "block";
-                sid_words.style.display = "none";
-                return [4 /*yield*/, getParticipant(id)];
-            case 1:
-                participant = _a.sent();
-                if (!participant)
-                    return [2 /*return*/];
-                welcomeText.innerText = "Hello ".concat(participant.name);
-                return [4 /*yield*/, updateCharts()];
-            case 2:
-                _a.sent();
-                logweightbutton.style.display = window.location.hash === "#admin"
-                    ? ""
-                    : "none";
-                signindialog.close();
-                setTimeout(function () {
-                    sid_words.style.display = "";
-                    sid_progress.style.display = "";
-                }, 500);
-                return [2 /*return*/];
-        }
-    });
-}); };
-var loadWeights = function () { return __awaiter(_this, void 0, void 0, function () {
-    return __generator(this, function (_a) {
-        return [2 /*return*/, pocketBase.collection("weights").getFullList({
-                sort: "-created",
-                expand: "participant",
-            })
-                .catch(function (e) { return (console.error("Error loading weights:", e), []); })];
-    });
-}); };
-var groupWeights = function (weights) {
-    return weights.reduce(function (accumulator, element) {
-        var _a;
-        var _b;
-        ((_a = accumulator[_b = element.expand.participant.name]) !== null && _a !== void 0 ? _a : (accumulator[_b] = [])).push(element);
-        return accumulator;
-    }, {});
-};
-var createDatasets = function (groupedWeights, mode) {
-    return Object.entries(groupedWeights).map(function (_a, i) {
-        var name = _a[0], elements = _a[1];
-        var startWeight = elements[elements.length - 1].weight;
-        return {
-            label: name,
-            data: elements.sort(function (a, b) {
-                return Date.parse(a.updated) - Date.parse(b.updated);
-            })
-                .map(function (x) { return ({
-                x: new Date(x.updated),
-                y: mode === "Relative"
-                    ? x.weight - startWeight
-                    : mode === "Progress"
-                        ? ((x.weight - startWeight) /
-                            (elements[0].expand.participant.goal -
-                                startWeight)) * 100
-                        : x.weight,
-            }); }),
-            borderColor: ["#5297ff", "#52ff5a", "green", "orange", "purple"][i % 5],
-            fill: false,
-        };
-    });
-};
-var renderRecordList = function (groupedWeights) {
-    recordList.innerHTML = Object.entries(groupedWeights).map(function (_a) {
-        var name = _a[0], elements = _a[1];
-        var weightLost = (elements[0].weight - elements[elements.length - 1].weight)
+const loadWeights = async () => pocketBase.collection("weights").getFullList({
+    sort: "-created",
+    expand: "participant",
+})
+    .catch((e) => (console.error("Error loading weights:", e), []));
+const groupWeights = (weights) => weights.reduce((accumulator, element) => {
+    (accumulator[element.expand.participant.name] ??= []).push(element);
+    return accumulator;
+}, {});
+const createDatasets = (groupedWeights, mode) => Object.entries(groupedWeights).map(([name, elements], i) => {
+    const startWeight = elements[elements.length - 1].weight;
+    return {
+        label: name,
+        data: elements.sort((a, b) => Date.parse(a.updated) - Date.parse(b.updated))
+            .map((x) => ({
+            x: new Date(x.updated),
+            y: mode === "Relative"
+                ? x.weight - startWeight
+                : mode === "Progress"
+                    ? ((x.weight - startWeight) /
+                        (elements[0].expand.participant.goal -
+                            startWeight)) * 100
+                    : x.weight,
+        })),
+        borderColor: ["#5297ff", "#52ff5a", "green", "orange", "purple"][i % 5],
+        fill: false,
+    };
+});
+const renderRecordList = (groupedWeights) => {
+    recordList.innerHTML = Object.entries(groupedWeights).map(([name, elements]) => {
+        const weightLost = (elements[0].weight - elements[elements.length - 1].weight)
             .toFixed(1);
-        return "<h3 style=\"margin:0em 1rem; border-bottom: 1px solid black;\">".concat(name, "</h3>\n        <ul class=\"list border\">\n            <li class=\"ripple\">Total weight lost: ").concat(weightLost, "kg</li>\n            ").concat(elements.map(function (x, i) {
-            return "<li class=\"ripple\" style=\"".concat(i ? "" : "background-color: var(--inverse-primary);", "\">\n                    <div>").concat(new Date(x.updated).toLocaleDateString("en-GB", {
-                day: "2-digit",
-                month: "long",
-            }), "</div>\n                    ").concat(x.weight, "kg\n                </li>");
-        }).join(""), "\n        </ul>");
+        return `<h3 style="margin:0em 1rem; border-bottom: 1px solid black;">${name}</h3>
+        <ul class="list border">
+            <li class="ripple">Total weight lost: ${weightLost}kg</li>
+            ${elements.map((x, i) => `<li class="ripple" style="${i ? "" : "background-color: var(--inverse-primary);"}">
+                    <div>${new Date(x.updated).toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "long",
+        })}</div>
+                    ${x.weight}kg
+                </li>`).join("")}
+        </ul>`;
     }).join("");
 };
-// New helper function to compute goal and line start values
-var calculateGoalLineValues = function (participantWeights, mode) {
-    var _a;
-    var lastWeight = ((_a = participantWeights[participantWeights.length - 1]) === null || _a === void 0 ? void 0 : _a.weight) || 0;
-    var goalLineValue = 0, lineStartValue = lastWeight;
+const calculateGoalLineValues = (participantWeights, mode) => {
+    const lastWeight = participantWeights[participantWeights.length - 1]?.weight || 0;
+    let goalLineValue = 0, lineStartValue = lastWeight;
     if (participantWeights.length > 0) {
-        var goal = participantWeights[0].expand.participant.goal;
+        const { goal } = participantWeights[0].expand.participant;
         if (mode === "Absolute") {
             goalLineValue = goal;
             lineStartValue = lastWeight;
@@ -166,237 +100,178 @@ var calculateGoalLineValues = function (participantWeights, mode) {
             lineStartValue = 0;
         }
     }
-    return { goalLineValue: goalLineValue, lineStartValue: lineStartValue };
+    return { goalLineValue, lineStartValue };
 };
 // Refactored updateCharts with error handling and computed values
-var updateCharts = function () { return __awaiter(_this, void 0, void 0, function () {
-    var weights, grouped, participantWeights, _a, goalLineValue, lineStartValue, ctx, datasets, margin, highestValue, yAxisReverse, ann, error_1;
-    var _b, _c;
-    return __generator(this, function (_d) {
-        switch (_d.label) {
-            case 0:
-                _d.trys.push([0, 2, , 3]);
-                return [4 /*yield*/, loadWeights()];
-            case 1:
-                weights = _d.sent();
-                grouped = groupWeights(weights);
-                renderRecordList(grouped);
-                participantWeights = currentParticipantId
-                    ? weights.filter(function (w) {
-                        return w.expand.participant.id === currentParticipantId;
-                    })
-                    : [];
-                _a = calculateGoalLineValues(participantWeights, GLOBALmode), goalLineValue = _a.goalLineValue, lineStartValue = _a.lineStartValue;
-                ctx = document.getElementById("ProgressGraph")
-                    .getContext("2d");
-                datasets = createDatasets(grouped, GLOBALmode);
-                margin = 5;
-                highestValue = void 0;
-                yAxisReverse = GLOBALmode === "Progress";
-                if (yAxisReverse) {
-                    highestValue = Math.min.apply(Math, datasets.flatMap(function (ds) { return ds.data.map(function (pt) { return pt.y; }); }));
-                }
-                else {
-                    highestValue = Math.max.apply(Math, datasets.flatMap(function (ds) { return ds.data.map(function (pt) { return pt.y; }); }));
-                }
-                if (chartInstance) {
-                    chartInstance.data.datasets = datasets;
-                    if ((_c = (_b = chartInstance.options.plugins) === null || _b === void 0 ? void 0 : _b.annotation) === null || _c === void 0 ? void 0 : _c.annotations) {
-                        ann = chartInstance.options.plugins.annotation.annotations;
-                        ann.lineStart.yMin = lineStartValue;
-                        ann.lineStart.yMax = lineStartValue;
-                        ann.goalLine.yMin = goalLineValue;
-                        ann.goalLine.yMax = goalLineValue;
-                        ann.box1.yMax = goalLineValue;
-                        ann.box1.yMin = goalLineValue +
-                            (yAxisReverse ? margin : -margin);
-                    }
-                    chartInstance.options.scales.y.reverse = yAxisReverse;
-                    if (yAxisReverse) {
-                        chartInstance.options.scales.y.max = goalLineValue + margin;
-                        chartInstance.options.scales.y.min = highestValue - margin;
-                    }
-                    else {
-                        chartInstance.options.scales.y.max = highestValue + margin;
-                        chartInstance.options.scales.y.min = goalLineValue - margin;
-                    }
-                    chartInstance.update();
-                }
-                else {
-                    chartInstance = new Chart(ctx, {
-                        type: "line",
-                        data: { datasets: datasets },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            scales: {
-                                x: {
-                                    type: "time",
-                                    time: {
-                                        unit: "day",
-                                        displayFormats: { day: "dd MMM" },
-                                        tooltipFormat: "dd MMM yyyy",
-                                    },
-                                    title: { display: false },
-                                    ticks: {
-                                        autoSkip: true,
-                                        maxRotation: 0,
-                                        minRotation: 0,
-                                    },
-                                },
-                                y: {
-                                    title: { display: true, text: "Weight Lost (kg)" },
-                                    reverse: yAxisReverse,
-                                    min: goalLineValue - 5,
-                                    max: highestValue + 5,
-                                },
+const updateCharts = async () => {
+    try {
+        const weights = await loadWeights();
+        const grouped = groupWeights(weights);
+        renderRecordList(grouped);
+        const participantWeights = currentParticipantId
+            ? weights.filter((w) => w.expand.participant.id === currentParticipantId)
+            : [];
+        const { goalLineValue, lineStartValue } = calculateGoalLineValues(participantWeights, GLOBALmode);
+        // ...existing code to initialize Chart context and datasets...
+        const ctx = document.getElementById("ProgressGraph")
+            .getContext("2d");
+        const datasets = createDatasets(grouped, GLOBALmode);
+        const margin = 5;
+        let highestValue;
+        const yAxisReverse = GLOBALmode === "Progress";
+        if (yAxisReverse) {
+            highestValue = Math.min(...datasets.flatMap((ds) => ds.data.map((pt) => pt.y)));
+        }
+        else {
+            highestValue = Math.max(...datasets.flatMap((ds) => ds.data.map((pt) => pt.y)));
+        }
+        if (chartInstance) {
+            chartInstance.data.datasets = datasets;
+            if (chartInstance.options.plugins?.annotation?.annotations) {
+                const ann = chartInstance.options.plugins.annotation.annotations;
+                ann.lineStart.yMin = lineStartValue;
+                ann.lineStart.yMax = lineStartValue;
+                ann.goalLine.yMin = goalLineValue;
+                ann.goalLine.yMax = goalLineValue;
+                ann.box1.yMax = goalLineValue;
+                ann.box1.yMin = goalLineValue +
+                    (yAxisReverse ? margin : -margin);
+            }
+            chartInstance.options.scales.y.reverse = yAxisReverse;
+            if (yAxisReverse) {
+                chartInstance.options.scales.y.max = goalLineValue + margin;
+                chartInstance.options.scales.y.min = highestValue - margin;
+            }
+            else {
+                chartInstance.options.scales.y.max = highestValue + margin;
+                chartInstance.options.scales.y.min = goalLineValue - margin;
+            }
+            chartInstance.update();
+        }
+        else {
+            chartInstance = new Chart(ctx, {
+                type: "line",
+                data: { datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: "time",
+                            time: {
+                                unit: "day",
+                                displayFormats: { day: "dd MMM" },
+                                tooltipFormat: "dd MMM yyyy",
                             },
-                            plugins: {
-                                legend: { display: true, position: "top" },
-                                annotation: {
-                                    annotations: {
-                                        lineStart: {
-                                            type: "line",
-                                            yMin: lineStartValue,
-                                            yMax: lineStartValue,
-                                            borderColor: "rgba(0,0,0,0.2)",
-                                            borderWidth: 2,
-                                            borderDash: [5, 5],
-                                        },
-                                        goalLine: {
-                                            type: "line",
-                                            yMin: goalLineValue,
-                                            yMax: goalLineValue,
-                                            borderColor: "rgba(0,0,0,0.8)",
-                                            borderWidth: 2,
-                                            borderDash: [5, 5],
-                                        },
-                                        box1: {
-                                            type: "box",
-                                            yMin: goalLineValue - 5,
-                                            yMax: goalLineValue,
-                                            backgroundColor: "rgba(0,0,0,0.25)",
-                                        },
-                                    },
+                            title: { display: false },
+                            ticks: {
+                                autoSkip: true,
+                                maxRotation: 0,
+                                minRotation: 0,
+                            },
+                        },
+                        y: {
+                            title: { display: true, text: "Weight Lost (kg)" },
+                            reverse: yAxisReverse,
+                            min: goalLineValue - 5,
+                            max: highestValue + 5,
+                        },
+                    },
+                    plugins: {
+                        legend: { display: true, position: "top" },
+                        annotation: {
+                            annotations: {
+                                lineStart: {
+                                    type: "line",
+                                    yMin: lineStartValue,
+                                    yMax: lineStartValue,
+                                    borderColor: "rgba(0,0,0,0.2)",
+                                    borderWidth: 2,
+                                    borderDash: [5, 5],
+                                },
+                                goalLine: {
+                                    type: "line",
+                                    yMin: goalLineValue,
+                                    yMax: goalLineValue,
+                                    borderColor: "rgba(0,0,0,0.8)",
+                                    borderWidth: 2,
+                                    borderDash: [5, 5],
+                                },
+                                box1: {
+                                    type: "box",
+                                    yMin: goalLineValue - 5,
+                                    yMax: goalLineValue,
+                                    backgroundColor: "rgba(0,0,0,0.25)",
                                 },
                             },
                         },
-                    });
-                }
-                return [3 /*break*/, 3];
-            case 2:
-                error_1 = _d.sent();
-                console.error("Error in updateCharts:", error_1);
-                return [3 /*break*/, 3];
-            case 3: return [2 /*return*/];
-        }
-    });
-}); };
-var logWeight = function () { return __awaiter(_this, void 0, void 0, function () {
-    var weight;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                console.log("enjunueihehuyehuy");
-                if (window.location.hash !== "#admin") {
-                    console.error("Unauthorized: Only admin can log weights.");
-                    return [2 /*return*/];
-                }
-                weightFormDialog.close();
-                weight = +document.getElementById("weightInput")
-                    .value;
-                if (!currentParticipantId || isNaN(weight))
-                    return [2 /*return*/];
-                return [4 /*yield*/, pocketBase.collection("weights").create({
-                        weight: weight,
-                        participant: currentParticipantId,
-                    })
-                        .catch(function (e) { return console.error("Error logging weight:", e); })];
-            case 1:
-                _a.sent();
-                document.getElementById("weightInput").value = "";
-                return [4 /*yield*/, updateCharts()];
-            case 2:
-                _a.sent();
-                return [2 /*return*/];
-        }
-    });
-}); };
-// New function: Load all participants from the collection
-var loadParticipants = function () { return __awaiter(_this, void 0, void 0, function () {
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0: return [4 /*yield*/, pocketBase.collection("participants").getFullList()
-                    .catch(function (e) {
-                    console.error("Error loading participants:", e);
-                    return [];
-                })];
-            case 1: return [2 /*return*/, _a.sent()];
-        }
-    });
-}); };
-// New function: Render sign‑in buttons dynamically
-var renderSignInButtons = function () { return __awaiter(_this, void 0, void 0, function () {
-    var participants, container;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0: return [4 /*yield*/, loadParticipants()];
-            case 1:
-                participants = _a.sent();
-                container = document.getElementById("participantButtons");
-                if (container) {
-                    container.innerHTML = participants.map(function (participant) {
-                        return "<button onclick=\"refreshParticipant('".concat(participant.id, "')\">").concat(participant.name, "</button>");
-                    }).join("");
-                }
-                return [2 /*return*/];
-        }
-    });
-}); };
-// New function: Centralize DOM event listener assignments
-var attachEventListeners = function () {
-    GraphTabs.querySelectorAll("a").forEach(function (e) {
-        e.addEventListener("click", function () { return __awaiter(_this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        GLOBALmode = e.innerText;
-                        return [4 /*yield*/, updateCharts()];
-                    case 1:
-                        _a.sent();
-                        return [2 /*return*/];
-                }
+                    },
+                },
             });
-        }); });
+        }
+    }
+    catch (error) {
+        console.error("Error in updateCharts:", error);
+    }
+};
+const logWeight = async () => {
+    if (window.location.hash !== "#admin") {
+        console.error("Unauthorized: Only admin can log weights.");
+        return;
+    }
+    weightFormDialog.close();
+    const weight = +document.getElementById("weightInput")
+        .value;
+    if (!currentParticipantId || isNaN(weight))
+        return;
+    await pocketBase.collection("weights").create({
+        weight: weight,
+        participant: currentParticipantId,
+    })
+        .catch((e) => console.error("Error logging weight:", e));
+    document.getElementById("weightInput").value = "";
+    await updateCharts();
+};
+// New function: Load all participants from the collection
+const loadParticipants = async () => {
+    return await pocketBase.collection("participants").getFullList()
+        .catch((e) => {
+        console.error("Error loading participants:", e);
+        return [];
+    });
+};
+// New function: Render sign‑in buttons dynamically
+const renderSignInButtons = async () => {
+    const participants = await loadParticipants();
+    const container = document.getElementById("participantButtons");
+    if (container) {
+        container.innerHTML = participants.map((participant) => `<button onclick="refreshParticipant('${participant.id}')">${participant.name}</button>`).join("");
+    }
+};
+// New function: Centralize DOM event listener assignments
+const attachEventListeners = () => {
+    GraphTabs.querySelectorAll("a").forEach((e) => {
+        e.addEventListener("click", async () => {
+            GLOBALmode = e.innerText;
+            await updateCharts();
+        });
     });
     submitButton.addEventListener("click", logWeight);
     //pocketBase.collection("weights").subscribe("*", updateCharts);
 };
 // Refactored init function to use centralized event listener setup
-var init = function () { return __awaiter(_this, void 0, void 0, function () {
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                attachEventListeners();
-                if (!currentParticipantId) return [3 /*break*/, 2];
-                logweightbutton.style.display = window.location.hash === "#admin"
-                    ? ""
-                    : "none";
-                return [4 /*yield*/, refreshParticipant()];
-            case 1:
-                _a.sent();
-                return [3 /*break*/, 5];
-            case 2:
-                signindialog.showModal();
-                return [4 /*yield*/, renderSignInButtons()];
-            case 3:
-                _a.sent();
-                return [4 /*yield*/, updateCharts()];
-            case 4:
-                _a.sent();
-                _a.label = 5;
-            case 5: return [2 /*return*/];
-        }
-    });
-}); };
+const init = async () => {
+    attachEventListeners();
+    if (currentParticipantId) {
+        logweightbutton.style.display = window.location.hash === "#admin"
+            ? ""
+            : "none";
+        await refreshParticipant();
+    }
+    else {
+        signindialog.showModal();
+        await renderSignInButtons();
+        await updateCharts();
+    }
+};
 init();
