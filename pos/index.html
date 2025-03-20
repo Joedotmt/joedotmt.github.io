@@ -148,10 +148,18 @@
                 const getName = (itemId) =>
                 {
                     let name = itemId;
-                    if (ticket.expand && ticket.expand.items)
+                    if (ticket.expand)
                     {
-                        const found = ticket.expand.items.find(exp => exp.id === itemId);
-                        if (found) name = found.name;
+                        if (ticket.expand.items)
+                        {
+                            const found = ticket.expand.items.find(exp => exp.id === itemId);
+                            if (found) return found.name;
+                        }
+                        if (ticket.expand.ready_items)
+                        {
+                            const found = ticket.expand.ready_items.find(exp => exp.id === itemId);
+                            if (found) return found.name;
+                        }
                     }
                     return name;
                 };
@@ -176,7 +184,6 @@
                     acc[name].count++;
                     return acc;
                 }, {});
-
                 const notReadyHtml = Object.entries(notReadyFreq).map(([name, obj]) =>
                 {
                     return `<li class="ripple" data-id="${obj.foodId}" data-food-name="${name}" data-ticket-id="${ticket.id}">${obj.count}x ${name}</li>`;
@@ -185,6 +192,7 @@
                 {
                     return `<li class="ripple selected" data-id="${obj.foodId}" data-food-name="${name}" data-ticket-id="${ticket.id}">${obj.count}x ${name}</li>`;
                 }).join("");
+
                 const listHtml = notReadyHtml + readyHtml;
 
                 // Create ticket element
@@ -218,6 +226,28 @@
                         {
                             newItems.splice(index, 1);
                             const newReady = [...(ticket.ready_items || []), foodId];
+                            e.target.classList.toggle("selected");
+                            await pb.collection('cafe_tickets').update(ticketId, { items: newItems, ready_items: newReady });
+                        }
+                    });
+                });
+                // Added: Attach click event to ready items to mark them as not ready
+                const readyLiElements = div.querySelectorAll('ul.list li.ripple.selected');
+                readyLiElements.forEach(li =>
+                {
+                    li.addEventListener('click', async (e) =>
+                    {
+                        e.stopPropagation();
+                        const foodId = li.getAttribute('data-id');
+                        const ticketId = li.getAttribute('data-ticket-id');
+                        // Remove one occurrence from ready_items and add it back to items
+                        const newReady = [...(ticket.ready_items || [])];
+                        const index = newReady.indexOf(foodId);
+                        if (index > -1)
+                        {
+                            newReady.splice(index, 1);
+                            const newItems = [...(ticket.items || []), foodId];
+                            e.target.classList.toggle("selected");
                             await pb.collection('cafe_tickets').update(ticketId, { items: newItems, ready_items: newReady });
                         }
                     });
