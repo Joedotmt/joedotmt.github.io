@@ -37,10 +37,15 @@ body.light {
     --surface-container-highest: #e2e3dd;
 }
 
+body {
+    font-family: "Roboto Mono", monospace, sans-serif;
+}
+
 .ticket-grid {
     display: flex;
     gap: 1rem;
     margin: 2rem;
+    flex-wrap: wrap;
 }
 
 .ticket-item {
@@ -107,4 +112,17 @@ li.selected {
 
     background-color: var(--inverse-primary) !important;
     box-shadow: inset 0 0 0 2px var(--primary);
+}
+
+#dialogOverlay {
+    opacity: 0;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100dvw;
+    height: 100dvh;
+    background: black;
+    z-index: 1;
+    pointer-events: none;
+    transition: opacity 0.5s cubic-bezier(0.075, 0.82, 0.165, 1) allow-discrete;
 }
