@@ -17,6 +17,20 @@
 
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,done_all,edit,fullscreen,fullscreen_exit,remove" />
     <link rel="stylesheet" href="style.css" />
+
+    <!-- Added: CSS transition for ticket items -->
+    <style>
+        .ticket-item {
+            opacity: 0;
+            scale: 1.05;
+            transition: opacity 0.5s cubic-bezier(0.075, 0.82, 0.165, 1), scale 0.5s cubic-bezier(0.075, 0.82, 0.165, 1);
+        }
+
+        .ticket-item.fade-in {
+            opacity: 1;
+            scale: 1;
+        }
+    </style>
 </head>
 <body class="dark">
     <header>
@@ -266,6 +280,11 @@
                     </div>
                 `;
                 ticketGrid.appendChild(div);
+                // Added: trigger fade-in transition
+                setTimeout(() =>
+                {
+                    div.classList.add('fade-in');
+                }, 10);
 
                 // Attach click event to not-ready items to mark them as ready
                 const liElements = div.querySelectorAll('.itemthing:not(.selected)');
@@ -354,7 +373,8 @@
                 });
             });
 
-            ticketGrid.appendChild(addTicketBtn);
+            // Place addTicketBtn at the beginning instead of appending it
+            ticketGrid.prepend(addTicketBtn);
         }
 
         //OPEN TICKET DIALOG
@@ -444,7 +464,6 @@
                 await pb.collection('cafe_tickets').delete(currentEditingTicket.id);
                 currentEditingTicket = null;
                 updateTotal();
-                loadTickets();
             }
         });
 
