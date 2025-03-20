@@ -1,0 +1,110 @@
+body.light {
+    --primary: #006e1c;
+    --on-primary: #ffffff;
+    --primary-container: #94f990;
+    --on-primary-container: #002204;
+    --secondary: #52634f;
+    --on-secondary: #ffffff;
+    --secondary-container: #d5e8cf;
+    --on-secondary-container: #111f0f;
+    --tertiary: #38656a;
+    --on-tertiary: #ffffff;
+    --tertiary-container: #bcebf0;
+    --on-tertiary-container: #002023;
+    --error: #ba1a1a;
+    --on-error: #ffffff;
+    --error-container: #ffdad6;
+    --on-error-container: #410002;
+    --background: #fcfdf6;
+    --on-background: #1a1c19;
+    --surface: #f9faf4;
+    --on-surface: #1a1c19;
+    --surface-variant: #dee5d8;
+    --on-surface-variant: #424940;
+    --outline: #72796f;
+    --outline-variant: #c2c9bd;
+    --shadow: #000000;
+    --scrim: #000000;
+    --inverse-surface: #2f312d;
+    --inverse-on-surface: #f0f1eb;
+    --inverse-primary: #78dc77;
+    --surface-dim: #dadad4;
+    --surface-bright: #f9faf4;
+    --surface-container-lowest: #ffffff;
+    --surface-container-low: #f3f4ee;
+    --surface-container: #eeeee8;
+    --surface-container-high: #e8e9e2;
+    --surface-container-highest: #e2e3dd;
+}
+
+.ticket-grid {
+    display: flex;
+    gap: 1rem;
+    margin: 2rem;
+}
+
+.ticket-item {
+    border: 2px solid var(--outline);
+    border-radius: 4px;
+    display: flex;
+    overflow: auto;
+    flex-direction: column;
+    width: fit-content;
+}
+
+.ticket-item button.edit,
+.ticket-item button.delete {}
+
+.ticket-item button.edit {}
+
+.ticket-item button.delete {
+    background-color: rgb(91, 0, 0);
+}
+
+.add-ticket {
+    border: 2px dashed var(--outline);
+    border-radius: 4px;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    align-content: center;
+}
+
+dialog {
+    padding: 1rem;
+    background-color: var(--surface-bright) !important;
+}
+
+dialog form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+button {
+    margin: 0;
+}
+
+.field {
+    margin: 1em 0;
+}
+
+li {
+    border-radius: 1em !important;
+    background-color: var(--surface-variant) !important;
+    flex-grow: 0 !important;
+}
+
+dialog > ul > li {
+    background-color: var(--surface-variant) !important;
+}
+
+li.selected {
+    background-color: var(--surface-container) !important;
+    box-shadow: inset 0 0 0 1px var(--primary);
+
+    background-color: var(--inverse-primary) !important;
+    box-shadow: inset 0 0 0 2px var(--primary);
+}

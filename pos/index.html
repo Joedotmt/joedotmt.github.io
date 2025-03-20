@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <title>Realtime POS & Ticket System</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@600&display=swap" rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pocketbase/0.25.0/pocketbase.umd.js"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/beercss@3.9.7/dist/cdn/beer.min.css" rel="stylesheet">
+    <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.9.7/dist/cdn/beer.min.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=add,done_all,edit" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body class="light">
+    <div class="ticket-grid" id="ticketGrid">
+        <div class="add-ticket ripple" id="addTicketBtn">
+            <div><span class="material-symbols-outlined">add</span></div>
+            <div>Add Ticket</div>
+        </div>
+    </div>
+
+    <dialog class="left" id="ticketDialog">
+        <h5 style="margin-bottom: 0.5em;">Create Ticket</h5>
+
+        <ul style="gap:0.2em;" class="list">
+            <li data-price="90" class="ripple">
+                Croissant
+            </li>
+            <li data-price="90" class="ripple">
+                Coffee
+            </li>
+            <li data-price="90" class="ripple">
+                Tea
+            </li>
+            <li data-price="90" class="ripple">
+                Cinnamon Roll
+            </li>
+            <li data-price="90" class="ripple">
+                Smoothie
+            </li>
+        </ul>
+
+        <div class="field label border">
+            <input id="noteField" type="text" autocomplete="off">
+            <label>Note</label>
+        </div>
+
+        <div class="field label border">
+            <input id="nameField" type="text" autocomplete="off">
+            <label>Name</label>
+        </div>
+
+        <div id="ticketTotal" style="text-align: right; font-weight: bold; margin-top: 1em;">
+            Total: $0.00
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1em;">
+            <div style="flex: 1; margin-right: 1em;">
+                <div class="field label border">
+                    <input id="customerGave" type="number" style="width: 100%; padding: 0.5em;" />
+                    <label>Customer Gave</label>
+                </div>
+
+            </div>
+            <div id="changeAmount" style="flex: 1; text-align: right; font-weight: bold;">
+                Change: $0.00
+            </div>
+        </div>
+        <nav class="right-align">
+            <button id="cancelBtn" class="border">Cancel</button>
+            <button id="ticketFormConfirm">Create</button>
+        </nav>
+    </dialog>
+    <script>
+        const pb = new PocketBase('https://petition.pockethost.io');
+        pb.autoCancellation(false);
+        const ticketGrid = document.getElementById('ticketGrid');
+        const addTicketBtn = document.getElementById('addTicketBtn');
+        const ticketDialog = document.getElementById('ticketDialog');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const ticketFormConfirm = document.getElementById("ticketFormConfirm");
+        const noteField = document.getElementById('noteField');
+        const nameField = document.getElementById('nameField');
+        const ticketTotal = document.getElementById('ticketTotal');
+        const customerGave = document.getElementById('customerGave');
+        const changeAmount = document.getElementById('changeAmount');
+
+        let itemCounts = {};
+        const listItems = ticketDialog.querySelectorAll('.list li');
+        listItems.forEach(item =>
+        {
+            const text = item.textContent.trim();
+            itemCounts[text] = 0;
+
+            item.innerHTML = `<span class="item-name">${text}</span> <span class="item-count">0</span> <button class="minus" style="display: none;">-</button>`;
+
+            item.addEventListener('click', (e) =>
+            {
+                if (e.target.classList.contains('minus')) return;
+                itemCounts[text]++;
+                item.querySelector('.item-count').textContent = itemCounts[text];
+                const price = Number(item.getAttribute('data-price')) || 0;
+
+                item.querySelector('.minus').style.display = 'inline';
+                item.classList.add('selected');
+                updateTotal();
+            });
+
+            // Decrease count when clicking minus button
+            item.querySelector('.minus').addEventListener('click', (e) =>
+            {
+                e.stopPropagation();
+                if (itemCounts[text] > 0)
+                {
+                    itemCounts[text]--;
+                    item.querySelector('.item-count').textContent = itemCounts[text];
+                    const price = Number(item.getAttribute('data-price')) || 0;
+
+                    if (itemCounts[text] === 0)
+                    {
+                        item.querySelector('.minus').style.display = 'none';
+                        item.classList.remove('selected');
+                    }
+                    updateTotal();
+                }
+            });
+        });
+
+        async function loadTickets()
+        {
+            const result = await pb.collection('cafe_tickets').getFullList();
+            ticketGrid.innerHTML = '';
+
+            result.forEach(ticket =>
+            {
+                // Count item frequencies
+                const itemFreq = ticket.items.split(',')
+                    .map(item => item.trim())
+                    .filter(Boolean)
+                    .reduce((acc, item) =>
+                    {
+                        acc[item] = (acc[item] || 0) + 1;
+                        return acc;
+                    }, {});
+
+                // Build list items
+                const listHtml = Object.entries(itemFreq).map(([item, count]) =>
+                {
+                    const isSelected = item.startsWith('_');
+                    const displayName = isSelected ? item.slice(1) : item;
+                    return `<li class="${isSelected ? 'selected' : ''} ripple" style="margin:10px;">${count}x ${displayName}</li>`;
+                }).join("");
+
+                // Create ticket element
+                const div = document.createElement('div');
+                div.className = 'ticket-item';
+                div.innerHTML = `
+            <div style="font-size:1.5em; padding: 0.4em; border-bottom: 2px solid var(--outline)">${ticket.name}</div>
+            <ul class="list border">${listHtml}</ul>
+            ${ticket.note ? `<div>Note: ${ticket.note}</div>` : ''}
+            <div style="display:flex;">
+                <button class="edit ripple" style="border-radius:0; width:100%; background:var(--background); color:var(--inverse-surface)" data-id="${ticket.id}">
+                    <span class="material-symbols-outlined">edit</span>
+                </button>
+            </div>
+        `;
+
+                // Attach event listeners for toggling items
+                div.querySelectorAll('ul.list li').forEach(li =>
+                {
+                    li.addEventListener('click', async () =>
+                    {
+                        const match = li.textContent.match(/^(\d+)x\s+(_?)(.*)$/);
+                        if (!match) return;
+
+                        const [, , prefix, baseName] = match;
+                        li.classList.toggle('selected');
+
+                        // Toggle underscore prefix in items array
+                        const newItems = ticket.items.split(',').map(s =>
+                        {
+                            s = s.trim();
+                            return s === (prefix ? `_${baseName}` : baseName) ? (prefix ? baseName : `_${s}`) : s;
+                        });
+
+                        await pb.collection('cafe_tickets').update(ticket.id, { items: newItems.toString() });
+                    });
+                });
+
+                ticketGrid.appendChild(div);
+            });
+
+            ticketGrid.appendChild(addTicketBtn);
+        }
+
+        addTicketBtn.addEventListener('click', () =>
+        {
+            noteField.value = '';
+            nameField.value = '';
+            // Reset counts and UI for list items
+            ticketDialog.querySelectorAll('.list li').forEach(item =>
+            {
+                const text = item.querySelector('.item-name').textContent;
+                itemCounts[text] = 0;
+                item.querySelector('.item-count').textContent = '0';
+                item.querySelector('.minus').style.display = 'none';
+                item.classList.remove('selected');
+            });
+            customerGave.value = '';
+            changeAmount.textContent = 'Change: $0.00';
+            ticketDialog.showModal();
+            updateTotal();
+        });
+
+        cancelBtn.addEventListener('click', () =>
+        {
+            ticketDialog.close();
+        });
+
+        ticketFormConfirm.addEventListener('click', async (e) =>
+        {
+            e.preventDefault();
+            // Convert counts to an array with repeated entries
+            let itemsArray = [];
+            for (let key in itemCounts)
+            {
+                for (let i = 0; i < itemCounts[key]; i++)
+                {
+                    itemsArray.push(key);
+                }
+            }
+            const newTicket = {
+                note: noteField.value,
+                name: nameField.value,
+                items: itemsArray.toString()
+            };
+            await pb.collection('cafe_tickets').create(newTicket);
+            ticketDialog.close();
+            loadTickets();
+            updateTotal();
+            customerGave.value = '';
+            changeAmount.textContent = 'Change: $0.00';
+        });
+
+        ticketGrid.addEventListener('click', async (e) =>
+        {
+            const target = e.target;
+            if (target.classList.contains('delete'))
+            {
+                const id = target.dataset.id;
+                await pb.collection('cafe_tickets').delete(id);
+                loadTickets();
+            } else if (target.classList.contains('edit'))
+            {
+                const id = target.dataset.id;
+                const newTicket = prompt('Enter new ticket value:');
+                if (newTicket)
+                {
+                    await pb.collection('cafe_tickets').update(id, { ticket: newTicket });
+                    loadTickets();
+                }
+            }
+        });
+
+        const updateChange = () =>
+        {
+            const total = parseFloat(ticketTotal.textContent.replace('Total: €', '')) || 0;
+            const given = parseFloat(customerGave.value) || 0;
+            const change = (given - total).toFixed(2);
+            changeAmount.textContent = `Change: €${change}`;
+            if (given < total)
+            {
+                changeAmount.style.color = "var(--error)";
+                changeAmount.textContent = `Change: €${change}`;
+            }
+        };
+
+        customerGave.addEventListener('input', updateChange);
+
+        const updateTotal = () =>
+        {
+            let total = 0;
+            for (let key in itemCounts)
+            {
+                // Find the <li> element by matching the item name
+                const itemElement = Array.from(ticketDialog.querySelectorAll('.list li')).find(
+                    item => item.querySelector('.item-name')?.textContent.trim() === key
+                );
+
+                const price = Number(itemElement?.getAttribute('data-price')) || 0;
+                total += itemCounts[key] * price;
+            }
+            ticketTotal.textContent = `Total: €${(total).toFixed(2)}`;
+            updateChange();
+        };
+
+        loadTickets();
+    </script>
+</body>
+</html>
