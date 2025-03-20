@@ -190,16 +190,38 @@
                     return name;
                 };
 
-                const notReadyFreq = (ticket.items || []).reduce((acc, id) =>
+                let notReadyFreq = {};
+                if (ticket.amounts_of_each)
                 {
-                    const name = getName(id);
-                    if (!acc[name])
+                    for (let foodId in ticket.amounts_of_each)
                     {
-                        acc[name] = { count: 0, foodId: id };
+                        const totalCount = Number(ticket.amounts_of_each[foodId]);
+                        const readyCount = (ticket.ready_items || []).filter(id => id === foodId).length;
+                        const notReadyCount = totalCount - readyCount;
+                        if (notReadyCount > 0)
+                        {
+                            const name = getName(foodId);
+                            notReadyFreq[name] = { count: notReadyCount, foodId: foodId };
+                        }
                     }
-                    acc[name].count++;
-                    return acc;
-                }, {});
+                }
+                else
+                {
+                    notReadyFreq = (ticket.items || []).reduce((acc, id) =>
+                    {
+                        const name = getName(id);
+                        if (!acc[name])
+                        {
+                            acc[name] = { count: 0, foodId: id };
+                        }
+                        acc[name].count++;
+                        return acc;
+                    }, {});
+                }
+                const notReadyHtml = Object.entries(notReadyFreq).map(([name, obj]) =>
+                {
+                    return `<li class="ripple" data-id="${obj.foodId}" data-food-name="${name}" data-ticket-id="${ticket.id}">${obj.count}x ${name}</li>`;
+                }).join("");
                 const readyFreq = (ticket.ready_items || []).reduce((acc, id) =>
                 {
                     const name = getName(id);
@@ -210,10 +232,6 @@
                     acc[name].count++;
                     return acc;
                 }, {});
-                const notReadyHtml = Object.entries(notReadyFreq).map(([name, obj]) =>
-                {
-                    return `<li class="ripple" data-id="${obj.foodId}" data-food-name="${name}" data-ticket-id="${ticket.id}">${obj.count}x ${name}</li>`;
-                }).join("");
                 const readyHtml = Object.entries(readyFreq).map(([name, obj]) =>
                 {
                     return `<li class="ripple selected" data-id="${obj.foodId}" data-food-name="${name}" data-ticket-id="${ticket.id}">${obj.count}x ${name}</li>`;
@@ -314,24 +332,24 @@
         ticketFormConfirm.addEventListener('click', async (e) =>
         {
             e.preventDefault();
-            let itemsArray = [];
             const foodList = document.getElementById('foodList');
+            let amounts = {};
+            let uniqueItems = [];
             foodList.querySelectorAll('li').forEach(li =>
             {
                 const count = Number(li.querySelector('.item-count').textContent) || 0;
                 if (count > 0)
                 {
                     const foodId = li.getAttribute('data-id');
-                    for (let i = 0; i < count; i++)
-                    {
-                        itemsArray.push(foodId);
-                    }
+                    amounts[foodId] = count;
+                    uniqueItems.push(foodId);
                 }
             });
             const newTicket = {
                 note: noteField.value,
                 name: nameField.value,
-                items: itemsArray  // now an array of food IDs
+                items: uniqueItems,           // unique food IDs
+                amounts_of_each: amounts      // JSON mapping of food IDs to counts
             };
             await pb.collection('cafe_tickets').create(newTicket);
             ticketDialog.close();
