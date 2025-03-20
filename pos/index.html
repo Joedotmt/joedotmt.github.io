@@ -7,7 +7,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pocketbase/0.25.0/pocketbase.umd.js"></script>
 
@@ -24,7 +24,7 @@
         <nav>
             <div style="display: flex; align-items: center; gap: 0.5em; margin-right: auto;">
                 <img src="SASLIB_logo.png" style="height: 3em;">
-                <h5 style="margin: 0;" class="max left-align">SASSCUM</h5>
+                <h5 style="margin: 0; font-weight: 700;" class="max left-align">SASSCUM</h5>
             </div>
             <div style="margin: 0; font-size: 1em;">(Cafe Ultimate Manager)</div>
             <button onclick="toggle_fullscreen()" class="ripple circle">
@@ -75,6 +75,7 @@
             </div>
         </div>
         <nav class="right-align">
+            <button id="deleteBtn" class="border" style="margin-right: auto; display: none; background: var(--error); color: white;">Delete</button>
             <button id="cancelBtn" class="border">Cancel</button>
             <button id="ticketFormConfirm">Create</button>
         </nav>
@@ -92,6 +93,8 @@
         const ticketTotal = document.getElementById('ticketTotal');
         const customerGave = document.getElementById('customerGave');
         const changeAmount = document.getElementById('changeAmount');
+        const deleteBtn = document.getElementById("deleteBtn");
+        let currentEditingTicket = null; // Added: global variable for edit mode
 
         function toggle_fullscreen()
         {
@@ -113,7 +116,7 @@
             dialogOverlay.style.opacity = "0";
         });
 
-        let itemCounts = {}, itemMap = {};
+        let itemMap = {};  // keep itemMap if needed for price, but we'll now read price from li
 
         // Added: function to fetch and load food items from "cafe_items"
         async function loadFoodItems()
@@ -121,7 +124,6 @@
             const foodList = document.getElementById('foodList');
             const items = await pb.collection('cafe_items').getFullList();
             foodList.innerHTML = '';
-            itemCounts = {};
             itemMap = {};
             items.forEach(item =>
             {
@@ -131,14 +133,15 @@
                 li.setAttribute('data-price', item.price);
                 li.innerHTML = `<span class="item-name">${item.name}</span> <span class="item-count">0</span> <button class="minus" style="display: none;">-</button>`;
                 const name = item.name;
-                itemCounts[name] = 0;
                 itemMap[name] = li;
 
                 li.addEventListener('click', e =>
                 {
                     if (e.target.classList.contains('minus')) return;
-                    itemCounts[name]++;
-                    li.querySelector('.item-count').textContent = itemCounts[name];
+                    // Read current count from the DOM and update it
+                    let count = Number(li.querySelector('.item-count').textContent) || 0;
+                    count++;
+                    li.querySelector('.item-count').textContent = count;
                     li.querySelector('.minus').style.display = 'inline';
                     li.classList.add('selected');
                     updateTotal();
@@ -147,11 +150,12 @@
                 li.querySelector('.minus').addEventListener('click', e =>
                 {
                     e.stopPropagation();
-                    if (itemCounts[name] > 0)
+                    let count = Number(li.querySelector('.item-count').textContent) || 0;
+                    if (count > 0)
                     {
-                        itemCounts[name]--;
-                        li.querySelector('.item-count').textContent = itemCounts[name];
-                        if (itemCounts[name] === 0)
+                        count--;
+                        li.querySelector('.item-count').textContent = count;
+                        if (count === 0)
                         {
                             li.querySelector('.minus').style.display = 'none';
                             li.classList.remove('selected');
@@ -165,12 +169,21 @@
 
         async function loadTickets()
         {
-            const result = await pb.collection('cafe_tickets').getFullList({ expand: "items, ready_items" });
+            const result = await pb.collection('cafe_tickets').getFullList({ sort: "-created", expand: "items, ready_items" });
             ticketGrid.innerHTML = '';
 
             result.forEach(ticket =>
             {
-                // Build frequency maps for not-ready and ready items
+                // Determine if ticket is complete
+                let complete = false;
+                if (ticket.amounts_of_each)
+                {
+                    complete = Object.keys(ticket.amounts_of_each).every(foodId => (ticket.ready_items || []).includes(foodId));
+                } else
+                {
+                    complete = ((ticket.items || []).length === 0) && ((ticket.ready_items || []).length > 0);
+                }
+                // Build frequency maps for all items (combining ready and not-ready)
                 const getName = (itemId) =>
                 {
                     let name = itemId;
@@ -190,68 +203,65 @@
                     return name;
                 };
 
-                let notReadyFreq = {};
+                let itemCounts = {}; // Combined frequency map
+
                 if (ticket.amounts_of_each)
                 {
                     for (let foodId in ticket.amounts_of_each)
                     {
                         const totalCount = Number(ticket.amounts_of_each[foodId]);
-                        const readyCount = (ticket.ready_items || []).filter(id => id === foodId).length;
-                        const notReadyCount = totalCount - readyCount;
-                        if (notReadyCount > 0)
-                        {
-                            const name = getName(foodId);
-                            notReadyFreq[name] = { count: notReadyCount, foodId: foodId };
-                        }
+                        const isReady = (ticket.ready_items || []).includes(foodId); // If any are ready, all should be
+
+                        const name = getName(foodId);
+                        itemCounts[name] = { count: totalCount, foodId: foodId, ready: isReady };
                     }
-                }
-                else
+                } else
                 {
-                    notReadyFreq = (ticket.items || []).reduce((acc, id) =>
+                    (ticket.items || []).forEach(id =>
                     {
                         const name = getName(id);
-                        if (!acc[name])
+                        if (!itemCounts[name])
                         {
-                            acc[name] = { count: 0, foodId: id };
+                            itemCounts[name] = { count: 0, foodId: id, ready: false };
                         }
-                        acc[name].count++;
-                        return acc;
-                    }, {});
-                }
-                const notReadyHtml = Object.entries(notReadyFreq).map(([name, obj]) =>
-                {
-                    return `<li class="ripple" data-id="${obj.foodId}" data-food-name="${name}" data-ticket-id="${ticket.id}">${obj.count}x ${name}</li>`;
-                }).join("");
-                const readyFreq = (ticket.ready_items || []).reduce((acc, id) =>
-                {
-                    const name = getName(id);
-                    if (!acc[name])
-                    {
-                        acc[name] = { count: 0, foodId: id };
-                    }
-                    acc[name].count++;
-                    return acc;
-                }, {});
-                const readyHtml = Object.entries(readyFreq).map(([name, obj]) =>
-                {
-                    return `<li class="ripple selected" data-id="${obj.foodId}" data-food-name="${name}" data-ticket-id="${ticket.id}">${obj.count}x ${name}</li>`;
-                }).join("");
+                        itemCounts[name].count++;
+                    });
 
-                const listHtml = notReadyHtml + readyHtml;
+                    (ticket.ready_items || []).forEach(id =>
+                    {
+                        const name = getName(id);
+                        if (!itemCounts[name])
+                        {
+                            itemCounts[name] = { count: 0, foodId: id, ready: false };
+                        }
+                        itemCounts[name].ready = true; // Mark all of this type as ready
+                    });
+                }
+
+                // Generate HTML list with correct ready status
+                const listHtml = Object.entries(itemCounts).map(([name, obj]) =>
+                {
+                    const className = obj.ready ? "ripple selected" : "ripple";
+                    return `<li class="${className}" data-id="${obj.foodId}" data-food-name="${name}" data-ticket-id="${ticket.id}">${obj.count}x ${name}</li>`;
+                }).join("");
 
                 // Create ticket element
                 const div = document.createElement('div');
+                if (complete)
+                {
+                    div.style.opacity = "0.3";
+                }
                 div.className = 'ticket-item';
                 div.innerHTML = `
-            <div style="font-size:1.5em; padding: 0.4em; border-bottom: 2px solid var(--outline)">${ticket.name}</div>
-            <ul style="margin:10px; gap:5px;" class="list">${listHtml}</ul>
-            ${ticket.note ? `<div>Note: ${ticket.note}</div>` : ''}
-            <div style="display:flex;">
-                <button class="edit ripple" style="border-radius:0; width:100%; background:var(--background); color:var(--inverse-surface)" data-id="${ticket.id}">
-                    <span class="material-symbols-outlined">edit</span>
-                </button>
-            </div>
-        `;
+                    <div style="font-size:1.5em; padding: 0.4em; border-bottom: 2px solid var(--outline)">${ticket.name}</div>
+                    <ul style="margin:10px; gap:5px;" class="list">${listHtml}</ul>
+                    ${ticket.note ? `<div style="margin:0em 1em">${ticket.note}</div>` : ''}
+                    <div style="display:flex;">
+                        <button class="edit ripple" style="border-radius:0; width:100%; background:var(--surface-variant); color:var(--inverse-surface)" data-id="${ticket.id}">
+                            <span class="material-symbols-outlined">edit</span>
+                        </button>
+                    </div>
+                `;
                 ticketGrid.appendChild(div);
 
                 // Attach click event to not-ready items to mark them as ready
@@ -291,10 +301,53 @@
                         {
                             newReady.splice(index, 1);
                             const newItems = [...(ticket.items || []), foodId];
-                            e.target.classList.toggle("selected");
+                            e.target.classList.toggle('selected');
                             await pb.collection('cafe_tickets').update(ticketId, { items: newItems, ready_items: newReady });
                         }
                     });
+                });
+
+                // EDIT BUTTON event: allow editing a ticket
+                let editBtn = div.querySelector('.edit');
+                editBtn.addEventListener('click', () =>
+                {
+                    currentEditingTicket = ticket;
+                    // Pre-fill dialog fields with ticket's data
+                    nameField.value = ticket.name;
+                    noteField.value = ticket.note || '';
+                    // Reset food list counts and global mapping
+                    const foodList = document.getElementById('foodList');
+                    foodList.querySelectorAll('li').forEach(li =>
+                    {
+                        li.querySelector('.item-count').textContent = '0';
+                        li.querySelector('.minus').style.display = 'none';
+                        li.classList.remove('selected');
+                    });
+                    // Set counts based on ticket.amounts_of_each
+                    if (ticket.amounts_of_each)
+                    {
+                        for (let foodId in ticket.amounts_of_each)
+                        {
+                            let li = foodList.querySelector(`li[data-id="${foodId}"]`);
+                            if (li)
+                            {
+                                const count = ticket.amounts_of_each[foodId];
+                                li.querySelector('.item-count').textContent = count;
+                                if (count > 0)
+                                {
+                                    li.querySelector('.minus').style.display = 'inline';
+                                    li.classList.add('selected');
+                                }
+                            }
+                        }
+                    }
+                    updateTotal();
+                    // Set dialog title to "Edit Ticket"
+                    ticketDialog.querySelector('h5').textContent = 'Edit Ticket';
+                    ticketDialog.showModal();
+                    dialogOverlay.style.opacity = "0.6";
+                    // Show delete button when editing
+                    deleteBtn.style.display = 'inline-block';
                 });
             });
 
@@ -304,28 +357,36 @@
         //OPEN TICKET DIALOG
         addTicketBtn.addEventListener('click', () =>
         {
+            currentEditingTicket = null; // Reset edit mode
+            // Reset fields as in create mode
             noteField.value = '';
             nameField.value = '';
             const foodList = document.getElementById('foodList');
             foodList.querySelectorAll('li').forEach(item =>
             {
-                const n = item.querySelector('.item-name').textContent;
-                itemCounts[n] = 0;
                 item.querySelector('.item-count').textContent = '0';
                 item.querySelector('.minus').style.display = 'none';
                 item.classList.remove('selected');
             });
             customerGave.value = '';
             changeAmount.textContent = 'Change: €0.00';
+            // Set dialog title to "Create Ticket"
+            ticketDialog.querySelector('h5').textContent = 'Create Ticket';
             ticketDialog.showModal();
             dialogOverlay.style.opacity = "0.6";
             updateTotal();
+            // Hide delete button in create mode
+            deleteBtn.style.display = 'none';
         });
 
         //CANCEL TICKET CREATION
         cancelBtn.addEventListener('click', () =>
         {
+            currentEditingTicket = null; // Exit edit mode on cancel
+            ticketDialog.querySelector('h5').textContent = 'Create Ticket';
             ticketDialog.close();
+            // Ensure delete button is hidden when cancelling
+            deleteBtn.style.display = 'none';
         });
 
         //CREATING TICKET
@@ -351,11 +412,37 @@
                 items: uniqueItems,           // unique food IDs
                 amounts_of_each: amounts      // JSON mapping of food IDs to counts
             };
-            await pb.collection('cafe_tickets').create(newTicket);
             ticketDialog.close();
+            if (currentEditingTicket)
+            {
+                // Update existing ticket
+                await pb.collection('cafe_tickets').update(currentEditingTicket.id, newTicket);
+                currentEditingTicket = null;
+            }
+            else
+            {
+                // Create new ticket
+                await pb.collection('cafe_tickets').create(newTicket);
+            }
             updateTotal();
             customerGave.value = '';
             changeAmount.textContent = 'Change: €0.00';
+            // Reset dialog title back to create mode
+            ticketDialog.querySelector('h5').textContent = 'Create Ticket';
+        });
+
+        // DELETE TICKET (added event)
+        deleteBtn.addEventListener('click', async (e) =>
+        {
+            e.preventDefault();
+            if (currentEditingTicket)
+            {
+                ticketDialog.close();
+                await pb.collection('cafe_tickets').delete(currentEditingTicket.id);
+                currentEditingTicket = null;
+                updateTotal();
+                loadTickets();
+            }
         });
 
         ticketGrid.addEventListener('click', async (e) =>
@@ -381,11 +468,14 @@
 
         const updateTotal = () =>
         {
-            const total = Object.entries(itemCounts).reduce((sum, [name, count]) =>
+            const foodList = document.getElementById('foodList');
+            let total = 0;
+            foodList.querySelectorAll('li').forEach(li =>
             {
-                const price = Number(itemMap[name].getAttribute('data-price')) || 0;
-                return sum + count * price;
-            }, 0);
+                const count = Number(li.querySelector('.item-count').textContent) || 0;
+                const price = Number(li.getAttribute('data-price')) || 0;
+                total += count * price;
+            });
             ticketTotal.textContent = `Total: €${total.toFixed(2)}`;
             updateChange();
         };
