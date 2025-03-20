@@ -119,7 +119,6 @@ dialog > ul > .itemthing {
 
 .itemthing.selected {
     background-color: var(--inverse-primary) !important;
-    box-shadow: inset 0 0 0 2px var(--primary);
 }
 
 #dialogOverlay {
