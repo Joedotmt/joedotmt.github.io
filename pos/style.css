@@ -39,25 +39,28 @@ body.light {
 
 body {
     font-family: "Poppins", sans-serif;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
 }
 body, ::backdrop {
     background: var(--background);
 }
 
 .ticket-grid {
-    display: flex;
-    gap: 1rem;
-    margin: 2rem;
-    flex-wrap: wrap;
+    display: grid;
+    gap: 0.5rem;
+    margin: 1rem;
+    height: -webkit-fill-available;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
 }
 
 .ticket-item {
     border: 2px solid var(--outline);
     border-radius: 4px;
-    display: flex;
+    display: inline-flex;
     overflow: auto;
     flex-direction: column;
-    width: fit-content;
 }
 
 .ticket-item button.edit,
@@ -99,20 +102,22 @@ button {
     margin: 1em 0;
 }
 
-li {
-    border-radius: 1em !important;
+.itemthing {
+    border-radius: 10px !important;
     background-color: var(--surface-variant) !important;
     flex-grow: 0 !important;
+    padding: 0.3em 0.5em;
+    font-size: 1.5em;
+    display: grid;
+    align-content: center;
+    width: 100%;
 }
 
-dialog > ul > li {
+dialog > ul > .itemthing {
     background-color: var(--surface-variant) !important;
 }
 
-li.selected {
-    background-color: var(--surface-container) !important;
-    box-shadow: inset 0 0 0 1px var(--primary);
-
+.itemthing.selected {
     background-color: var(--inverse-primary) !important;
     box-shadow: inset 0 0 0 2px var(--primary);
 }

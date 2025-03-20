@@ -241,8 +241,8 @@
                 // Generate HTML list with correct ready status
                 const listHtml = Object.entries(itemCounts).map(([name, obj]) =>
                 {
-                    const className = obj.ready ? "ripple selected" : "ripple";
-                    return `<li class="${className}" data-id="${obj.foodId}" data-food-name="${name}" data-ticket-id="${ticket.id}">${obj.count}x ${name}</li>`;
+                    const className = obj.ready ? "ripple itemthing selected" : "ripple itemthing";
+                    return `<div class="${className}" data-id="${obj.foodId}" data-food-name="${name}" data-ticket-id="${ticket.id}">${obj.count}x ${name}</div>`;
                 }).join("");
 
                 // Create ticket element
@@ -253,8 +253,12 @@
                 }
                 div.className = 'ticket-item';
                 div.innerHTML = `
-                    <div style="font-size:1.5em; padding: 0.4em; border-bottom: 2px solid var(--outline)">${ticket.name}</div>
-                    <ul style="margin:10px; gap:5px;" class="list">${listHtml}</ul>
+                    <div style="font-size:1.5em; border-radius:0; padding: 0.4em; border-bottom: 2px solid var(--outline)">${ticket.name}</div>
+
+
+                    <div style="margin:5px; gap:5px; display:flex; flex-wrap: wrap; height:100%">${listHtml}</div>
+
+
                     ${ticket.note ? `<div style="margin:0em 1em">${ticket.note}</div>` : ''}
                     <div style="display:flex;">
                         <button class="edit ripple" style="border-radius:0; width:100%; background:var(--surface-variant); color:var(--inverse-surface)" data-id="${ticket.id}">
@@ -265,7 +269,7 @@
                 ticketGrid.appendChild(div);
 
                 // Attach click event to not-ready items to mark them as ready
-                const liElements = div.querySelectorAll('ul.list li.ripple:not(.selected)');
+                const liElements = div.querySelectorAll('.itemthing:not(.selected)');
                 liElements.forEach(li =>
                 {
                     li.addEventListener('click', async (e) =>
@@ -286,7 +290,7 @@
                     });
                 });
                 // Added: Attach click event to ready items to mark them as not ready
-                const readyLiElements = div.querySelectorAll('ul.list li.ripple.selected');
+                const readyLiElements = div.querySelectorAll('.itemthing.selected');
                 readyLiElements.forEach(li =>
                 {
                     li.addEventListener('click', async (e) =>
