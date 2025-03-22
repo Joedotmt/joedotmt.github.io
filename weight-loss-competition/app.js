@@ -266,8 +266,8 @@ async function updateCharts()
                         y: {
                             title: { display: true, text: "Weight Lost (kg)" },
                             reverse: yAxisReverse,
-                            min: (goalLineValue - margin),
-                            max: (highestValue + margin),
+                            min: (goalLineValue - 5),
+                            max: (highestValue + 5),
                         }
                     },
                     plugins: {
