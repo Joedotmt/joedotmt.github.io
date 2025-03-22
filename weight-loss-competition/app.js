@@ -230,12 +230,12 @@ async function updateCharts()
 
             if (yAxisReverse)
             {
-                chartInstance.options.scales.y.max = goalLineValue + margin;
-                chartInstance.options.scales.y.min = highestValue - margin;
+                chartInstance.options.scales.y.max = (goalLineValue + margin);
+                chartInstance.options.scales.y.min = (highestValue - margin);
             } else
             {
-                chartInstance.options.scales.y.max = highestValue + margin;
-                chartInstance.options.scales.y.min = goalLineValue - margin;
+                chartInstance.options.scales.y.max = (highestValue + margin);
+                chartInstance.options.scales.y.min = (goalLineValue - margin);
             }
 
             chartInstance.update();
@@ -266,8 +266,8 @@ async function updateCharts()
                         y: {
                             title: { display: true, text: "Weight Lost (kg)" },
                             reverse: yAxisReverse,
-                            min: goalLineValue - 5,
-                            max: highestValue + 5
+                            min: (goalLineValue - margin),
+                            max: (highestValue + margin),
                         }
                     },
                     plugins: {
