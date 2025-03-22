@@ -365,6 +365,7 @@ async function renderSignInButtons()
         });
         container.innerHTML = html;
     }
+    sid_words.style.display = "block"
 }
 
 // Initialize application
@@ -391,6 +392,7 @@ async function init()
     {
         signindialog.showModal();
         await renderSignInButtons();
+        sid_progress.style.display = "none"
         await updateCharts();
     }
 }
