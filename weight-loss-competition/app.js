@@ -99,7 +99,7 @@ function renderRecordList(groupedWeights) {
 <h3 style="margin:0em 1rem;">${name}</h3>
 </article>
     <ul class="list border">
-      <li class="ripple" style="display: flex
+      <li style="display: flex
 ;
     flex-direction: column;
     align-items: flex-start; gap:0">
@@ -114,7 +114,7 @@ function renderRecordList(groupedWeights) {
                 month: "long"
             });
 
-            html += `<li class="ripple" style="${i ? "" : "background-color: var(--inverse-primary);"}">
+            html += `<li style="${i ? "" : "background-color: var(--inverse-primary);"}">
         <div>${date}</div>
         ${x.weight}kg
       </li>`;
