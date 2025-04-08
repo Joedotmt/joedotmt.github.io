@@ -14,30 +14,27 @@ let GLOBALmode = "Absolute";
 const pocketBase = new PocketBase("https://petition.pockethost.io/");
 const currentParticipantId = localStorage.getItem("participant") || "";
 let chartInstance = null;
+let GLOBALparticipants = null
 
 // Show signin dialog initially
 signindialog.showModal();
 
 // Get participant data
-async function getParticipant(id)
-{
+async function getParticipant(id) {
     const participantId = id || currentParticipantId;
     if (!participantId) return null;
 
     localStorage.setItem("participant", participantId);
-    try
-    {
+    try {
         return await pocketBase.collection("participants").getOne(participantId);
-    } catch (e)
-    {
+    } catch (e) {
         console.error("Error fetching participant:", e);
         return null;
     }
 }
 
 // Refresh participant data and UI
-async function refreshParticipant(id)
-{
+async function refreshParticipant(id) {
     sid_progress.style.display = "block";
     sid_words.style.display = "none";
 
@@ -49,35 +46,31 @@ async function refreshParticipant(id)
     logweightbutton.style.display = window.location.hash === "#admin" ? "" : "none";
     signindialog.close();
 
-    setTimeout(() =>
-    {
+    setTimeout(() => {
         sid_words.style.display = "";
         sid_progress.style.display = "";
     }, 500);
 }
-
+let GLOBALWeightData = null
 // Load weights data
-async function loadWeights()
-{
-    try
-    {
-        return await pocketBase.collection("weights").getFullList({
+async function loadWeights() {
+    try {
+        GLOBALWeightData = await pocketBase.collection("weights").getFullList({
             sort: "-created",
             expand: "participant"
         });
-    } catch (e)
-    {
+        return true;
+    } catch (e) {
         console.error("Error loading weights:", e);
         return [];
     }
 }
 
+
 // Group weights by participant name
-function groupWeights(weights)
-{
+function groupWeights(weights) {
     const groups = {};
-    weights.forEach(element =>
-    {
+    weights.forEach(element => {
         const name = element.expand.participant.name;
         if (!groups[name]) groups[name] = [];
         groups[name].push(element);
@@ -85,54 +78,21 @@ function groupWeights(weights)
     return groups;
 }
 
-// Create chart datasets
-function createDatasets(groupedWeights, mode)
-{
-    const colors = ["#5297ff", "#52ff5a", "green", "orange", "purple"];
-    return Object.entries(groupedWeights).map(([name, elements], i) =>
-    {
-        const startWeight = elements[elements.length - 1].weight;
 
-        return {
-            label: name,
-            data: elements
-                .sort((a, b) => Date.parse(a.updated) - Date.parse(b.updated))
-                .map(x =>
-                {
-                    let y;
-                    if (mode === "Relative")
-                    {
-                        y = x.weight - startWeight;
-                    } else if (mode === "Progress")
-                    {
-                        y = ((x.weight - startWeight) / (elements[0].expand.participant.goal - startWeight)) * 100;
-                    } else
-                    { // Absolute
-                        y = x.weight;
-                    }
-                    return { x: new Date(x.updated), y };
-                }),
-            borderColor: colors[i % colors.length],
-            fill: false
-        };
-    });
-}
 
 // Render weight records list
-function renderRecordList(groupedWeights)
-{
+function renderRecordList(groupedWeights) {
     let html = '';
-
-    Object.entries(groupedWeights).forEach(([name, elements]) =>
-    {
+    Object.entries(groupedWeights).forEach(([name, elements]) => {
         const weightLost = (elements[0].weight - elements[elements.length - 1].weight).toFixed(1);
 
         html += `<h3 style="margin:0em 1rem; border-bottom: 1px solid black;">${name}</h3>
     <ul class="list border">
       <li class="ripple">Total weight lost: ${weightLost}kg</li>`;
 
-        elements.forEach((x, i) =>
-        {
+        html += `<div>${weightLost / (elements[elements.length - 1].weight) * 100} ${elements[elements.length - 1].weight}</div>`
+
+        elements.forEach((x, i) => {
             const date = new Date(x.updated).toLocaleDateString("en-GB", {
                 day: "2-digit",
                 month: "long"
@@ -151,28 +111,23 @@ function renderRecordList(groupedWeights)
 }
 
 // Calculate goal line values
-function calculateGoalLineValues(participantWeights, mode)
-{
+function calculateGoalLineValues(participantWeights, mode) {
     const lastWeight = participantWeights.length > 0 ?
         participantWeights[participantWeights.length - 1].weight : 0;
 
     let goalLineValue = 0;
     let lineStartValue = lastWeight;
 
-    if (participantWeights.length > 0)
-    {
+    if (participantWeights.length > 0) {
         const goal = participantWeights[0].expand.participant.goal;
 
-        if (mode === "Absolute")
-        {
+        if (mode === "Absolute") {
             goalLineValue = goal;
             lineStartValue = lastWeight;
-        } else if (mode === "Relative")
-        {
+        } else if (mode === "Relative") {
             goalLineValue = -(lastWeight - goal);
             lineStartValue = 0;
-        } else if (mode === "Progress")
-        {
+        } else if (mode === "Progress") {
             goalLineValue = 100;
             lineStartValue = 0;
         }
@@ -182,11 +137,35 @@ function calculateGoalLineValues(participantWeights, mode)
 }
 
 // Update charts
-async function updateCharts()
-{
-    try
-    {
-        const weights = await loadWeights();
+async function updateCharts() {
+    // Create chart datasets
+    function createDatasets(groupedWeights, mode) {
+        const colors = ["#5297ff", "#52ff5a", "green", "orange", "purple"];
+        return Object.entries(groupedWeights).map(([name, elements], i) => {
+            const startWeight = elements[elements.length - 1].weight;
+
+            return {
+                label: name,
+                data: elements
+                    .sort((a, b) => Date.parse(a.updated) - Date.parse(b.updated))
+                    .map(x => {
+                        let y;
+                        if (mode === "Relative") {
+                            y = x.weight - startWeight;
+                        } else if (mode === "Progress") {
+                            y = ((x.weight - startWeight) / (elements[0].expand.participant.goal - startWeight)) * 100;
+                        } else { // Absolute
+                            y = x.weight;
+                        }
+                        return { x: new Date(x.updated), y };
+                    }),
+                borderColor: colors[i % colors.length],
+                fill: false
+            };
+        });
+    }
+    try {
+        const weights = GLOBALWeightData;
         const grouped = groupWeights(weights);
         renderRecordList(grouped);
 
@@ -202,21 +181,17 @@ async function updateCharts()
         const yAxisReverse = GLOBALmode === "Progress";
         let highestValue;
 
-        if (yAxisReverse)
-        {
+        if (yAxisReverse) {
             highestValue = Math.min(...datasets.flatMap(ds => ds.data.map(pt => pt.y)));
-        } else
-        {
+        } else {
             highestValue = Math.max(...datasets.flatMap(ds => ds.data.map(pt => pt.y)));
         }
 
-        if (chartInstance)
-        {
+        if (chartInstance) {
             // Update existing chart
             chartInstance.data.datasets = datasets;
 
-            if (chartInstance.options.plugins?.annotation?.annotations)
-            {
+            if (chartInstance.options.plugins?.annotation?.annotations) {
                 const ann = chartInstance.options.plugins.annotation.annotations;
                 ann.lineStart.yMin = lineStartValue;
                 ann.lineStart.yMax = lineStartValue;
@@ -228,19 +203,16 @@ async function updateCharts()
 
             chartInstance.options.scales.y.reverse = yAxisReverse;
 
-            if (yAxisReverse)
-            {
+            if (yAxisReverse) {
                 chartInstance.options.scales.y.max = (goalLineValue + margin);
                 chartInstance.options.scales.y.min = (highestValue - margin);
-            } else
-            {
+            } else {
                 chartInstance.options.scales.y.max = (highestValue + margin);
                 chartInstance.options.scales.y.min = (goalLineValue - margin);
             }
 
             chartInstance.update();
-        } else
-        {
+        } else {
             // Create new chart
             chartInstance = new Chart(ctx, {
                 type: "line",
@@ -302,17 +274,14 @@ async function updateCharts()
                 }
             });
         }
-    } catch (error)
-    {
+    } catch (error) {
         console.error("Error in updateCharts:", error);
     }
 }
 
 // Log new weight
-async function logWeight()
-{
-    if (window.location.hash !== "#admin")
-    {
+async function logWeight() {
+    if (window.location.hash !== "#admin") {
         console.error("Unauthorized: Only admin can log weights.");
         return;
     }
@@ -322,45 +291,36 @@ async function logWeight()
 
     if (!currentParticipantId || isNaN(weight)) return;
 
-    try
-    {
+    try {
         await pocketBase.collection("weights").create({
             weight: weight,
             participant: currentParticipantId
         });
 
         document.getElementById("weightInput").value = "";
-        await updateCharts();
-    } catch (e)
-    {
+    } catch (e) {
         console.error("Error logging weight:", e);
     }
 }
 
 // Load all participants
-async function loadParticipants()
-{
-    try
-    {
-        return await pocketBase.collection("participants").getFullList();
-    } catch (e)
-    {
+async function loadParticipants() {
+    try {
+        GLOBALparticipants = await pocketBase.collection("participants").getFullList();
+    } catch (e) {
         console.error("Error loading participants:", e);
         return [];
     }
 }
 
 // Render signin buttons
-async function renderSignInButtons()
-{
-    const participants = await loadParticipants();
+async function renderSignInButtons() {
+    const participants = GLOBALparticipants
     const container = document.getElementById("participantButtons");
 
-    if (container)
-    {
+    if (container) {
         let html = '';
-        participants.forEach(participant =>
-        {
+        participants.forEach(participant => {
             html += `<button onclick="refreshParticipant('${participant.id}')">${participant.name}</button>`;
         });
         container.innerHTML = html;
@@ -369,27 +329,30 @@ async function renderSignInButtons()
 }
 
 // Initialize application
-async function init()
-{
+async function init() {
+
+    pocketBase.collection('weights').subscribe('*', async function (e) {
+        await loadWeights()
+        await updateCharts()
+    }, { /* other options like expand, custom headers, etc. */ });
+
     //EVENT LISTENERS//////////////
     const tabs = GraphTabs.querySelectorAll("a");
-    tabs.forEach(tab =>
-    {
-        tab.addEventListener("click", async () =>
-        {
+    tabs.forEach(tab => {
+        tab.addEventListener("click", async () => {
             GLOBALmode = tab.innerText;
             await updateCharts();
         });
     });
     submitButton.addEventListener("click", logWeight);
     ///////////////////////////////
+    await loadParticipants()
+    await loadWeights()
 
-    if (currentParticipantId)
-    {
+    if (currentParticipantId) {
         logweightbutton.style.display = window.location.hash === "#admin" ? "" : "none";
         await refreshParticipant();
-    } else
-    {
+    } else {
         signindialog.showModal();
         await renderSignInButtons();
         sid_progress.style.display = "none"
