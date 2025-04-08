@@ -84,13 +84,29 @@ function groupWeights(weights) {
 function renderRecordList(groupedWeights) {
     let html = '';
     Object.entries(groupedWeights).forEach(([name, elements]) => {
-        const weightLost = (elements[0].weight - elements[elements.length - 1].weight).toFixed(1);
+        //const weightLost = (elements[0].weight - elements[elements.length - 1].weight).toFixed(1);
 
-        html += `<h3 style="margin:0em 1rem; border-bottom: 1px solid black;">${name}</h3>
+        const goal = GLOBALparticipants.find(p => p.name === name)?.goal;
+        const startingWeight = elements[elements.length - 1].weight;
+        const currentWeight = elements[0].weight;
+        const weightLost = (startingWeight - currentWeight).toFixed(1);
+        const totalToLose = (startingWeight - goal);
+        const progressPercent = ((weightLost / totalToLose) * 100).toFixed(1);
+
+
+        html += `<article style="padding: 0; border-bottom: 1px solid black; box-shadow: none; border-radius:0;">
+  <progress class="max" value="${progressPercent}" max="100"></progress>
+<h3 style="margin:0em 1rem;">${name}</h3>
+</article>
     <ul class="list border">
-      <li class="ripple">Total weight lost: ${weightLost}kg</li>`;
+      <li class="ripple" style="display: flex
+;
+    flex-direction: column;
+    align-items: flex-start; gap:0">
+        <div>Total weight lost: ${weightLost}kg</div>
+        <div style="display:flex; gap:0.5em; align-items:center">${progressPercent}%<progress value="${progressPercent}" max="100" class="large"></progress></div>
+      </li>`;
 
-        html += `<div>${weightLost / (elements[elements.length - 1].weight) * 100} ${elements[elements.length - 1].weight}</div>`
 
         elements.forEach((x, i) => {
             const date = new Date(x.updated).toLocaleDateString("en-GB", {
