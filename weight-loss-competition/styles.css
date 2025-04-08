@@ -167,10 +167,6 @@ li {
     cursor:auto !important;
 }
 
-li:hover {
-    /* background-color: var(--surface-container); */
-}
-
 ::-webkit-scrollbar {
     display: none;
 }
