@@ -1,4 +1,9 @@
 /* styles.css */
+button{
+    margin: 0;
+}
+
+
 body {
     font-family: "Roboto Mono", monospace, Arial, sans-serif;
     margin: 0;
@@ -128,5 +133,8 @@ li:hover {
 @media (max-width: 841px) {
     .hzvl{
         flex-direction: column;
-    }    
+    }
+    .ththiuejr{
+        min-width: 100% !important;
+    }
 }

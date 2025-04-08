@@ -94,7 +94,7 @@ function renderRecordList(groupedWeights) {
         const progressPercent = ((weightLost / totalToLose) * 100).toFixed(1);
 
 
-        html += `<article style="padding: 0; border-bottom: 1px solid black; box-shadow: none; border-radius:0;">
+        html += `<article style="padding: 0; border-bottom: .0625rem solid var(--surface-variant); box-shadow: none; border-radius:0;">
   <progress class="max" value="${progressPercent}" max="100"></progress>
 <h3 style="margin:0em 1rem;">${name}</h3>
 </article>
