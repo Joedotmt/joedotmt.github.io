@@ -45,7 +45,7 @@ async function refreshParticipant(id) {
 
     welcomeText.innerText = `Hello ${participant.name}`;
     await updateCharts();
-    logweightbutton.style.display = window.location.hash === "#admin" ? "" : "none";
+    logweightbutton.disabled = window.location.hash === "#admin" ? "false" : "true";
     setSigninDialogMode("closed");
 }
 let GLOBALWeightData = null
@@ -394,7 +394,6 @@ async function init() {
     await loadWeights()
 
     if (currentParticipantId) {
-        logweightbutton.style.display = window.location.hash === "#admin" ? "" : "none";
         await refreshParticipant();
     }
     else
