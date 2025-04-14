@@ -106,6 +106,7 @@ function renderRecordList(groupedWeights) {
     flex-direction: column;
     align-items: flex-start; gap:0">
         <div>Total weight lost: ${weightLost}kg</div>
+        <div>Goal: ${goal}kg</div>
         <div style="display:flex; gap:0.5em; align-items:center">${progressPercent}%<progress value="${progressPercent}" max="100" class="large"></progress></div>
       </li>`;
 
@@ -158,7 +159,18 @@ function calculateGoalLineValues(participantWeights, mode) {
 async function updateCharts() {
     // Create chart datasets
     function createDatasets(groupedWeights, mode) {
-        const colors = ["#5297ff", "#52ff5a", "green", "orange", "purple"];
+        const colors = ["#0000ff", "#0964ed", "#ff0000", "#00ff00", "#00b350"];
+
+        // Hash function to generate a consistent index based on the participant's name
+        function getColorIndex(name) {
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) {
+                hash = (hash << 5) - hash + name.charCodeAt(i);
+                hash |= 0; // Convert to 32-bit integer
+            }
+            return Math.abs(hash) % colors.length;
+        }
+
         return Object.entries(groupedWeights).map(([name, elements], i) => {
             const startWeight = elements[elements.length - 1].weight;
 
@@ -177,7 +189,7 @@ async function updateCharts() {
                         }
                         return { x: new Date(x.updated), y };
                     }),
-                borderColor: colors[i % colors.length],
+                borderColor: colors[getColorIndex(name)],
                 fill: false
             };
         });
