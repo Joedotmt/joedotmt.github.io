@@ -104,7 +104,7 @@ function renderRecordList(groupedWeights) {
       <li style="display: flex
 ;
     flex-direction: column;
-    align-items: flex-start; gap:0">
+    align-items: flex-start; gap:0; min-height: fit-content" ">
         <div>Total weight lost: ${weightLost}kg</div>
         <div>Goal: ${goal}kg</div>
         <div style="display:flex; gap:0.5em; align-items:center">${progressPercent}%<progress value="${progressPercent}" max="100" class="large"></progress></div>
