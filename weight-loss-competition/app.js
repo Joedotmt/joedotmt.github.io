@@ -12,6 +12,7 @@ const GraphTabs = document.getElementById("GraphTabs");
 // Global state
 let GLOBALmode = "Absolute";
 const pocketBase = new PocketBase("https://petition.pockethost.io/");
+//const pocketBase = new PocketBase("http://127.0.0.1:8090/");
 const currentParticipantId = localStorage.getItem("participant") || "";
 let chartInstance = null;
 let GLOBALparticipants = null
@@ -57,7 +58,8 @@ async function loadWeights() {
     try {
         GLOBALWeightData = await pocketBase.collection("weights").getFullList({
             sort: "-created",
-            expand: "participant"
+            expand: "participant",
+            filter: "hidden = false"
         });
         return true;
     } catch (e) {
