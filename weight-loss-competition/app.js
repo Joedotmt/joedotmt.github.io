@@ -8,6 +8,8 @@ const submitButton = document.getElementById("submitButton");
 const weightFormDialog = document.getElementById("weightFormDialog");
 const signindialog = document.getElementById("signindialog");
 const GraphTabs = document.getElementById("GraphTabs");
+const loadingText = document.getElementById('loadingtext');
+const loadingTextLines = Array.from(loadingText.children);
 
 // Global state
 let GLOBALmode = "Absolute";
@@ -342,6 +344,13 @@ async function loadParticipants() {
 
 function setSigninDialogMode(mode) {
     if (mode === "loading") {
+        // Randomly choose one line
+        const chosen = Math.floor(Math.random() * loadingTextLines.length);
+
+        // Hide all lines except the chosen one
+        loadingTextLines.forEach((line, index) => {
+            line.style.display = index === chosen ? 'block' : 'none';
+        });
         sid_progress.style.display = "block";
         sid_words.style.display = "none";
         signindialog.showModal();
@@ -351,7 +360,7 @@ function setSigninDialogMode(mode) {
         sid_progress.style.display = "none";
         sid_words.style.display = "block";
         signindialog.showModal();
-    } else if (mode === "closed"){
+    } else if (mode === "closed") {
         sid_progress.style.display = "none";
         sid_words.style.display = "none";
         signindialog.close();
@@ -396,11 +405,10 @@ async function init() {
     if (currentParticipantId) {
         await refreshParticipant();
     }
-    else
-    {
+    else {
         await setSigninDialogMode("signin");
     }
-    
+
 }
 
 init();
