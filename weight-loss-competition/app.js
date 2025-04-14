@@ -13,12 +13,12 @@ const GraphTabs = document.getElementById("GraphTabs");
 let GLOBALmode = "Absolute";
 const pocketBase = new PocketBase("https://petition.pockethost.io/");
 //const pocketBase = new PocketBase("http://127.0.0.1:8090/");
-const currentParticipantId = localStorage.getItem("participant") || "";
+let currentParticipantId = localStorage.getItem("participant") || "";
 let chartInstance = null;
 let GLOBALparticipants = null
 
 // Show signin dialog initially
-signindialog.showModal();
+setSigninDialogMode("loading");
 
 // Get participant data
 async function getParticipant(id) {
@@ -36,21 +36,17 @@ async function getParticipant(id) {
 
 // Refresh participant data and UI
 async function refreshParticipant(id) {
-    sid_progress.style.display = "block";
-    sid_words.style.display = "none";
+    setSigninDialogMode("loading");
 
     const participant = await getParticipant(id);
     if (!participant) return;
 
+    currentParticipantId = participant.id;
+
     welcomeText.innerText = `Hello ${participant.name}`;
     await updateCharts();
     logweightbutton.style.display = window.location.hash === "#admin" ? "" : "none";
-    signindialog.close();
-
-    setTimeout(() => {
-        sid_words.style.display = "";
-        sid_progress.style.display = "";
-    }, 500);
+    setSigninDialogMode("closed");
 }
 let GLOBALWeightData = null
 // Load weights data
@@ -202,6 +198,7 @@ async function updateCharts() {
         const participantWeights = currentParticipantId ?
             weights.filter(w => w.expand.participant.id === currentParticipantId) : [];
 
+
         const { goalLineValue, lineStartValue } = calculateGoalLineValues(participantWeights, GLOBALmode);
 
         const ctx = document.getElementById("ProgressGraph").getContext("2d");
@@ -343,6 +340,24 @@ async function loadParticipants() {
     }
 }
 
+function setSigninDialogMode(mode) {
+    if (mode === "loading") {
+        sid_progress.style.display = "block";
+        sid_words.style.display = "none";
+        signindialog.showModal();
+    }
+    else if (mode === "signin") {
+        renderSignInButtons();
+        sid_progress.style.display = "none";
+        sid_words.style.display = "block";
+        signindialog.showModal();
+    } else if (mode === "closed"){
+        sid_progress.style.display = "none";
+        sid_words.style.display = "none";
+        signindialog.close();
+    }
+}
+
 // Render signin buttons
 async function renderSignInButtons() {
     const participants = GLOBALparticipants
@@ -355,7 +370,6 @@ async function renderSignInButtons() {
         });
         container.innerHTML = html;
     }
-    sid_words.style.display = "block"
 }
 
 // Initialize application
@@ -382,12 +396,12 @@ async function init() {
     if (currentParticipantId) {
         logweightbutton.style.display = window.location.hash === "#admin" ? "" : "none";
         await refreshParticipant();
-    } else {
-        signindialog.showModal();
-        await renderSignInButtons();
-        sid_progress.style.display = "none"
-        await updateCharts();
     }
+    else
+    {
+        await setSigninDialogMode("signin");
+    }
+    
 }
 
 init();

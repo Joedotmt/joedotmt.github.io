@@ -30,7 +30,7 @@
 <body class="light">
     <header style="flex-direction: row; align-items: center; justify-content: space-between;">
         <h1>Weight Loss Competition Tracker</h1>
-        <button id="signinbutton" onclick="signindialog.showModal(); localStorage.clear()">Sign Out</button>
+        <button id="signinbutton" onclick="setDialogLoading('signin'); localStorage.clear()">Sign Out</button>
     </header>
 
     <dialog class="max" style="justify-content: center; align-items: center; align-content: center;" id="signindialog">
