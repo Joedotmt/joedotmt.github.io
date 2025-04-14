@@ -112,7 +112,7 @@ function renderRecordList(groupedWeights) {
 
 
         elements.forEach((x, i) => {
-            const date = new Date(x.updated).toLocaleDateString("en-GB", {
+            const date = new Date(x.created).toLocaleDateString("en-GB", {
                 day: "2-digit",
                 month: "long"
             });
@@ -177,7 +177,7 @@ async function updateCharts() {
             return {
                 label: name,
                 data: elements
-                    .sort((a, b) => Date.parse(a.updated) - Date.parse(b.updated))
+                    .sort((a, b) => Date.parse(a.created) - Date.parse(b.created))
                     .map(x => {
                         let y;
                         if (mode === "Relative") {
@@ -187,7 +187,7 @@ async function updateCharts() {
                         } else { // Absolute
                             y = x.weight;
                         }
-                        return { x: new Date(x.updated), y };
+                        return { x: new Date(x.created), y };
                     }),
                 borderColor: colors[getColorIndex(name)],
                 fill: false
