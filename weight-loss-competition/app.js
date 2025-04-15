@@ -224,6 +224,10 @@ async function updateCharts() {
             highestValue = Math.max(...datasets.flatMap(ds => ds.data.map(pt => pt.y)));
         }
 
+        const yAxisLabel = GLOBALmode === "Absolute" ? "Weight (kg)" :
+                           GLOBALmode === "Relative" ? "Weight Change (kg)" :
+                           "Progress (%)";
+
         if (chartInstance) {
             // Update existing chart
             chartInstance.data.datasets = datasets;
@@ -239,6 +243,7 @@ async function updateCharts() {
             }
 
             chartInstance.options.scales.y.reverse = yAxisReverse;
+            chartInstance.options.scales.y.title.text = yAxisLabel;
 
             if (yAxisReverse) {
                 chartInstance.options.scales.y.max = (goalLineValue + margin);
@@ -273,7 +278,7 @@ async function updateCharts() {
                             }
                         },
                         y: {
-                            title: { display: true, text: "Weight Lost (kg)" },
+                            title: { display: true, text: yAxisLabel },
                             reverse: yAxisReverse,
                             min: (goalLineValue - 5),
                             max: (highestValue + 5),
