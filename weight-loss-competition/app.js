@@ -39,6 +39,7 @@ async function getParticipant(id) {
 // Refresh participant data and UI
 async function refreshParticipant(id) {
     setSigninDialogMode("loading");
+    logweightbutton.disabled = window.location.hash === "#admin" ? "" : "true";
 
     const participant = await getParticipant(id);
     if (!participant) return;
@@ -47,7 +48,6 @@ async function refreshParticipant(id) {
 
     welcomeText.innerText = `Hello ${participant.name}`;
     await updateCharts();
-    logweightbutton.disabled = window.location.hash === "#admin" ? "false" : "true";
     setSigninDialogMode("closed");
 }
 let GLOBALWeightData = null
