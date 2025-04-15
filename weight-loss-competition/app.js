@@ -15,41 +15,51 @@ const loadingTextLines = Array.from(loadingText.children);
 let GLOBALmode = "Absolute";
 const pocketBase = new PocketBase("https://petition.pockethost.io/");
 //const pocketBase = new PocketBase("http://127.0.0.1:8090/");
-let currentParticipantId = localStorage.getItem("participant") || "";
 let chartInstance = null;
 let GLOBALparticipants = null
+
+let currentParticipant = {}
 
 // Show signin dialog initially
 setSigninDialogMode("loading");
 
-// Get participant data
-async function getParticipant(id) {
-    const participantId = id || currentParticipantId;
-    if (!participantId) return null;
+async function signIn(id) {
+    /*
+    Sign in to the id arg, if the id is blank, show the signin screen
+    */
+    if (!id)
+    {
+        setSigninDialogMode("signin")
+        return
+    }
 
-    localStorage.setItem("participant", participantId);
+    setSigninDialogMode("loading")
+
+    localStorage.setItem("participant", id);
     try {
-        return await pocketBase.collection("participants").getOne(participantId);
+        currentParticipant = await pocketBase.collection("participants").getOne(id);
     } catch (e) {
         console.error("Error fetching participant:", e);
-        return null;
+        alert("Error getting participant")
+        setSigninDialogMode("signin")
+        return;
     }
+
+    setSigninDialogMode("closed")
+    welcomeText.innerText = `Hello ${currentParticipant.name}`;
+    updateCharts();
+}
+function iejeeji_example() {
+    let setParticipant = localStorage.getItem("participant") || ""
+    signIn(setParticipant)
 }
 
-// Refresh participant data and UI
-async function refreshParticipant(id) {
-    setSigninDialogMode("loading");
-    logweightbutton.disabled = window.location.hash === "#admin" ? "" : "true";
 
-    const participant = await getParticipant(id);
-    if (!participant) return;
 
-    currentParticipantId = participant.id;
 
-    welcomeText.innerText = `Hello ${participant.name}`;
-    await updateCharts();
-    setSigninDialogMode("closed");
-}
+
+
+
 let GLOBALWeightData = null
 // Load weights data
 async function loadWeights() {
@@ -77,8 +87,6 @@ function groupWeights(weights) {
     });
     return groups;
 }
-
-
 
 // Render weight records list
 function renderRecordList(groupedWeights) {
@@ -128,15 +136,15 @@ function renderRecordList(groupedWeights) {
 }
 
 // Calculate goal line values
-function calculateGoalLineValues(participantWeights, mode) {
-    const lastWeight = participantWeights.length > 0 ?
-        participantWeights[participantWeights.length - 1].weight : 0;
+function calculateGoalLineValues(currentParticipantWeights, mode) {
+    const lastWeight = currentParticipantWeights.length > 0 ?
+        currentParticipantWeights[currentParticipantWeights.length - 1].weight : 0;
 
     let goalLineValue = 0;
     let lineStartValue = lastWeight;
 
-    if (participantWeights.length > 0) {
-        const goal = participantWeights[0].expand.participant.goal;
+    if (currentParticipantWeights.length > 0) {
+        const goal = currentParticipant.goal;
 
         if (mode === "Absolute") {
             goalLineValue = goal;
@@ -197,11 +205,10 @@ async function updateCharts() {
         const grouped = groupWeights(weights);
         renderRecordList(grouped);
 
-        const participantWeights = currentParticipantId ?
-            weights.filter(w => w.expand.participant.id === currentParticipantId) : [];
+        const currentParticipantWeights = currentParticipant.id ?
+            weights.filter(w => w.expand.participant.id === currentParticipant.id) : [];
 
-
-        const { goalLineValue, lineStartValue } = calculateGoalLineValues(participantWeights, GLOBALmode);
+        const { goalLineValue, lineStartValue } = calculateGoalLineValues(currentParticipantWeights, GLOBALmode);
 
         const ctx = document.getElementById("ProgressGraph").getContext("2d");
         const datasets = createDatasets(grouped, GLOBALmode);
@@ -318,12 +325,12 @@ async function logWeight() {
     weightFormDialog.close();
     const weight = +document.getElementById("weightInput").value;
 
-    if (!currentParticipantId || isNaN(weight)) return;
+    if (!currentParticipant.id || isNaN(weight)) return;
 
     try {
         await pocketBase.collection("weights").create({
             weight: weight,
-            participant: currentParticipantId
+            participant: currentParticipant.id
         });
 
         document.getElementById("weightInput").value = "";
@@ -375,7 +382,7 @@ async function renderSignInButtons() {
     if (container) {
         let html = '';
         participants.forEach(participant => {
-            html += `<button onclick="refreshParticipant('${participant.id}')">${participant.name}</button>`;
+            html += `<button onclick="signIn('${participant.id}')">${participant.name}</button>`;
         });
         container.innerHTML = html;
     }
@@ -383,7 +390,7 @@ async function renderSignInButtons() {
 
 // Initialize application
 async function init() {
-
+    logweightbutton.disabled = window.location.hash === "#admin" ? "" : "true";
     pocketBase.collection('weights').subscribe('*', async function (e) {
         await loadWeights()
         await updateCharts()
@@ -402,12 +409,8 @@ async function init() {
     await loadParticipants()
     await loadWeights()
 
-    if (currentParticipantId) {
-        await refreshParticipant();
-    }
-    else {
-        await setSigninDialogMode("signin");
-    }
+    let setParticipant = localStorage.getItem("participant") || ""
+    await signIn(setParticipant);
 
 }
 
