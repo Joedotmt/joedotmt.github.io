@@ -104,15 +104,16 @@ function renderRecordList(groupedWeights) {
 
         html += `<article style="padding: 0; border-bottom: .0625rem solid var(--surface-variant); box-shadow: none; border-radius:0;">
   <progress class="max" value="${progressPercent}" max="100"></progress>
-<h3 style="margin:0em 1rem;">${name}</h3>
+<h3 style="margin:0em 0.8rem;">${name}</h3>
 </article>
     <ul class="list border">
       <li style="display: flex
 ;
     flex-direction: column;
     align-items: flex-start; gap:0; min-height: fit-content" ">
-        <div>Total weight lost: ${weightLost}kg</div>
+        <div>Lost: ${weightLost}kg</div>
         <div>Goal: ${goal}kg</div>
+        <div>Left: ${(currentWeight-goal).toFixed(1)}kg</div>
         <div style="display:flex; gap:0.5em; align-items:center">${progressPercent}%<progress value="${progressPercent}" max="100" class="large"></progress></div>
       </li>`;
 

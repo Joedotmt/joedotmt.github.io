@@ -84,19 +84,28 @@ body.light {
 
 body {
     font-family: "Roboto Mono", monospace, Arial, sans-serif;
+    font-weight: 600;
     margin: 0;
     padding: 0;
     width: 100dvw;
 }
 
 #sid_progress {
-    display: block;
+    display: flex;
+    align-items: center;
+    align-content: center;
+    justify-content: center;
+    justify-items: center;
     position: fixed;
     top: 50%;
     left: 50%;
     translate: -50% -50%;
     z-index: 10;
     animation: stupidScale 500ms ease 0s infinite forwards;
+}
+
+progress.circle {
+    animation: 0.3s to-circular linear infinite;
 }
 
 #sid_words {
