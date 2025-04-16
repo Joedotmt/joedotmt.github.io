@@ -20,6 +20,31 @@ let currentUser = {};
 // Show signin dialog initially
 setSigninDialogMode("loading");
 
+// Try to restore PocketBase auth from localStorage and refresh if possible
+async function tryRestoreAuth() {
+    // Restore token and model from localStorage if present
+    const pbAuth = localStorage.getItem("pocketbase_auth");
+    if (pbAuth) {
+        try {
+            const { token, model } = JSON.parse(pbAuth);
+            pocketBase.authStore.save(token, model);
+            // Try to refresh the session
+            await pocketBase.collection('users').authRefresh();
+            currentUser = pocketBase.authStore.model;
+            welcomeText.innerText = `Hello ${currentUser.username}`;
+            setSigninDialogMode("closed");
+            await updateCharts();
+            return true;
+        } catch (e) {
+            // If refresh fails, clear auth and show sign-in
+            pocketBase.authStore.clear();
+            localStorage.removeItem("pocketbase_auth");
+        }
+    }
+    setSigninDialogMode("signin");
+    return false;
+}
+
 // Updated signIn to use authWithPassword authentication
 async function signIn(username, password) {
     if (!username || !password) {
@@ -28,7 +53,7 @@ async function signIn(username, password) {
     }
     setSigninDialogMode("loading");
     try {
-        const authData = await pocketBase.collection('users').authWithPassword(username, password);
+        await pocketBase.collection('users').authWithPassword(username, password);
         currentUser = pocketBase.authStore.model;
     } catch (e) {
         console.error("Error during sign in:", e);
@@ -371,8 +396,7 @@ async function init() {
     submitButton.addEventListener("click", logWeight);
     ///////////////////////////////
     await loadWeights();
-    // Use stored username for auto sign-in if desired (password must be re-entered for security)
-    const storedUsername = localStorage.getItem("participant") || "";
-    await signIn(storedUsername, ""); // will show the signin dialog if password is missing
+    // Try to restore session, otherwise show sign-in dialog
+    await tryRestoreAuth();
 }
 init();
