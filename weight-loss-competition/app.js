@@ -49,11 +49,6 @@ async function signIn(id) {
     welcomeText.innerText = `Hello ${currentParticipant.name}`;
     updateCharts();
 }
-function iejeeji_example() {
-    let setParticipant = localStorage.getItem("participant") || ""
-    signIn(setParticipant)
-}
-
 
 
 
