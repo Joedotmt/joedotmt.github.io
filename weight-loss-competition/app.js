@@ -14,54 +14,67 @@ const loadingTextLines = Array.from(loadingText.children);
 // Global state
 let GLOBALmode = "Absolute";
 const pocketBase = new PocketBase("https://petition.pockethost.io/");
-//const pocketBase = new PocketBase("http://127.0.0.1:8090/");
 let chartInstance = null;
-let GLOBALparticipants = null
-
-let currentParticipant = {}
+let currentUser = {};
 
 // Show signin dialog initially
 setSigninDialogMode("loading");
 
-async function signIn(id) {
-    /*
-    Sign in to the id arg, if the id is blank, show the signin screen
-    */
-    if (!id)
-    {
-        setSigninDialogMode("signin")
-        return
-    }
-
-    setSigninDialogMode("loading")
-
-    localStorage.setItem("participant", id);
-    try {
-        currentParticipant = await pocketBase.collection("participants").getOne(id);
-    } catch (e) {
-        console.error("Error fetching participant:", e);
-        alert("Error getting participant")
-        setSigninDialogMode("signin")
+// Updated signIn to use authWithPassword authentication
+async function signIn(username, password) {
+    if (!username || !password) {
+        setSigninDialogMode("signin");
         return;
     }
-
-    setSigninDialogMode("closed")
-    welcomeText.innerText = `Hello ${currentParticipant.name}`;
+    setSigninDialogMode("loading");
+    try {
+        const authData = await pocketBase.collection('users').authWithPassword(username, password);
+        currentUser = pocketBase.authStore.model;
+    } catch (e) {
+        console.error("Error during sign in:", e);
+        alert("Error signing in");
+        setSigninDialogMode("signin");
+        return;
+    }
+    setSigninDialogMode("closed");
+    welcomeText.innerText = `Hello ${currentUser.username}`;
     updateCharts();
 }
 
+// Update renderSignInForm to pass username and password to signIn
+function renderSignInForm() {
+    const container = document.getElementById("participantButtons");
+    if (container) {
+        container.innerHTML = `
+            <form id="signinForm" style="display: flex; flex-direction: column; gap: 1em;">
+                <input type="text" id="usernameInput" placeholder="Username or Email" required>
+                <input type="password" id="passwordInput" placeholder="Password" required>
+                <button type="submit">Sign In</button>
+                <button type="button" id="guestSignInButton">Sign in as Guest</button>
+            </form>
+        `;
+        const form = document.getElementById("signinForm");
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const username = document.getElementById("usernameInput").value;
+            const password = document.getElementById("passwordInput").value;
+            await signIn(username, password);
+        });
 
+        const guestButton = document.getElementById("guestSignInButton");
+        guestButton.addEventListener("click", async () => {
+            await signIn("guest", "guestacc");
+        });
+    }
+}
 
-
-
-
-let GLOBALWeightData = null
+let GLOBALWeightData = null;
 // Load weights data
 async function loadWeights() {
     try {
         GLOBALWeightData = await pocketBase.collection("weights").getFullList({
             sort: "-created",
-            expand: "participant",
+            expand: "user",
             filter: "hidden = false"
         });
         return true;
@@ -71,77 +84,58 @@ async function loadWeights() {
     }
 }
 
-
-// Group weights by participant name
+// Update grouping to use the expanded user field
 function groupWeights(weights) {
     const groups = {};
     weights.forEach(element => {
-        const name = element.expand.participant.name;
+        const name = element.expand.user.username;
         if (!groups[name]) groups[name] = [];
         groups[name].push(element);
     });
     return groups;
 }
 
-// Render weight records list
+// In renderRecordList, update the user goal logic – assume the authenticated user holds their own goal.
 function renderRecordList(groupedWeights) {
     let html = '';
     Object.entries(groupedWeights).forEach(([name, elements]) => {
-        //const weightLost = (elements[0].weight - elements[elements.length - 1].weight).toFixed(1);
-
-        const goal = GLOBALparticipants.find(p => p.name === name)?.goal;
+        // Use currentUser.goal if the group corresponds to the logged in user; otherwise assume a goal of 0.
+        const goal = (name === currentUser.username) ? currentUser.goal : 0;
         const startingWeight = elements[elements.length - 1].weight;
         const currentWeight = elements[0].weight;
         const weightLost = (startingWeight - currentWeight).toFixed(1);
         const totalToLose = (startingWeight - goal);
-        const progressPercent = ((weightLost / totalToLose) * 100).toFixed(1);
-
-
+        const progressPercent = totalToLose ? ((weightLost / totalToLose) * 100).toFixed(1) : 0;
         html += `<article style="padding: 0; border-bottom: .0625rem solid var(--surface-variant); box-shadow: none; border-radius:0;">
   <progress class="max" value="${progressPercent}" max="100"></progress>
 <h3 style="margin:0em 0.8rem;">${name}</h3>
 </article>
     <ul class="list border">
-      <li style="display: flex
-;
-    flex-direction: column;
-    align-items: flex-start; gap:0; min-height: fit-content" ">
+      <li style="display: flex; flex-direction: column; align-items: flex-start; gap:0; min-height: fit-content">
         <div>Lost: ${weightLost}kg</div>
         <div>Goal: ${goal}kg</div>
-        <div>Left: ${(currentWeight-goal).toFixed(1)}kg</div>
+        <div>Left: ${(currentWeight - goal).toFixed(1)}kg</div>
         <div style="display:flex; gap:0.5em; align-items:center">${progressPercent}%<progress value="${progressPercent}" max="100" class="large"></progress></div>
       </li>`;
-
-
         elements.forEach((x, i) => {
-            const date = new Date(x.created).toLocaleDateString("en-GB", {
-                day: "2-digit",
-                month: "long"
-            });
-
+            const date = new Date(x.created).toLocaleDateString("en-GB", { day: "2-digit", month: "long" });
             html += `<li style="${i ? "" : "background-color: var(--inverse-primary);"}">
         <div>${date}</div>
         ${x.weight}kg
       </li>`;
         });
-
         html += '</ul>';
     });
-
     recordList.innerHTML = html;
 }
 
-// Calculate goal line values
-function calculateGoalLineValues(currentParticipantWeights, mode) {
-    const lastWeight = currentParticipantWeights.length > 0 ?
-        currentParticipantWeights[currentParticipantWeights.length - 1].weight : 0;
-
+// Update calculateGoalLineValues to use currentUser.goal
+function calculateGoalLineValues(currentUserWeights, mode) {
+    const lastWeight = currentUserWeights.length > 0 ? currentUserWeights[currentUserWeights.length - 1].weight : 0;
     let goalLineValue = 0;
     let lineStartValue = lastWeight;
-
-    if (currentParticipantWeights.length > 0) {
-        const goal = currentParticipant.goal;
-
+    if (currentUserWeights.length > 0) {
+        const goal = currentUser.goal;
         if (mode === "Absolute") {
             goalLineValue = goal;
             lineStartValue = lastWeight;
@@ -153,11 +147,10 @@ function calculateGoalLineValues(currentParticipantWeights, mode) {
             lineStartValue = 0;
         }
     }
-
     return { goalLineValue, lineStartValue };
 }
 
-// Update charts
+// In updateCharts, update filter and datasets to use the 'user' field
 async function updateCharts() {
     // Create chart datasets
     function createDatasets(groupedWeights, mode) {
@@ -185,7 +178,7 @@ async function updateCharts() {
                         if (mode === "Relative") {
                             y = x.weight - startWeight;
                         } else if (mode === "Progress") {
-                            y = ((x.weight - startWeight) / (elements[0].expand.participant.goal - startWeight)) * 100;
+                            y = ((x.weight - startWeight) / (elements[0].expand.user.goal - startWeight)) * 100;
                         } else { // Absolute
                             y = x.weight;
                         }
@@ -200,11 +193,9 @@ async function updateCharts() {
         const weights = GLOBALWeightData;
         const grouped = groupWeights(weights);
         renderRecordList(grouped);
-
-        const currentParticipantWeights = currentParticipant.id ?
-            weights.filter(w => w.expand.participant.id === currentParticipant.id) : [];
-
-        const { goalLineValue, lineStartValue } = calculateGoalLineValues(currentParticipantWeights, GLOBALmode);
+        const currentUserWeights = currentUser.id ?
+            weights.filter(w => w.expand.user.id === currentUser.id) : [];
+        const { goalLineValue, lineStartValue } = calculateGoalLineValues(currentUserWeights, GLOBALmode);
 
         const ctx = document.getElementById("ProgressGraph").getContext("2d");
         const datasets = createDatasets(grouped, GLOBALmode);
@@ -316,37 +307,24 @@ async function updateCharts() {
     }
 }
 
-// Log new weight
+// Update logWeight to use the authenticated user relationship
 async function logWeight() {
-    if (window.location.hash !== "#admin") {
-        console.error("Unauthorized: Only admin can log weights.");
+    if (currentUser.id == "soavzbhd6bu6y5r") {
+        submitButton.innerText = ("You CAN'T log weights you're mearly a guest")
+        console.error("Unauthorized: Guests can't log weights.");
         return;
     }
-
     weightFormDialog.close();
     const weight = +document.getElementById("weightInput").value;
-
-    if (!currentParticipant.id || isNaN(weight)) return;
-
+    if (!currentUser.id || isNaN(weight)) return;
     try {
         await pocketBase.collection("weights").create({
             weight: weight,
-            participant: currentParticipant.id
+            user: currentUser.id
         });
-
         document.getElementById("weightInput").value = "";
     } catch (e) {
         console.error("Error logging weight:", e);
-    }
-}
-
-// Load all participants
-async function loadParticipants() {
-    try {
-        GLOBALparticipants = await pocketBase.collection("participants").getFullList();
-    } catch (e) {
-        console.error("Error loading participants:", e);
-        return [];
     }
 }
 
@@ -364,7 +342,8 @@ function setSigninDialogMode(mode) {
         signindialog.showModal();
     }
     else if (mode === "signin") {
-        renderSignInButtons();
+        submitButton.innerText = ("Submit")
+        renderSignInForm()
         sid_progress.style.display = "none";
         sid_words.style.display = "block";
         signindialog.showModal();
@@ -375,29 +354,13 @@ function setSigninDialogMode(mode) {
     }
 }
 
-// Render signin buttons
-async function renderSignInButtons() {
-    const participants = GLOBALparticipants
-    const container = document.getElementById("participantButtons");
-
-    if (container) {
-        let html = '';
-        participants.forEach(participant => {
-            html += `<button onclick="signIn('${participant.id}')">${participant.name}</button>`;
-        });
-        container.innerHTML = html;
-    }
-}
-
 // Initialize application
 async function init() {
-    logweightbutton.disabled = window.location.hash === "#admin" ? "" : "true";
     pocketBase.collection('weights').subscribe('*', async function (e) {
-        await loadWeights()
-        await updateCharts()
-    }, { /* other options like expand, custom headers, etc. */ });
-
-    //EVENT LISTENERS//////////////
+        await loadWeights();
+        await updateCharts();
+    });
+    //EVENT LISTENERS...
     const tabs = GraphTabs.querySelectorAll("a");
     tabs.forEach(tab => {
         tab.addEventListener("click", async () => {
@@ -407,12 +370,9 @@ async function init() {
     });
     submitButton.addEventListener("click", logWeight);
     ///////////////////////////////
-    await loadParticipants()
-    await loadWeights()
-
-    let setParticipant = localStorage.getItem("participant") || ""
-    await signIn(setParticipant);
-
+    await loadWeights();
+    // Use stored username for auto sign-in if desired (password must be re-entered for security)
+    const storedUsername = localStorage.getItem("participant") || "";
+    await signIn(storedUsername, ""); // will show the signin dialog if password is missing
 }
-
 init();
