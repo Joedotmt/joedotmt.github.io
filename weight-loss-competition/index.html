@@ -56,7 +56,25 @@
         <div id="sid_words" style="display: none;">
             <h5 style="text-align: center;">Who are you?</h5>
             <nav id="participantButtons" class="center-align">
-                <!-- Sign-in form will be dynamically rendered here -->
+                <form id="signinForm" style="display: flex; flex-direction: column; gap: 1em;">
+                
+                
+                    <div style="margin:0" class="field label suffix border">
+                    <input type="text" autocomplete="off" id="usernameInput" required>
+                    <label>Username</label>
+                    <i>person</i>
+                    </div>
+    
+                    <div style="margin:0" class="field label suffix border">
+                    <input id="passwordInput" type="password" required>
+                    <label>Password</label>
+                    <i>password</i>
+                    </div>
+                    
+    
+                    <button type="submit">Sign In</button>
+                    <button type="button" id="guestSignInButton">Sign in as Guest</button>
+                </form>
             </nav>
         </div>
     </dialog>

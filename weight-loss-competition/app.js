@@ -70,14 +70,6 @@ async function signIn(username, password) {
 function renderSignInForm() {
     const container = document.getElementById("participantButtons");
     if (container) {
-        container.innerHTML = `
-            <form id="signinForm" style="display: flex; flex-direction: column; gap: 1em;">
-                <input type="text" id="usernameInput" placeholder="Username or Email" required>
-                <input type="password" id="passwordInput" placeholder="Password" required>
-                <button type="submit">Sign In</button>
-                <button type="button" id="guestSignInButton">Sign in as Guest</button>
-            </form>
-        `;
         const form = document.getElementById("signinForm");
         form.addEventListener("submit", async (event) => {
             event.preventDefault();
