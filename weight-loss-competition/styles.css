@@ -108,8 +108,17 @@ progress.circle {
     animation: 0.3s to-circular linear infinite;
 }
 
-a:hover{
+.privacylink:hover {
     color: blue;
+}
+
+.privacylink {
+    position: absolute;
+    left: 0;
+    top: -5px;
+    z-index: 5;
+    text-decoration: underline;
+    opacity: 0.5;
 }
 
 #sid_words {
@@ -177,7 +186,7 @@ h2 {
 li {
     justify-content: space-between !important;
     padding-right: 2.5em !important;
-    cursor:auto !important;
+    cursor: auto !important;
 }
 
 ::-webkit-scrollbar {
@@ -239,7 +248,7 @@ li {
         min-width: 100% !important;
     }
 
-    #recordList{
+    #recordList {
         width: 100% !important;
     }
 }
