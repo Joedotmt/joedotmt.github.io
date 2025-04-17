@@ -122,7 +122,16 @@ function groupWeights(weights) {
 // In renderRecordList, update the user goal logic – assume the authenticated user holds their own goal.
 function renderRecordList(groupedWeights) {
     let html = '';
-    Object.entries(groupedWeights).forEach(([name, elements]) => {
+    // Get all group names
+    const allNames = Object.keys(groupedWeights);
+    // Sort so that currentUser's name comes first
+    allNames.sort((a, b) => {
+        if (a === currentUser.username) return -1;
+        if (b === currentUser.username) return 1;
+        return 0;
+    });
+    allNames.forEach(name => {
+        const elements = groupedWeights[name];
         // Use currentUser.goal if the group corresponds to the logged in user; otherwise assume a goal of 0.
         const goal = (name === currentUser.username) ? currentUser.goal : 0;
         const startingWeight = elements[elements.length - 1].weight;
