@@ -56,7 +56,6 @@ async function signIn(username, password) {
         currentUser = pocketBase.authStore.model;
     } catch (e) {
         console.error("Error during sign in:", e);
-        alert("Error signing in");
         setSigninDialogMode("signin");
         return;
     }
