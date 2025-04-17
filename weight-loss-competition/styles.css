@@ -108,6 +108,10 @@ progress.circle {
     animation: 0.3s to-circular linear infinite;
 }
 
+a:hover{
+    color: blue;
+}
+
 #sid_words {
     display: contents;
 }
