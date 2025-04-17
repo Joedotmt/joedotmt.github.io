@@ -132,7 +132,7 @@ function renderRecordList(groupedWeights) {
     allNames.forEach(name => {
         const elements = groupedWeights[name];
         // Use currentUser.goal if the group corresponds to the logged in user; otherwise assume a goal of 0.
-        const goal = (name === currentUser.username) ? currentUser.goal : 0;
+        const goal = elements[0].expand.user.goal;
         const startingWeight = elements[elements.length - 1].weight;
         const currentWeight = elements[0].weight;
         const weightLost = (startingWeight - currentWeight).toFixed(1);
