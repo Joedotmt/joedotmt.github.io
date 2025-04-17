@@ -17,9 +17,6 @@ const pocketBase = new PocketBase("https://petition.pockethost.io/");
 let chartInstance = null;
 let currentUser = {};
 
-// Show signin dialog initially
-setSigninDialogMode("loading");
-
 // Try to restore PocketBase auth from localStorage and refresh if possible
 async function tryRestoreAuth() {
     // Restore token and model from localStorage if present
@@ -32,8 +29,10 @@ async function tryRestoreAuth() {
             await pocketBase.collection('users').authRefresh();
             currentUser = pocketBase.authStore.model;
             welcomeText.innerText = `Hello ${currentUser.username}`;
+            
+            await loadWeights();
+
             setSigninDialogMode("closed");
-            await updateCharts();
             return true;
         } catch (e) {
             // If refresh fails, clear auth and show sign-in
@@ -61,6 +60,7 @@ async function signIn(username, password) {
         setSigninDialogMode("signin");
         return;
     }
+    await loadWeights();
     setSigninDialogMode("closed");
     welcomeText.innerText = `Hello ${currentUser.username}`;
     updateCharts();
@@ -89,11 +89,18 @@ let GLOBALWeightData = null;
 // Load weights data
 async function loadWeights() {
     try {
+        const allVisibleToUser = [...currentUser.friends, currentUser.id];
+
+        const friendFilters = allVisibleToUser
+            .map(id => `user.id = "${id}"`)
+            .join(' || ');
+
         GLOBALWeightData = await pocketBase.collection("weights").getFullList({
             sort: "-created",
             expand: "user",
-            filter: "hidden = false"
+            filter: `hidden = false && (${friendFilters})`
         });
+        updateCharts();
         return true;
     } catch (e) {
         console.error("Error loading weights:", e);
@@ -228,8 +235,8 @@ async function updateCharts() {
         }
 
         const yAxisLabel = GLOBALmode === "Absolute" ? "Weight (kg)" :
-                           GLOBALmode === "Relative" ? "Weight Change (kg)" :
-                           "Progress (%)";
+            GLOBALmode === "Relative" ? "Weight Change (kg)" :
+                "Progress (%)";
 
         if (chartInstance) {
             // Update existing chart
@@ -375,7 +382,6 @@ function setSigninDialogMode(mode) {
 async function init() {
     pocketBase.collection('weights').subscribe('*', async function (e) {
         await loadWeights();
-        await updateCharts();
     });
     //EVENT LISTENERS...
     const tabs = GraphTabs.querySelectorAll("a");
@@ -387,8 +393,11 @@ async function init() {
     });
     submitButton.addEventListener("click", logWeight);
     ///////////////////////////////
-    await loadWeights();
+
+    setSigninDialogMode("loading");
     // Try to restore session, otherwise show sign-in dialog
     await tryRestoreAuth();
+
+    
 }
 init();
