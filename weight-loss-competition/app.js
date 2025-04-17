@@ -29,7 +29,7 @@ async function tryRestoreAuth() {
             await pocketBase.collection('users').authRefresh();
             currentUser = pocketBase.authStore.model;
             welcomeText.innerText = `Hello ${currentUser.username}`;
-            
+
             await loadWeights();
 
             setSigninDialogMode("closed");
@@ -161,26 +161,26 @@ function renderRecordList(groupedWeights) {
     recordList.innerHTML = html;
 }
 
-// Update calculateGoalLineValues to use currentUser.goal
 function calculateGoalLineValues(currentUserWeights, mode) {
-    const lastWeight = currentUserWeights.length > 0 ? currentUserWeights[currentUserWeights.length - 1].weight : 0;
-    let goalLineValue = 0;
-    let lineStartValue = lastWeight;
-    if (currentUserWeights.length > 0) {
-        const goal = currentUser.goal;
-        if (mode === "Absolute") {
-            goalLineValue = goal;
-            lineStartValue = lastWeight;
-        } else if (mode === "Relative") {
-            goalLineValue = -(lastWeight - goal);
-            lineStartValue = 0;
-        } else if (mode === "Progress") {
-            goalLineValue = 100;
-            lineStartValue = 0;
-        }
+    const weights = currentUserWeights.length
+        ? currentUserWeights
+        : GLOBALWeightData.map(entry => ({ weight: entry.weight || 0 }));
+
+    const firstWeight = weights[weights.length - 1].weight;
+    let goal = currentUser.goal || Math.min(...GLOBALWeightData.map(entry => entry.expand.user.goal || 0));
+
+    switch (mode) {
+        case "Absolute":
+            return { goalLineValue: goal, lineStartValue: firstWeight };
+        case "Relative":
+            return { goalLineValue: -(firstWeight - goal), lineStartValue: 0 };
+        case "Progress":
+            return { goalLineValue: 100, lineStartValue: 0 };
+        default:
+            return { goalLineValue: 0, lineStartValue: firstWeight };
     }
-    return { goalLineValue, lineStartValue };
 }
+
 
 // In updateCharts, update filter and datasets to use the 'user' field
 async function updateCharts() {
@@ -406,6 +406,6 @@ async function init() {
     // Try to restore session, otherwise show sign-in dialog
     await tryRestoreAuth();
 
-    
+
 }
 init();
