@@ -9,8 +9,9 @@
     <link rel="icon" href="favicon.jpg">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,500..700;1,500..700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,500..700;1,500..700&display=swap"
+        rel="stylesheet">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pocketbase/0.25.0/pocketbase.umd.js"></script>
 
@@ -25,7 +26,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
 
 
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=2">
 </head>
 
 <body class="light">
@@ -40,17 +41,17 @@
             <progress id="sid_progressbar" class="circle large"></progress>
 
             <div style="display: contents;" id="loadingtext">
-            <div>AAAAAAAAAA</div>
-            <div>LOADING...</div>
-            <div>GOTTA GO FAST</div>
-            <div>IM IN AGONY</div>
-            <div>HELP ME</div>
-            <div>!!!!!!!!!!!</div>
-            <div>FATASS</div>
-            <div>BRRRRRR</div>
-            <div>WOAMAAPAO</div>
-            <div>HELP HELP HELP</div>
-            <div>92.251.80.174</div>
+                <div>AAAAAAAAAA</div>
+                <div>LOADING...</div>
+                <div>GOTTA GO FAST</div>
+                <div>IM IN AGONY</div>
+                <div>HELP ME</div>
+                <div>!!!!!!!!!!!</div>
+                <div>FATASS</div>
+                <div>BRRRRRR</div>
+                <div>WOAMAAPAO</div>
+                <div>HELP HELP HELP</div>
+                <div>92.251.80.174</div>
             </div>
 
         </div>
@@ -58,21 +59,21 @@
             <h5 style="text-align: center;">Who are you?</h5>
             <nav id="participantButtons" class="center-align">
                 <form id="signinForm" style="display: flex; flex-direction: column; gap: 1em;">
-                
-                
+
+
                     <div style="margin:0" class="field label suffix border">
-                    <input type="text" autocomplete="off" id="usernameInput" required>
-                    <label>Username</label>
-                    <i>person</i>
+                        <input type="text" autocomplete="off" id="usernameInput" required>
+                        <label>Username</label>
+                        <i>person</i>
                     </div>
-    
+
                     <div style="margin:0" class="field label suffix border">
-                    <input id="passwordInput" type="password" required>
-                    <label>Password</label>
-                    <i>password</i>
+                        <input id="passwordInput" type="password" required>
+                        <label>Password</label>
+                        <i>password</i>
                     </div>
-                    
-    
+
+
                     <button type="submit">Sign In</button>
                     <button type="button" id="guestSignInButton">Sign in as Guest</button>
                 </form>
@@ -86,9 +87,9 @@
         align-items: center;">
             <h1 style="text-align: center; width: 50%;" id="welcomeText">Hello </h1>
 
-            <button style="width: 50%; box-sizing: border-box;"
-                onclick="weightFormDialog.showModal()" id='logweightbutton'>Log Weight</button>
-    
+            <button style="width: 50%; box-sizing: border-box;" onclick="weightFormDialog.showModal()"
+                id='logweightbutton'>Log Weight</button>
+
         </div>
 
         <!-- tabs wont work without these -->
@@ -110,8 +111,8 @@
                     <a class="ripple" data-ui="#tab3">Progress</a>
                 </div>
                 <div style="height: 100%;">
-                <canvas id="ProgressGraph"></canvas>
-            </div>
+                    <canvas id="ProgressGraph"></canvas>
+                </div>
             </div>
             <ul style="width: 50%;" id="recordList" class="list border">
             </ul>
