@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -47,9 +48,37 @@
         .current-day {
             background-color: #ffcccb;
         }
+
+        a {
+            font-size: 50px;
+            color: #ff0000;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            padding: 10px;
+            outline: 2px solid #545454;
+            width: 500px;
+            border-radius: 10px;
+            transition: all 0.1s ease;
+        }
+
+        a:hover {
+            outline: 10px solid #ff0000;
+            width: 510px;
+        }
     </style>
 </head>
+
 <body>
+    <div style="margin: 3em 0em; gap: 1em; display: flex; flex-direction: column; align-items: center;">
+        <a target="_blank" href="https://www.um.edu.mt/matsec/past/secondaryeducationcertificatesec/">Past Papers</a>
+        <a target="_blank" href="https://www.um.edu.mt/matsec/syllabi/2025/">Syllabi</a>
+        <a target="_blank"
+            href="https://www.um.edu.mt/matsec/markingschemesandexemplars/markingschemes/secondaryeducationcertificatesec/">Marking
+            Schemes</a>
+        <a target="_blank"
+            href="https://www.um.edu.mt/matsec/markingschemesandexemplars/sampleexaminationpapers/">Sample Papers</a>
+    </div>
     <div style="padding: 15px;">
         <h2>Joe Esposito - Secondary Certificate Examinations - Main Session Timetable 2025</h2>
         <table>
@@ -87,8 +116,7 @@
         };
 
         // Utility to format a Date object as "D Month YYYY (Weekday)"
-        function formatDate(date)
-        {
+        function formatDate(date) {
             return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', weekday: 'long' });
         }
 
@@ -97,36 +125,32 @@
         const endDate = new Date(Date.UTC(2025, 4, 20));   // May 20, 2025 (UTC)
         const today = new Date().toISOString().split('T')[0]; // Get today's date in ISO format
 
-        for (let d = new Date(startDate); d <= endDate; d.setUTCDate(d.getUTCDate() + 1))
-        {
+        for (let d = new Date(startDate); d <= endDate; d.setUTCDate(d.getUTCDate() + 1)) {
             const iso = d.toISOString().split('T')[0];
             let row = document.createElement('tr');
-            if (examEvents[iso])
-            {
+            if (examEvents[iso]) {
                 let event = examEvents[iso];
                 row.innerHTML = `<td>${formatDate(new Date(d))}</td>
                                 <td>${event.time}</td>
                                 <td>${event.subject}</td>
                                 <td>${event.venue}</td>
                                 <td>${event.room}</td>`;
-            } else
-            {
+            } else {
                 row.innerHTML = `<td>${formatDate(new Date(d))}</td>
                                 <td colspan="4" class="study-day">Study Day</td>`;
             }
             // Add weekend class for Saturdays and Sundays
-            if (d.getDay() === 6 || d.getDay() === 0)
-            {
+            if (d.getDay() === 6 || d.getDay() === 0) {
                 row.classList.add('weekend');
                 row.querySelector('.study-day')?.classList.add('weekend');
             }
             // Add current-day class for today
-            if (iso === today)
-            {
+            if (iso === today) {
                 row.classList.add('current-day');
             }
             scheduleBody.appendChild(row);
         }
     </script>
 </body>
+
 </html>
