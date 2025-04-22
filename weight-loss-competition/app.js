@@ -16,6 +16,19 @@ let GLOBALmode = "Absolute";
 const pocketBase = new PocketBase("https://petition.pockethost.io/");
 let chartInstance = null;
 let currentUser = {};
+let GLOBALWeightData = null;
+let showHiddenWeights = false; // <-- Add this flag
+
+// Listen for secret key combo: Ctrl+Shift+H
+document.addEventListener('keydown', async function (e) {
+    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'h') {
+        showHiddenWeights = !showHiddenWeights;
+        setSigninDialogMode("loading")
+        await loadWeights();
+        setSigninDialogMode("closed")
+        //alert(`Hidden weights ${showHiddenWeights ? "shown" : "hidden"}.`);
+    }
+});
 
 // Try to restore PocketBase auth from localStorage and refresh if possible
 async function tryRestoreAuth() {
@@ -84,7 +97,6 @@ function renderSignInForm() {
     }
 }
 
-let GLOBALWeightData = null;
 // Load weights data
 async function loadWeights() {
     try {
@@ -94,10 +106,13 @@ async function loadWeights() {
             .map(id => `user.id = "${id}"`)
             .join(' || ');
 
+        // If showHiddenWeights is true, don't filter by hidden
+        const hiddenFilter = showHiddenWeights ? "" : "hidden = false && ";
+
         GLOBALWeightData = await pocketBase.collection("weights").getFullList({
             sort: "-created",
             expand: "user",
-            filter: `hidden = false && (${friendFilters})`
+            filter: `${hiddenFilter}(${friendFilters})`
         });
         updateCharts();
         return true;
