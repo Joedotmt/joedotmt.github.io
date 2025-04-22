@@ -27,6 +27,7 @@
             scale: 0.9;
         }
 
+
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -190,7 +191,7 @@
             justify-content: space-between;
             align-items: center;
             container: footer / inline-size;
-            clip-path: polygon(1% 5%, 99% 0, 100% 95%, 5% 100%);
+            clip-path: polygon(1px 5px, calc(100% - 10px) 0, 100% calc(100% - 10px), 5px calc(100% - 10px));
         }
 
         @media (hover: hover) {
@@ -351,9 +352,11 @@
         <div style="width: 100%; font-size: 2em;" class="banner longbanner" id="ConstructionBanner">
             <h1 style="font-size: 1em">I make games, videos, and software</h1>
             <h5>This is the website for Joe Grech Esposito in Malta. Some things may still be on icedjelly.com as I work on migrating.</h5>
-            <div style="background-position: 50% 50%; background-size: cover;" class="footer">
-                <p>Latest video (S7 final project)</p>
-                <iframe height="220" width="350" src="https://www.youtube.com/embed/Q5lFmHLFia4" title="DON&#39;T PRESS THE BUTTON" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen="true"></iframe>
+            <div style="background-position: 50% 50%; background-size: cover; flex-direction: column;" class="footer">
+                <p>Watch the showreel</p>
+                <a target="_blank" href="https://www.youtube.com/embed/V-432v8IUVE?modestbranding=1&autoplay=1&controls=1&fs=1&loop=0&rel=0&showinfo=0&disablekb=1" style="scale: 1;">
+                    <img style="width: 100%; height: 100%; aspect-ratio: 16/9;" src="/home/showreel.jpg"></img>
+                </a>
             </div>
             <div style="background: url(home/hopdodge.png); background-position: 50% 50%; background-size: cover;" class="footer">
                 <p>HopDodge is a 3D puzzle platforming game. Create and share levels using the steam workshop. You have all the freedom you need to create your own adventures.</p>
