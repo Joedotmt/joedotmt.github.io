@@ -80,7 +80,7 @@ async function signIn(username, password) {
 
 function updateWelcomeTextAndWords() {
     welcomeText.innerText = `Hello ${currentUser.username}`;
-    
+    /*
     // Check if the user is a physicist
     if (currentUser.is_physicist) {
         // Replace all occurrences of "weight" with "mass"
@@ -88,7 +88,7 @@ function updateWelcomeTextAndWords() {
     } else {
         // Replace all occurrences of "mass" with "weight"
         document.body.innerHTML = document.body.innerHTML.replace(/\bmass\b/gi, "weight");
-    }
+    }*/
 }
 
 // Update renderSignInForm to pass username and password to signIn
