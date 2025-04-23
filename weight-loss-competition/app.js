@@ -17,7 +17,7 @@ const pocketBase = new PocketBase("https://petition.pockethost.io/");
 let chartInstance = null;
 let currentUser = {};
 let GLOBALWeightData = null;
-let showHiddenWeights = false; // <-- Add this flag
+let showHiddenWeights = true;
 
 // Listen for secret key combo: Ctrl+Shift+H
 document.addEventListener('keydown', async function (e) {
