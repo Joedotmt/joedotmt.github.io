@@ -148,11 +148,14 @@ function renderRecordList(groupedWeights) {
         const elements = groupedWeights[name];
         // Use currentUser.goal if the group corresponds to the logged in user; otherwise assume a goal of 0.
         const goal = elements[0].expand.user.goal;
+        const height_m = elements[0].expand.user.height_cm/100;
         const startingWeight = elements[elements.length - 1].weight;
         const currentWeight = elements[0].weight;
         const weightLost = (startingWeight - currentWeight).toFixed(1);
         const totalToLose = (startingWeight - goal);
         const progressPercent = totalToLose ? ((weightLost / totalToLose) * 100).toFixed(1) : 0;
+        const bmi = currentWeight / (height_m * height_m);
+        //
         html += `<article style="padding: 0; border-bottom: .0625rem solid var(--surface-variant); box-shadow: none; border-radius:0;">
   <progress class="max" value="${progressPercent}" max="100"></progress>
 <h3 style="margin:0em 0.8rem;">${name}</h3>
@@ -162,6 +165,8 @@ function renderRecordList(groupedWeights) {
         <div>Lost: ${weightLost}kg</div>
         <div>Goal: ${goal}kg</div>
         <div>Left: ${(currentWeight - goal).toFixed(1)}kg</div>
+        <div>BMI: ${bmi.toFixed(1)}kg/m² <a target="_blank" style="text-decoration: underline;" href="https://www.calculator.net/bmi-calculator.html?cheightmeter=${elements[0].expand.user.height_cm}&ckg=${currentWeight}&printit=0&ctype=metric&x=Calculate">More Info</a></div>
+        <div>Height: ${elements[0].expand.user.height_cm}cm</div>
         <div style="display:flex; gap:0.5em; align-items:center">${progressPercent}%<progress value="${progressPercent}" max="100" class="large"></progress></div>
       </li>`;
         elements.forEach((x, i) => {
