@@ -161,12 +161,12 @@ function renderRecordList(groupedWeights) {
 <h3 style="margin:0em 0.8rem;">${name}</h3>
 </article>
     <ul class="list border">
-      <li style="display: flex; flex-direction: column; align-items: flex-start; gap:0; min-height: fit-content">
-        <div>Lost: ${weightLost}kg</div>
-        <div>Goal: ${goal}kg</div>
-        <div>Left: ${(currentWeight - goal).toFixed(1)}kg</div>
-        <div>BMI: ${bmi.toFixed(1)}kg/m² <a target="_blank" style="text-decoration: underline;" href="https://www.calculator.net/bmi-calculator.html?cheightmeter=${elements[0].expand.user.height_cm}&ckg=${currentWeight}&printit=0&ctype=metric&x=Calculate">More Info</a></div>
-        <div>Height: ${elements[0].expand.user.height_cm}cm</div>
+      <li style="display: flex; flex-direction: column; align-items: flex-start; gap:0; min-height: fit-content; padding:1em;">
+        <div>Goal&#160&#160&#160: ${goal}kg</div>
+        <div>Lost&#160&#160&#160: ${weightLost}kg</div>
+        <div>Left&#160&#160&#160: ${(currentWeight - goal).toFixed(1)}kg</div>
+        <div>BMI&#160&#160&#160&#160: ${bmi.toFixed(1)}kg/m² <a target="_blank" style="text-decoration: underline;" href="https://www.calculator.net/bmi-calculator.html?cheightmeter=${elements[0].expand.user.height_cm}&ckg=${currentWeight}&printit=0&ctype=metric&x=Calculate">More Info</a></div>
+        <div>Height&#160: ${elements[0].expand.user.height_cm}cm</div>
         <div style="display:flex; gap:0.5em; align-items:center">${progressPercent}%<progress value="${progressPercent}" max="100" class="large"></progress></div>
       </li>`;
         elements.forEach((x, i) => {
