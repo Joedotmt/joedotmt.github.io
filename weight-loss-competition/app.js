@@ -41,7 +41,7 @@ async function tryRestoreAuth() {
             // Try to refresh the session
             await pocketBase.collection('users').authRefresh();
             currentUser = pocketBase.authStore.model;
-            welcomeText.innerText = `Hello ${currentUser.username}`;
+            updateWelcomeTextAndWords()
 
             await loadWeights();
 
@@ -74,8 +74,21 @@ async function signIn(username, password) {
     }
     await loadWeights();
     setSigninDialogMode("closed");
-    welcomeText.innerText = `Hello ${currentUser.username}`;
+    updateWelcomeTextAndWords();
     updateCharts();
+}
+
+function updateWelcomeTextAndWords() {
+    welcomeText.innerText = `Hello ${currentUser.username}`;
+    
+    // Check if the user is a physicist
+    if (currentUser.is_physicist) {
+        // Replace all occurrences of "weight" with "mass"
+        document.body.innerHTML = document.body.innerHTML.replace(/\bweight\b/gi, "mass");
+    } else {
+        // Replace all occurrences of "mass" with "weight"
+        document.body.innerHTML = document.body.innerHTML.replace(/\bmass\b/gi, "weight");
+    }
 }
 
 // Update renderSignInForm to pass username and password to signIn
