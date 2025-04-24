@@ -59,11 +59,11 @@ async function tryRestoreAuth() {
 
 // Updated signIn to use authWithPassword authentication
 async function signIn(username, password) {
+    setSigninDialogMode("loading");
     if (!username || !password) {
         setSigninDialogMode("signin");
         return;
     }
-    setSigninDialogMode("loading");
     try {
         await pocketBase.collection('users').authWithPassword(username, password);
         currentUser = pocketBase.authStore.model;
@@ -80,15 +80,25 @@ async function signIn(username, password) {
 
 function updateWelcomeTextAndWords() {
     welcomeText.innerText = `Hello ${currentUser.username}`;
-    /*
+
     // Check if the user is a physicist
     if (currentUser.is_physicist) {
+
         // Replace all occurrences of "weight" with "mass"
-        document.body.innerHTML = document.body.innerHTML.replace(/\bweight\b/gi, "mass");
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        let node;
+        while ((node = walker.nextNode())) {
+            node.textContent = node.textContent.replace(/\bweight\b/gi, "Mass");
+        }
+
     } else {
         // Replace all occurrences of "mass" with "weight"
-        document.body.innerHTML = document.body.innerHTML.replace(/\bmass\b/gi, "weight");
-    }*/
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        let node;
+        while ((node = walker.nextNode())) {
+            node.textContent = node.textContent.replace(/\bMass\b/gi, "Weight");
+        }
+    }
 }
 
 // Update renderSignInForm to pass username and password to signIn
@@ -97,6 +107,7 @@ function renderSignInForm() {
     if (container) {
         const form = document.getElementById("signinForm");
         form.addEventListener("submit", async (event) => {
+            setSigninDialogMode("loading")
             event.preventDefault();
             const username = document.getElementById("usernameInput").value;
             const password = document.getElementById("passwordInput").value;
@@ -161,7 +172,7 @@ function renderRecordList(groupedWeights) {
         const elements = groupedWeights[name];
         // Use currentUser.goal if the group corresponds to the logged in user; otherwise assume a goal of 0.
         const goal = elements[0].expand.user.goal;
-        const height_m = elements[0].expand.user.height_cm/100;
+        const height_m = elements[0].expand.user.height_cm / 100;
         const startingWeight = elements[elements.length - 1].weight;
         const currentWeight = elements[0].weight;
         const weightLost = (startingWeight - currentWeight).toFixed(1);
