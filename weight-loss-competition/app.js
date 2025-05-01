@@ -19,16 +19,13 @@ let currentUser = {};
 let GLOBALWeightData = null;
 let showHiddenWeights = true;
 
-// Listen for secret key combo: Ctrl+Shift+H
-document.addEventListener('keydown', async function (e) {
-    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'h') {
-        showHiddenWeights = !showHiddenWeights;
-        setSigninDialogMode("loading")
-        await loadWeights();
-        setSigninDialogMode("closed")
-        //alert(`Hidden weights ${showHiddenWeights ? "shown" : "hidden"}.`);
-    }
-});
+async function toggleHiddenWeights()
+{
+    showHiddenWeights = !showHiddenWeights;
+    setSigninDialogMode("loading")
+    await loadWeights();
+    setSigninDialogMode("closed")
+}
 
 // Try to restore PocketBase auth from localStorage and refresh if possible
 async function tryRestoreAuth() {
