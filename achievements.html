@@ -6,26 +6,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Achievements</title>
     <script>
-        (function () {
+        (function ()
+        {
             const achievementsKey = 'siteAchievements';
             const achievementsList = [
                 { id: 'saw_face', name: 'Saw my face' },
                 { id: 'annoying_dot', name: 'Said hello to the annoying dot' }
             ];
 
-            function getAchievements() {
+            function getAchievements()
+            {
                 const achievements = localStorage.getItem(achievementsKey);
                 return achievements ? JSON.parse(achievements) : [];
             }
 
-            function saveAchievements(achievements) {
+            function saveAchievements(achievements)
+            {
                 localStorage.setItem(achievementsKey, JSON.stringify(achievements));
             }
 
-            function registerAchievement(achievement) {
-                console.log(achievement)
+            function registerAchievement(achievement)
+            {
+                console.log(achievement);
                 const achievements = getAchievements();
-                if (!achievements.includes(achievement)) {
+                if (!achievements.includes(achievement))
+                {
                     achievements.push(achievement);
                     saveAchievements(achievements);
                     console.log(`Achievement unlocked: ${achievement}`);
@@ -34,7 +39,8 @@
                 }
             }
 
-            function updateProgressBar() {
+            function updateProgressBar()
+            {
                 const achievements = getAchievements();
                 const progress = achievements.length / achievementsList.length;
                 const progressBar = document.querySelector('progress');
@@ -43,16 +49,20 @@
                 progressText.textContent = `${achievements.length}/${achievementsList.length}`;
             }
 
-            function displayAchievements() {
+            function displayAchievements()
+            {
                 const achievementsListElement = document.getElementById('achievements-list');
                 const achievements = getAchievements();
                 achievementsListElement.innerHTML = '';
-                achievementsList.forEach(achievement => {
+                achievementsList.forEach(achievement =>
+                {
                     const li = document.createElement('li');
                     li.textContent = achievement.name;
-                    if (achievements.includes(achievement.id)) {
+                    if (achievements.includes(achievement.id))
+                    {
                         li.textContent += ' ✅';
-                    } else {
+                    } else
+                    {
                         li.textContent += ' 🔒';
                     }
                     achievementsListElement.appendChild(li);
@@ -60,8 +70,10 @@
                 updateProgressBar();
             }
 
-            window.addEventListener('message', (event) => {
-                if (event.data.type === 'registerAchievement') {
+            window.addEventListener('message', (event) =>
+            {
+                if (event.data.type === 'registerAchievement')
+                {
                     registerAchievement(event.data.achievement);
                 }
             });
@@ -105,9 +117,10 @@
 
 <body style="background: white; font-family: monospace;">
     <h1>Your Achievements</h1>
-    <p>Explore the website to get achivements</p>
-    <div style="display: flex; align-items: center;">    <span id="progress-text">0%</span>
-        <progress value="0" max="1"></progress></div>
+    <p>Explore the website to get achievements</p>
+    <div style="display: flex; align-items: center;"> <span id="progress-text">0%</span>
+        <progress value="0" max="1"></progress>
+    </div>
 
     <ul id="achievements-list"></ul>
 </body>
