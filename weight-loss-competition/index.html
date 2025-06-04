@@ -10,15 +10,13 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,500..700;1,500..700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,500..700;1,500..700&display=swap" rel="stylesheet">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pocketbase/0.25.0/pocketbase.umd.js"></script>
 
     <link href="https://cdn.jsdelivr.net/npm/beercss@3.9.7/dist/cdn/beer.min.css" rel="stylesheet">
     <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.9.7/dist/cdn/beer.min.js"></script>
-    <script type="module"
-        src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
@@ -30,6 +28,7 @@
 </head>
 
 <body class="light">
+    <a class="privacylink" style="right: 0;" onclick="toggleHiddenWeights()">Toggle Smoothing</a>
     <a class="privacylink" href="./privacy/">Privacy Notice</a>
     <header style="flex-direction: row; align-items: center; justify-content: space-between;">
         <h1 style="margin: 1em 0em; margin-right: 1em;">Weight Loss Competition Tracker</h1>
@@ -68,7 +67,7 @@
                     </div>
 
                     <div style="margin:0" class="field label suffix border">
-                        <input id="passwordInput" type="password" required>
+                        <input id="passwordInput" type="password" autocomplete="current-password" required>
                         <label>Password</label>
                         <i>password</i>
                     </div>
@@ -87,8 +86,7 @@
         align-items: center;">
             <h1 style="text-align: center; width: 50%;" id="welcomeText">Hello </h1>
 
-            <button style="width: 50%; box-sizing: border-box;" onclick="weightFormDialog.showModal()"
-                id='logweightbutton'>Log Weight</button>
+            <button style="width: 50%; box-sizing: border-box;" onclick="weightFormDialog.showModal()" id='logweightbutton'>Log Weight</button>
 
         </div>
 
@@ -137,7 +135,7 @@
             <button style="margin: 0;" id="submitButton">Submit</button>
         </nav>
     </dialog>
-    <button style="margin: 5px; margin-top: 5em; scale: 0.5; opacity: 0.5;" onclick="toggleHiddenWeights()">Toggle Graph Smoothing</button>
+
     <script src="app.js?v=7"></script>
 </body>
 

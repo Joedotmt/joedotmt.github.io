@@ -22,29 +22,33 @@ let showHiddenWeights = true;
 async function toggleHiddenWeights()
 {
     showHiddenWeights = !showHiddenWeights;
-    setSigninDialogMode("loading")
+    setSigninDialogMode("loading");
     await loadWeights();
-    setSigninDialogMode("closed")
+    setSigninDialogMode("closed");
 }
 
 // Try to restore PocketBase auth from localStorage and refresh if possible
-async function tryRestoreAuth() {
+async function tryRestoreAuth()
+{
     // Restore token and model from localStorage if present
     const pbAuth = localStorage.getItem("pocketbase_auth");
-    if (pbAuth) {
-        try {
+    if (pbAuth)
+    {
+        try
+        {
             const { token, model } = JSON.parse(pbAuth);
             pocketBase.authStore.save(token, model);
             // Try to refresh the session
             await pocketBase.collection('users').authRefresh();
             currentUser = pocketBase.authStore.model;
-            updateWelcomeTextAndWords()
+            updateWelcomeTextAndWords();
 
             await loadWeights();
 
             setSigninDialogMode("closed");
             return true;
-        } catch (e) {
+        } catch (e)
+        {
             // If refresh fails, clear auth and show sign-in
             pocketBase.authStore.clear();
             localStorage.removeItem("pocketbase_auth");
@@ -55,16 +59,20 @@ async function tryRestoreAuth() {
 }
 
 // Updated signIn to use authWithPassword authentication
-async function signIn(username, password) {
+async function signIn(username, password)
+{
     setSigninDialogMode("loading");
-    if (!username || !password) {
+    if (!username || !password)
+    {
         setSigninDialogMode("signin");
         return;
     }
-    try {
+    try
+    {
         await pocketBase.collection('users').authWithPassword(username, password);
         currentUser = pocketBase.authStore.model;
-    } catch (e) {
+    } catch (e)
+    {
         console.error("Error during sign in:", e);
         setSigninDialogMode("signin");
         return;
@@ -75,36 +83,44 @@ async function signIn(username, password) {
     updateCharts();
 }
 
-function updateWelcomeTextAndWords() {
+function updateWelcomeTextAndWords()
+{
     welcomeText.innerText = `Hello ${currentUser.username}`;
 
     // Check if the user is a physicist
-    if (currentUser.is_physicist) {
+    if (currentUser.is_physicist)
+    {
 
         // Replace all occurrences of "weight" with "mass"
         const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
         let node;
-        while ((node = walker.nextNode())) {
+        while ((node = walker.nextNode()))
+        {
             node.textContent = node.textContent.replace(/\bweight\b/gi, "Mass");
         }
 
-    } else {
+    } else
+    {
         // Replace all occurrences of "mass" with "weight"
         const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
         let node;
-        while ((node = walker.nextNode())) {
+        while ((node = walker.nextNode()))
+        {
             node.textContent = node.textContent.replace(/\bMass\b/gi, "Weight");
         }
     }
 }
 
 // Update renderSignInForm to pass username and password to signIn
-function renderSignInForm() {
+function renderSignInForm()
+{
     const container = document.getElementById("participantButtons");
-    if (container) {
+    if (container)
+    {
         const form = document.getElementById("signinForm");
-        form.addEventListener("submit", async (event) => {
-            setSigninDialogMode("loading")
+        form.addEventListener("submit", async (event) =>
+        {
+            setSigninDialogMode("loading");
             event.preventDefault();
             const username = document.getElementById("usernameInput").value;
             const password = document.getElementById("passwordInput").value;
@@ -112,15 +128,18 @@ function renderSignInForm() {
         });
 
         const guestButton = document.getElementById("guestSignInButton");
-        guestButton.addEventListener("click", async () => {
+        guestButton.addEventListener("click", async () =>
+        {
             await signIn("guest", "guestacc");
         });
     }
 }
 
 // Load weights data
-async function loadWeights() {
-    try {
+async function loadWeights()
+{
+    try
+    {
         const allVisibleToUser = [...currentUser.friends, currentUser.id];
 
         const friendFilters = allVisibleToUser
@@ -137,16 +156,19 @@ async function loadWeights() {
         });
         updateCharts();
         return true;
-    } catch (e) {
+    } catch (e)
+    {
         console.error("Error loading weights:", e);
         return [];
     }
 }
 
 // Update grouping to use the expanded user field
-function groupWeights(weights) {
+function groupWeights(weights)
+{
     const groups = {};
-    weights.forEach(element => {
+    weights.forEach(element =>
+    {
         const name = element.expand.user.username;
         if (!groups[name]) groups[name] = [];
         groups[name].push(element);
@@ -155,17 +177,20 @@ function groupWeights(weights) {
 }
 
 // In renderRecordList, update the user goal logic – assume the authenticated user holds their own goal.
-function renderRecordList(groupedWeights) {
+function renderRecordList(groupedWeights)
+{
     let html = '';
     // Get all group names
     const allNames = Object.keys(groupedWeights);
     // Sort so that currentUser's name comes first
-    allNames.sort((a, b) => {
+    allNames.sort((a, b) =>
+    {
         if (a === currentUser.username) return -1;
         if (b === currentUser.username) return 1;
         return 0;
     });
-    allNames.forEach(name => {
+    allNames.forEach(name =>
+    {
         const elements = groupedWeights[name];
         // Use currentUser.goal if the group corresponds to the logged in user; otherwise assume a goal of 0.
         const goal = elements[0].expand.user.goal;
@@ -190,7 +215,8 @@ function renderRecordList(groupedWeights) {
         <div>Height&#160: ${elements[0].expand.user.height_cm}cm</div>
         <div style="display:flex; gap:0.5em; align-items:center">${progressPercent}%<progress value="${progressPercent}" max="100" class="large"></progress></div>
       </li>`;
-        elements.forEach((x, i) => {
+        elements.forEach((x, i) =>
+        {
             const date = new Date(x.created).toLocaleDateString("en-GB", { day: "2-digit", month: "long" });
             html += `<li style="${i ? "" : "background-color: var(--inverse-primary);"}">
         <div>${date}</div>
@@ -202,7 +228,8 @@ function renderRecordList(groupedWeights) {
     recordList.innerHTML = html;
 }
 
-function calculateGoalLineValues(currentUserWeights, mode) {
+function calculateGoalLineValues(currentUserWeights, mode)
+{
     const weights = currentUserWeights.length
         ? currentUserWeights
         : GLOBALWeightData.map(entry => ({ weight: entry.weight || 0 }));
@@ -210,7 +237,8 @@ function calculateGoalLineValues(currentUserWeights, mode) {
     const firstWeight = weights[weights.length - 1].weight;
     let goal = currentUser.goal || Math.min(...GLOBALWeightData.map(entry => entry.expand.user.goal || 0));
 
-    switch (mode) {
+    switch (mode)
+    {
         case "Absolute":
             return { goalLineValue: goal, lineStartValue: firstWeight };
         case "Relative":
@@ -224,35 +252,44 @@ function calculateGoalLineValues(currentUserWeights, mode) {
 
 
 // In updateCharts, update filter and datasets to use the 'user' field
-async function updateCharts() {
+async function updateCharts()
+{
     // Create chart datasets
-    function createDatasets(groupedWeights, mode) {
+    function createDatasets(groupedWeights, mode)
+    {
         const colors = ["#0000ff", "#0964ed", "#ff0000", "#00ff00", "#00b350"];
 
         // Hash function to generate a consistent index based on the participant's name
-        function getColorIndex(name) {
+        function getColorIndex(name)
+        {
             let hash = 0;
-            for (let i = 0; i < name.length; i++) {
+            for (let i = 0; i < name.length; i++)
+            {
                 hash = (hash << 5) - hash + name.charCodeAt(i);
                 hash |= 0; // Convert to 32-bit integer
             }
             return Math.abs(hash) % colors.length;
         }
 
-        return Object.entries(groupedWeights).map(([name, elements], i) => {
+        return Object.entries(groupedWeights).map(([name, elements], i) =>
+        {
             const startWeight = elements[elements.length - 1].weight;
 
             return {
                 label: name,
                 data: elements
                     .sort((a, b) => Date.parse(a.created) - Date.parse(b.created))
-                    .map(x => {
+                    .map(x =>
+                    {
                         let y;
-                        if (mode === "Relative") {
+                        if (mode === "Relative")
+                        {
                             y = x.weight - startWeight;
-                        } else if (mode === "Progress") {
+                        } else if (mode === "Progress")
+                        {
                             y = ((x.weight - startWeight) / (elements[0].expand.user.goal - startWeight)) * 100;
-                        } else { // Absolute
+                        } else
+                        { // Absolute
                             y = x.weight;
                         }
                         return { x: new Date(x.created), y };
@@ -262,7 +299,8 @@ async function updateCharts() {
             };
         });
     }
-    try {
+    try
+    {
         const weights = GLOBALWeightData;
         const grouped = groupWeights(weights);
         renderRecordList(grouped);
@@ -277,9 +315,11 @@ async function updateCharts() {
         const yAxisReverse = GLOBALmode === "Progress";
         let highestValue;
 
-        if (yAxisReverse) {
+        if (yAxisReverse)
+        {
             highestValue = Math.min(...datasets.flatMap(ds => ds.data.map(pt => pt.y)));
-        } else {
+        } else
+        {
             highestValue = Math.max(...datasets.flatMap(ds => ds.data.map(pt => pt.y)));
         }
 
@@ -287,11 +327,13 @@ async function updateCharts() {
             GLOBALmode === "Relative" ? "Weight Change (kg)" :
                 "Progress (%)";
 
-        if (chartInstance) {
+        if (chartInstance)
+        {
             // Update existing chart
             chartInstance.data.datasets = datasets;
 
-            if (chartInstance.options.plugins?.annotation?.annotations) {
+            if (chartInstance.options.plugins?.annotation?.annotations)
+            {
                 const ann = chartInstance.options.plugins.annotation.annotations;
                 ann.lineStart.yMin = lineStartValue;
                 ann.lineStart.yMax = lineStartValue;
@@ -304,16 +346,19 @@ async function updateCharts() {
             chartInstance.options.scales.y.reverse = yAxisReverse;
             chartInstance.options.scales.y.title.text = yAxisLabel;
 
-            if (yAxisReverse) {
+            if (yAxisReverse)
+            {
                 chartInstance.options.scales.y.max = (goalLineValue + margin);
                 chartInstance.options.scales.y.min = (highestValue - margin);
-            } else {
+            } else
+            {
                 chartInstance.options.scales.y.max = (highestValue + margin);
                 chartInstance.options.scales.y.min = (goalLineValue - margin);
             }
 
             chartInstance.update();
-        } else {
+        } else
+        {
             // Create new chart
             chartInstance = new Chart(ctx, {
                 type: "line",
@@ -375,52 +420,62 @@ async function updateCharts() {
                 }
             });
         }
-    } catch (error) {
+    } catch (error)
+    {
         console.error("Error in updateCharts:", error);
     }
 }
 
 // Update logWeight to use the authenticated user relationship
-async function logWeight() {
-    if (currentUser.id == "soavzbhd6bu6y5r") {
-        submitButton.innerText = ("You CAN'T log weights you're mearly a guest")
+async function logWeight()
+{
+    if (currentUser.id == "soavzbhd6bu6y5r")
+    {
+        submitButton.innerText = ("You CAN'T log weights you're mearly a guest");
         console.error("Unauthorized: Guests can't log weights.");
         return;
     }
     weightFormDialog.close();
     const weight = +document.getElementById("weightInput").value;
     if (!currentUser.id || isNaN(weight)) return;
-    try {
+    try
+    {
         await pocketBase.collection("weights").create({
             weight: weight,
             user: currentUser.id
         });
         document.getElementById("weightInput").value = "";
-    } catch (e) {
+    } catch (e)
+    {
         console.error("Error logging weight:", e);
     }
 }
 
-function setSigninDialogMode(mode) {
-    if (mode === "loading") {
+function setSigninDialogMode(mode)
+{
+    if (mode === "loading")
+    {
         // Randomly choose one line
         const chosen = Math.floor(Math.random() * loadingTextLines.length);
 
         // Hide all lines except the chosen one
-        loadingTextLines.forEach((line, index) => {
+        loadingTextLines.forEach((line, index) =>
+        {
             line.style.display = index === chosen ? 'block' : 'none';
         });
         sid_progress.style.display = "block";
         sid_words.style.display = "none";
         signindialog.showModal();
     }
-    else if (mode === "signin") {
-        submitButton.innerText = ("Submit")
-        renderSignInForm()
+    else if (mode === "signin")
+    {
+        submitButton.innerText = ("Submit");
+        renderSignInForm();
         sid_progress.style.display = "none";
         sid_words.style.display = "block";
         signindialog.showModal();
-    } else if (mode === "closed") {
+    } else if (mode === "closed")
+    {
         sid_progress.style.display = "none";
         sid_words.style.display = "none";
         signindialog.close();
@@ -428,14 +483,18 @@ function setSigninDialogMode(mode) {
 }
 
 // Initialize application
-async function init() {
-    pocketBase.collection('weights').subscribe('*', async function (e) {
+async function init()
+{
+    pocketBase.collection('weights').subscribe('*', async function (e)
+    {
         await loadWeights();
     });
     //EVENT LISTENERS...
     const tabs = GraphTabs.querySelectorAll("a");
-    tabs.forEach(tab => {
-        tab.addEventListener("click", async () => {
+    tabs.forEach(tab =>
+    {
+        tab.addEventListener("click", async () =>
+        {
             GLOBALmode = tab.innerText;
             await updateCharts();
         });
