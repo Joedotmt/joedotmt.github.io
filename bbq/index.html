@@ -207,7 +207,6 @@
             <p class="medium-text">Results update automatically!!!!!1!1!</p>
         </header>
 
-        <!-- Button to open the dialog -->
         <nav class="center-align large-padding">
             <button class="primary large round ripple" onclick="ui('#upload-dates-dialog')">
                 <i>event_available</i>
@@ -215,7 +214,6 @@
             </button>
         </nav>
 
-        <!-- Dialog for submitting availability -->
         <dialog id="upload-dates-dialog" class="large bottom">
             <article class="card round large-padding">
                 <h2 class="large-text">Submit Your Availability</h2>
@@ -316,6 +314,9 @@
                 mode: "multiple",
                 dateFormat: "Y-m-d",
                 minDate: "today",
+                "locale": {
+                    "firstDayOfWeek": 1 // start week on Monday
+                }
             });
         }
 
@@ -323,7 +324,6 @@
         {
             messageArea.textContent = message;
             messageArea.className = ''; // Reset classes
-            // messageArea.classList.add('message-area'); // Base class if any, not strictly needed here
             if (type === 'success')
             {
                 messageArea.classList.add('message-success');
@@ -449,8 +449,7 @@
                         { // maxCount will be > 1 here due to the sort and previous condition
                             itemDiv.classList.add('most-popular');
                         }
-                        // Dates with counts between 1 and maxCount (exclusive) get default styling
-
+                        
                         const displayDate = new Date(item.date + 'T00:00:00Z').toLocaleDateString('en-US', {
                             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC'
                         });
@@ -507,7 +506,10 @@
             document.getElementById('submitButton').setAttribute('disabled', 'true');
             messageArea.style.display = 'none';
 
-            const name = nameInput.value.trim();
+            // --- CHANGE 1 START: Always submit username in uppercase ---
+            const name = nameInput.value.trim().toUpperCase();
+            // --- CHANGE 1 END ---
+
             const selectedDates = flatpickrInstance.selectedDates.map(date =>
             {
                 const year = date.getFullYear();
@@ -562,10 +564,46 @@
             }
         });
 
+        // --- CHANGE 2 START: New function to pre-fill dates for existing users ---
+        async function handleUsernameBlur() {
+            if (!pb) return; // Don't do anything if pocketbase isn't connected
+
+            const name = nameInput.value.trim().toUpperCase();
+            if (!name) { // If the name field is empty, clear the calendar
+                flatpickrInstance.clear();
+                return;
+            }
+
+            try {
+                // Look for a user with the entered name (case-insensitive)
+                const record = await pb.collection(COLLECTION_NAME).getFirstListItem(`name = "${name}"`);
+                
+                // If the user is found and has dates, populate the calendar
+                if (record && record.available_dates) {
+                    flatpickrInstance.setDate(record.available_dates, true); // setDate and trigger change event
+                    showMessage(`Welcome back, ${name}! Your previous dates have been loaded.`, 'success', 3000);
+                }
+            } catch (error) {
+                // This error is expected when a user is not found.
+                if (error.status === 404) {
+                    console.log(`User "${name}" not found. New user.`);
+                    flatpickrInstance.clear(); // Clear dates for a new user
+                } else {
+                    console.error("Error fetching user data:", error);
+                    showMessage(`Could not check for existing user: ${error.message}`, 'error');
+                }
+            }
+        }
+        // --- CHANGE 2 END ---
+
+
         document.addEventListener('DOMContentLoaded', () =>
         {
             initializeFlatpickr();
             initializePocketBaseClient();
+            
+            // --- CHANGE 3: Attach the new function to the username input's 'blur' event ---
+            nameInput.addEventListener('blur', handleUsernameBlur);
         });
 
         window.addEventListener('offline', () =>
