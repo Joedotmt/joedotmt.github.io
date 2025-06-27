@@ -208,7 +208,7 @@ function renderRecordList(groupedWeights)
 </article>
     <ul class="list border">
       <li style="display: flex; flex-direction: column; align-items: flex-start; gap:0; min-height: fit-content; padding:1em;">
-        <div>Goal&#160&#160&#160: ${goal}kg</div>
+        <div>Goal&#160&#160&#160: ${startingWeight} to ${goal}kg (Lose ${startingWeight - goal}kg)</div>
         <div>Lost&#160&#160&#160: ${weightLost}kg</div>
         <div>Left&#160&#160&#160: ${(currentWeight - goal).toFixed(1)}kg</div>
         <div>BMI&#160&#160&#160&#160: ${bmi.toFixed(1)}kg/m² <a target="_blank" style="text-decoration: underline;" href="https://www.calculator.net/bmi-calculator.html?cheightmeter=${elements[0].expand.user.height_cm}&ckg=${currentWeight}&printit=0&ctype=metric&x=Calculate">More Info</a></div>
