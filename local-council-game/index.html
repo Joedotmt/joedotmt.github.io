@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shapefile Guessing Game</title>
+
+    <!-- Leaflet.js for mapping -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- shapefile-js for parsing shapefiles -->
+    <script src="https://unpkg.com/shpjs@latest/dist/shp.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pangolin&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        /* Ensure the map and body take up the full screen */
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Pangolin', 'Inter', sans-serif;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+            background-color: #00071d;
+        }
+
+        /* Custom Leaflet popup styling */
+        .leaflet-popup-content-wrapper {
+            border-radius: 8px;
+        }
+
+        .leaflet-popup-content {
+            margin: 15px;
+            font-size: 14px;
+        }
+
+
+        /* Custom transition for UI elements */
+        .transition-all {
+            transition: all 0.3s ease-in-out;
+        }
+
+        .leaflet-control-attribution {
+            display: none;
+        }
+
+        /* Start Overlay Styles */
+        #start-overlay {
+            transition: opacity 1s;
+        }
+
+        #countdown {
+            animation: pulse 0.31s infinite ease-out;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            100% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100">
+    <!-- Start Overlay -->
+    <div id="start-overlay" class="fixed inset-0 bg-black z-[2000] flex items-center justify-center cursor-pointer">
+        <div class="text-white text-8xl font-bold tracking-wider">
+            <div id="countdown" class="hidden">3</div>
+            <div id="click-to-start">Click to Start</div>
+        </div>
+    </div>
+
+    <!-- The main map container -->
+    <div id="map"></div>
+
+    <!-- UI Overlay: File Upload and Game Info -->
+    <div id="ui-overlay" class="absolute top-0 left-0 right-0 z-[1000] flex flex-col">
+        <div style="margin-left: auto; margin-right: 10px; width: 50vw; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; overflow: hidden;"
+            class="bg-white/70 backdrop-blur-sm shadow-lg max-w-lg w-full text-center transition-all" id="info-box">
+
+            <!-- File input -->
+            <input type="file" id="file-input" style="display: none;"
+                class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                accept=".zip">
+
+            <!-- Game progress display (initially hidden) -->
+            <div id="progress-container" class="hidden mt-4">
+                <p class="text-lg font-semibold text-gray-700">Progress: <span id="progress-text"
+                        class="font-bold text-blue-600">0 / 0</span></p>
+                <div class="w-full bg-gray-200 h-2.5 mt-2">
+                    <div id="progress-bar" class="bg-blue-600 h-2.5" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Guessing Modal (initially hidden) -->
+    <div id="guess-modal" class="hidden absolute inset-0 z-[1001] bg-black/0 flex items-center justify-center p-4">
+        <div class="bg-white/20 p-1 rounded-full shadow-2xl w-full max-w-sm text-center transform transition-all scale-95 opacity-0"
+            id="guess-modal-content">
+            <input type="text" id="guess-input"
+                class="w-full px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                placeholder="Enter name...">
+            <button style="display: none;" id="cancel-guess"
+                class="w-full bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Win Modal (initially hidden) -->
+    <div id="win-modal"
+        class="hidden absolute inset-0 z-[1002] bg-green-500/80 flex items-center justify-center p-4 text-white text-center">
+        <div class="transform transition-all scale-95 opacity-0" id="win-modal-content">
+            <h1 class="text-6xl font-bold mb-4">🎉 You Win! 🎉</h1>
+            <p class="text-2xl mb-6">You've successfully named all the shapes!</p>
+            <button id="play-again"
+                class="bg-white text-green-600 font-bold py-3 px-8 rounded-full text-lg hover:bg-gray-100 transition-transform hover:scale-105">Play
+                Again with a New File</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Global Variables ---
+        let map;
+        let geoJsonLayer;
+        let selectedLayer;
+        let totalShapes = 0;
+        let guessedShapes = 0;
+        let backgroundMusic;
+
+        // --- DOM Elements ---
+        const fileInput = document.getElementById('file-input');
+        const progressContainer = document.getElementById('progress-container');
+        const progressText = document.getElementById('progress-text');
+        const progressBar = document.getElementById('progress-bar');
+        const infoBox = document.getElementById('info-box');
+
+        const guessModal = document.getElementById('guess-modal');
+        const guessModalContent = document.getElementById('guess-modal-content');
+        const guessInput = document.getElementById('guess-input');
+        const cancelGuessBtn = document.getElementById('cancel-guess');
+
+        const winModal = document.getElementById('win-modal');
+        const winModalContent = document.getElementById('win-modal-content');
+        const playAgainBtn = document.getElementById('play-again');
+
+        const startOverlay = document.getElementById('start-overlay');
+        const countdown = document.getElementById('countdown');
+        const clickToStart = document.getElementById('click-to-start');
+
+        // --- Styles for Shapes ---
+        const defaultStyle = { color: "#3388ff", weight: 2, opacity: 1, fillColor: "#3388ff", fillOpacity: 0.3 };
+        const highlightStyle = { color: "#ff7800", weight: 4, fillOpacity: 0.5 };
+        const guessedStyle = { color: "#28a745", weight: 2, opacity: 1, fillColor: "#28a745", fillOpacity: 0.6, interactive: false };
+
+        // --- Map Initialization ---
+        function initializeMap() {
+            if (map) map.remove();
+            map = L.map('map', {
+                center: [0,0],
+                zoom: 1,
+                preferCanvas: true,
+                wheelDebounceTime: 1,
+                zoomAnimation: true,
+            });
+        }
+
+        // --- Input Normalization ---
+        /**
+         * Normalizes a string for comparison by making it lowercase,
+         * replacing special Maltese characters and diacritics, and handling hyphens.
+         * Also ignores anything before the first dash (e.g., "l-isla" becomes "isla").
+         * @param {string} str The string to normalize.
+         * @returns {string} The normalized string.
+         */
+        function normalizeString(str) {
+            if (!str) return '';
+            let normalized = str.toLowerCase();
+            // Specific Maltese character replacements
+            normalized = normalized.replace(/ġ/g, 'g');
+            normalized = normalized.replace(/ħ/g, 'h');
+            normalized = normalized.replace(/ċ/g, 'c');
+            normalized = normalized.replace(/ż/g, 'z');
+            // General diacritic removal for characters like à, é, etc.
+            normalized = normalized.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            // Ignore anything before the first dash (hyphen or dash-like character)
+            normalized = normalized.replace(/^[^-–—]*[-–—]\s*/, '');
+            normalized = normalized.replace(/^[^ ]*[ ]\s*/, '');
+            // Replace hyphens and different dash types with a space
+            normalized = normalized.replace(/[-–—]/g, ' ');
+            // Remove consecutive spaces and trim
+            normalized = normalized.replace(/\s+/g, ' ').trim();
+            return normalized;
+        }
+
+        // --- Game Logic ---
+        function handleFile(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+
+            resetGame();
+
+            const reader = new FileReader();
+            reader.onload = (event) => loadShapefile(event.target.result);
+            reader.onerror = (err) => {
+                console.error("FileReader error:", err);
+
+            }
+            reader.readAsArrayBuffer(file);
+        }
+
+        function loadShapefile(buffer) {
+            shp(buffer).then(function (geojson) {
+                if (!geojson || (geojson.features && geojson.features.length === 0)) {
+
+                    return;
+                }
+
+                // Check if features have at least one of the required name properties
+                const firstProps = geojson.features[0].properties;
+                if (!firstProps || (firstProps.LAU_Name === undefined && firstProps.LAU_Latin === undefined)) {
+
+                    return;
+                }
+
+                geoJsonLayer = L.geoJSON(geojson, { style: defaultStyle, onEachFeature }).addTo(map);
+                map.fitBounds(geoJsonLayer.getBounds().pad(0));
+                totalShapes = geojson.features.length;
+                updateProgress();
+
+                fileInput.classList.add('hidden');
+                progressContainer.classList.remove('hidden');
+                infoBox.classList.add('md:w-auto');
+            }).catch(function (err) {
+                console.error("Shapefile parsing error:", err);
+
+            });
+        }
+
+        function onEachFeature(feature, layer) {
+            // Store both names on the layer. Fallback to empty string if one is missing.
+            layer.lauName = feature.properties.LAU_Name || '';
+            layer.lauLatin = feature.properties.LAU_Latin || '';
+            layer.isGuessed = false;
+            layer.on({ mouseover: highlightFeature, mouseout: resetHighlight, click: selectFeatureForGuessing });
+        }
+
+        // --- Feature Interaction ---
+        function highlightFeature(e) {
+            const layer = e.target;
+            if (!layer.isGuessed) {
+                layer.setStyle(highlightStyle);
+                layer.bringToFront();
+            }
+        }
+
+        function resetHighlight(e) {
+            if (geoJsonLayer) {
+                const layer = e.target;
+                if (!layer.isGuessed && layer !== selectedLayer) {
+                    geoJsonLayer.resetStyle(layer);
+                }
+            }
+        }
+
+        function selectFeatureForGuessing(e) {
+            L.DomEvent.stop(e);
+            if (selectedLayer && !selectedLayer.isGuessed) {
+                geoJsonLayer.resetStyle(selectedLayer);
+            }
+            selectedLayer = e.target;
+            if (selectedLayer.isGuessed) {
+                selectedLayer = null;
+                return;
+            }
+            selectedLayer.setStyle(highlightStyle);
+            selectedLayer.bringToFront();
+            showGuessModal();
+        }
+
+        // --- Guessing Logic ---
+        function handleCorrectGuess() {
+            if (!selectedLayer || selectedLayer.isGuessed) return; // Prevent double processing
+
+
+
+            selectedLayer.isGuessed = true;
+            selectedLayer.setStyle(guessedStyle);
+            selectedLayer.unbindPopup();
+            selectedLayer.off('click mouseover mouseout');
+
+            guessedShapes++;
+            updateProgress();
+            hideGuessModal();
+
+            if (guessedShapes === totalShapes) {
+                showWinScreen();
+            }
+
+            // Play correct sound
+            const correctAudio = new Audio('correct.mp3');
+            correctAudio.play();
+        }
+
+        function liveCheckGuess() {
+            const userGuess = guessInput.value;
+            if (!userGuess || !selectedLayer) return;
+
+            const normalizedGuess = normalizeString(userGuess);
+            const normalizedLauName = normalizeString(selectedLayer.lauName);
+            const normalizedLauLatin = normalizeString(selectedLayer.lauLatin);
+
+            const isCorrect = (normalizedLauName && normalizedGuess == normalizedLauName) ||
+                (normalizedLauLatin && normalizedGuess == normalizedLauLatin);
+
+            if (isCorrect) {
+                handleCorrectGuess();
+            }
+        }
+
+        // --- UI Management ---
+        function updateProgress() {
+            progressText.textContent = `${guessedShapes} / ${totalShapes}`;
+            const percentage = totalShapes > 0 ? (guessedShapes / totalShapes) * 100 : 0;
+            progressBar.style.width = `${percentage}%`;
+        }
+
+        function showGuessModal() {
+            guessModal.classList.remove('hidden');
+            guessModal.classList.add('flex');
+            setTimeout(() => {
+                guessModalContent.classList.remove('scale-95', 'opacity-0');
+                guessModalContent.classList.add('scale-100', 'opacity-100');
+                guessInput.focus();
+            }, 10);
+        }
+
+        function hideGuessModal() {
+            guessModalContent.classList.add('scale-95', 'opacity-0');
+            guessModalContent.classList.remove('scale-100', 'opacity-100');
+            setTimeout(() => {
+                guessModal.classList.add('hidden');
+                guessModal.classList.remove('flex');
+                guessInput.value = '';
+                guessInput.placeholder = 'Enter name...';
+                guessInput.classList.remove('border-red-500');
+                if (selectedLayer && !selectedLayer.isGuessed) {
+                    geoJsonLayer.resetStyle(selectedLayer);
+                }
+                selectedLayer = null;
+            }, 200);
+        }
+
+        function showWinScreen() {
+            winModal.classList.remove('hidden');
+            winModal.classList.add('flex');
+            setTimeout(() => {
+                winModalContent.classList.remove('scale-95', 'opacity-0');
+                winModalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function startGame() {
+
+            // document.body.requestFullscreen().catch(err => {
+            //     console.error("Error attempting to enable full-screen mode:", err);
+            // });
+            // Initialize background music
+            backgroundMusic = new Audio('music.mp3');
+            backgroundMusic.loop = true;
+            backgroundMusic.volume = 0.2;
+
+            startOverlay.removeEventListener('click', handleStartClick);
+            clickToStart.style.display = 'none';
+            countdown.style.display = 'block';
+
+            const countdownAudio = new Audio('321.mp3');
+            countdownAudio.play();
+
+
+            let count = 3;
+            countdown.textContent = count;
+            autoLoadFile();
+            const countInterval = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    countdown.textContent = count;
+                } else {
+                    clearInterval(countInterval);
+                    startOverlay.style.display = 'none';
+                    backgroundMusic.play();
+                }
+            }, 300);
+        }
+
+        function handleStartClick() {
+            startGame();
+        }
+
+        // --- Game Reset ---
+        function resetGame() {
+            if (geoJsonLayer) map.removeLayer(geoJsonLayer);
+            geoJsonLayer = null;
+            selectedLayer = null;
+            totalShapes = 0;
+            guessedShapes = 0;
+
+            progressContainer.classList.add('hidden');
+            updateProgress();
+            winModal.classList.add('hidden');
+            winModalContent.classList.add('scale-95', 'opacity-0');
+            fileInput.value = '';
+
+            if (backgroundMusic) {
+                backgroundMusic.pause();
+                backgroundMusic.currentTime = 0;
+            }
+            startOverlay.style.display = 'flex';
+            startOverlay.style.opacity = '1';
+            countdown.style.display = 'none';
+            clickToStart.style.display = 'block';
+            startOverlay.addEventListener('click', handleStartClick);
+        }
+
+        // --- Event Listeners ---
+        // fileInput.addEventListener('change', handleFile);
+        cancelGuessBtn.addEventListener('click', hideGuessModal);
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') { hideGuessModal(); }
+        });
+        guessInput.addEventListener('input', liveCheckGuess); // Check on every keystroke
+        guessInput.addEventListener('keyup', (e) => { if (e.key === 'Enter') manualCheckGuess(); });
+        playAgainBtn.addEventListener('click', () => {
+            resetGame();
+
+        });
+
+        // --- Initial Setup ---
+        window.onload = () => {
+            initializeMap();
+            startOverlay.addEventListener('click', handleStartClick);
+            // Only autoload file after countdown
+            startOverlay.style.opacity = '1';
+            startOverlay.style.transition = 'opacity 1s';
+        };
+
+        // Add a simple shake animation for incorrect guesses
+        const styleSheet = document.createElement("style");
+        styleSheet.type = "text/css";
+        styleSheet.innerText = `
+            @keyframes shake {
+                10%, 90% { transform: translate3d(-1px, 0, 0); }
+                20%, 80% { transform: translate3d(2px, 0, 0); }
+                30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+                40%, 60% { transform: translate3d(4px, 0, 0); }
+            }
+            .animate-shake { animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both; }
+        `;
+        document.head.appendChild(styleSheet);
+
+        // Add a new function to load the default file automatically
+        function autoLoadFile() {
+            fetch('Malta-LAU2.zip')
+                .then(response => response.arrayBuffer())
+                .then(buffer => loadShapefile(buffer))
+                .catch(err => {
+                    console.error("Fetch error:", err);
+                });
+        }
+    </script>
+</body>
+
+</html>
