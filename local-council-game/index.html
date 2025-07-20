@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shapefile Guessing Game</title>
+    <title>Malta LC Guessing Game</title>
 
     <!-- Leaflet.js for mapping -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -21,6 +21,7 @@
 
     <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
+
 
     <style>
         /* Ensure the map and body take up the full screen */
@@ -55,10 +56,6 @@
             transition: all 0.3s ease-in-out;
         }
 
-        .leaflet-control-attribution {
-            display: none;
-        }
-
         /* Start Overlay Styles */
         #start-overlay {
             transition: opacity 1s;
@@ -77,6 +74,58 @@
                 transform: scale(0.5);
                 opacity: 0;
             }
+        }
+
+        dialog {
+            z-index: 1001;
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translate(-50%, 0);
+            background: none;
+            transform-origin: 0 500%;
+            opacity: 0.9;
+
+            transition: display 0.2s allow-discrete, overlay 1s allow-discrete;
+
+            animation: close 0.2s cubic-bezier(0.075, 0.82, 0.165, 1);
+
+            &[open] {
+                animation: open 0.6s cubic-bezier(0.075, 0.82, 0.165, 1);
+            }
+        }
+
+        @keyframes open {
+            from {
+                opacity: 0;
+                scale: 0.9;
+            }
+
+            to {
+                opacity: 0.9;
+                scale: 1;
+            }
+        }
+
+        @keyframes close {
+            from {
+                opacity: 0.9;
+                scale: 1;
+            }
+
+            to {
+                opacity: 0;
+                scale: 0.9;
+            }
+        }
+
+        #guess-input {
+            font-size: 2em;
+            width: 90vw;
+            text-align: center;
+            background-color: black;
+            color: white;
+            z-index: 1001;
         }
     </style>
 </head>
@@ -115,16 +164,12 @@
     </div>
 
     <!-- Guessing Modal (initially hidden) -->
-    <div id="guess-modal" class="hidden absolute inset-0 z-[1001] bg-black/0 flex items-center justify-center p-4">
-        <div class="bg-white/20 p-1 rounded-full shadow-2xl w-full max-w-sm text-center transform transition-all scale-95 opacity-0"
-            id="guess-modal-content">
-            <input type="text" id="guess-input"
-                class="w-full px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                placeholder="Enter name...">
-            <button style="display: none;" id="cancel-guess"
-                class="w-full bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">Cancel</button>
-        </div>
-    </div>
+    <dialog id="guess-dialog">
+        <input autocomplete="off" type="text" id="guess-input" style="opacity: 1;"
+            class="w-full px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            placeholder="Enter name...">
+    </dialog>
+
 
     <!-- Win Modal (initially hidden) -->
     <div id="win-modal"
@@ -154,10 +199,8 @@
         const progressBar = document.getElementById('progress-bar');
         const infoBox = document.getElementById('info-box');
 
-        const guessModal = document.getElementById('guess-modal');
-        const guessModalContent = document.getElementById('guess-modal-content');
+        const guessDialog = document.getElementById('guess-dialog');
         const guessInput = document.getElementById('guess-input');
-        const cancelGuessBtn = document.getElementById('cancel-guess');
 
         const winModal = document.getElementById('win-modal');
         const winModalContent = document.getElementById('win-modal-content');
@@ -172,17 +215,33 @@
         const highlightStyle = { color: "#ff7800", weight: 4, fillOpacity: 0.5 };
         const guessedStyle = { color: "#28a745", weight: 2, opacity: 1, fillColor: "#28a745", fillOpacity: 0.6, interactive: false };
 
-        // --- Map Initialization ---
+        // --- Map Initialization (Blank Background) ---
         function initializeMap() {
             if (map) map.remove();
+
+
+            // Initialize the map, restricting it to the bounds of Malta
+            var myRenderer = L.svg({ padding: 1 });
             map = L.map('map', {
-                center: [0,0],
-                zoom: 1,
-                preferCanvas: true,
+                zoom: 11,
+                preferCanvas: false,
                 wheelDebounceTime: 1,
-                zoomAnimation: true,
+                zoomAnimation: false,
+                doubleClickZoom: false,
+                minZoom: 10,
+                maxBoundsViscosity: 0.5,
+                renderer: myRenderer,
+                zoomControl: false,
+                attributionControl: false,
+                wheelPxPerZoomLevel: 10000,
+            });
+
+            map.on('movestart', function (e) {
+                hideGuessModal();
             });
         }
+
+
 
         // --- Input Normalization ---
         /**
@@ -284,7 +343,7 @@
         }
 
         function selectFeatureForGuessing(e) {
-            L.DomEvent.stop(e);
+            //L.DomEvent.stop(e);
             if (selectedLayer && !selectedLayer.isGuessed) {
                 geoJsonLayer.resetStyle(selectedLayer);
             }
@@ -346,28 +405,24 @@
         }
 
         function showGuessModal() {
-            guessModal.classList.remove('hidden');
-            guessModal.classList.add('flex');
-            setTimeout(() => {
-                guessModalContent.classList.remove('scale-95', 'opacity-0');
-                guessModalContent.classList.add('scale-100', 'opacity-100');
-                guessInput.focus();
-            }, 10);
+            guessDialog.show();
+            guessInput.focus();
         }
 
         function hideGuessModal() {
-            guessModalContent.classList.add('scale-95', 'opacity-0');
-            guessModalContent.classList.remove('scale-100', 'opacity-100');
+            guessDialog.close();
+            
+            if (selectedLayer && !selectedLayer.isGuessed) {
+                geoJsonLayer.resetStyle(selectedLayer);
+            }
+            selectedLayer = null;
+
             setTimeout(() => {
-                guessModal.classList.add('hidden');
-                guessModal.classList.remove('flex');
                 guessInput.value = '';
                 guessInput.placeholder = 'Enter name...';
                 guessInput.classList.remove('border-red-500');
-                if (selectedLayer && !selectedLayer.isGuessed) {
-                    geoJsonLayer.resetStyle(selectedLayer);
-                }
-                selectedLayer = null;
+
+
             }, 200);
         }
 
@@ -385,6 +440,7 @@
             // document.body.requestFullscreen().catch(err => {
             //     console.error("Error attempting to enable full-screen mode:", err);
             // });
+
             // Initialize background music
             backgroundMusic = new Audio('music.mp3');
             backgroundMusic.loop = true;
@@ -444,7 +500,6 @@
 
         // --- Event Listeners ---
         // fileInput.addEventListener('change', handleFile);
-        cancelGuessBtn.addEventListener('click', hideGuessModal);
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') { hideGuessModal(); }
         });
@@ -463,20 +518,6 @@
             startOverlay.style.opacity = '1';
             startOverlay.style.transition = 'opacity 1s';
         };
-
-        // Add a simple shake animation for incorrect guesses
-        const styleSheet = document.createElement("style");
-        styleSheet.type = "text/css";
-        styleSheet.innerText = `
-            @keyframes shake {
-                10%, 90% { transform: translate3d(-1px, 0, 0); }
-                20%, 80% { transform: translate3d(2px, 0, 0); }
-                30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-                40%, 60% { transform: translate3d(4px, 0, 0); }
-            }
-            .animate-shake { animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both; }
-        `;
-        document.head.appendChild(styleSheet);
 
         // Add a new function to load the default file automatically
         function autoLoadFile() {
