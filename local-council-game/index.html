@@ -149,6 +149,8 @@
 </head>
 
 <body class="bg-gray-100">
+    <iframe style="display: none;" id="achievementsIframe" src="/achievements.html"></iframe>
+
     <a href="/" class="fixed-logo"><img id="logoimg" src="/assets/joe-logo.webp" width="100" alt="Logo"
             class="logo" /></a>
     <p href="/" style="color: white; margin-left: 100px; margin-top: 15px; scale: 1; pointer-events: none;"
@@ -206,7 +208,7 @@
             <p class="text-2xl mb-6">You've successfully named all the shapes!</p>
             <button id="play-again"
                 class="bg-white text-green-600 font-bold py-3 px-8 rounded-full text-lg hover:bg-gray-100 transition-transform hover:scale-105">Play
-                Again with a New File</button>
+                Again</button>
         </div>
     </div>
 
@@ -531,6 +533,7 @@
         }
 
         function showWinScreen() {
+            achievementsIframe.contentWindow.postMessage({ type: 'registerAchievement', achievement: "won-local-council-game" }, '*');
             winModal.classList.remove('hidden');
             winModal.classList.add('flex');
             setTimeout(() => {
@@ -616,8 +619,7 @@
         guessInput.addEventListener('input', liveCheckGuess); // Check on every keystroke
         guessInput.addEventListener('keyup', (e) => { if (e.key === 'Enter') manualCheckGuess(); });
         playAgainBtn.addEventListener('click', () => {
-            resetGame();
-
+            window.location.reload()
         });
 
         // --- Initial Setup ---

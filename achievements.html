@@ -11,7 +11,8 @@
             const achievementsKey = 'siteAchievements';
             const achievementsList = [
                 { id: 'saw_face', name: 'Saw my face' },
-                { id: 'annoying_dot', name: 'Said hello to the annoying dot' }
+                { id: 'annoying_dot', name: 'Said hello to the annoying dot' },
+                { id: 'won-local-council-game', name: 'Won the <a href="/local-council-game" target="_blank">Malta Local Council Guesser Game</a>' }
             ];
 
             function getAchievements()
@@ -57,13 +58,13 @@
                 achievementsList.forEach(achievement =>
                 {
                     const li = document.createElement('li');
-                    li.textContent = achievement.name;
+                    li.innerHTML = achievement.name;
                     if (achievements.includes(achievement.id))
                     {
-                        li.textContent += ' ✅';
+                        li.innerHTML += ' ✅';
                     } else
                     {
-                        li.textContent += ' 🔒';
+                        li.innerHTML += ' 🔒';
                     }
                     achievementsListElement.appendChild(li);
                 });
