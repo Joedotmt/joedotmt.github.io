@@ -545,7 +545,42 @@
             }
         }
 
+        let stopwatchInterval = null;
+        let startTimestamp = null;
+
+        // --- Stopwatch Helpers ---
+        function startStopwatch() {
+            startTimestamp = Date.now();
+            localStorage.setItem('lcgame_startTime', startTimestamp);
+            updateStopwatchDisplay();
+            stopwatchInterval = setInterval(updateStopwatchDisplay, 33);
+        }
+
+        function updateStopwatchDisplay() {
+            const now = Date.now();
+            const elapsed = now - (startTimestamp || now);
+            document.getElementById('stopwatch').textContent = formatTime(elapsed);
+        }
+
+        function formatTime(ms) {
+            const totalSeconds = ms / 1000;
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = Math.floor(totalSeconds % 60);
+            const centiseconds = Math.floor((totalSeconds * 100) % 100);
+            return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${centiseconds.toString().padStart(2, '0')}`;
+        }
+
+        function stopStopwatch() {
+            if (stopwatchInterval) clearInterval(stopwatchInterval);
+            stopwatchInterval = null;
+        }
+
+        // --- Win Screen Update ---
         function showWinScreen() {
+            stopStopwatch();
+            const now = Date.now();
+            const elapsed = now - (startTimestamp || now);
+            document.getElementById('final-time').textContent = formatTime(elapsed);
             achievementsIframe.contentWindow.postMessage({ type: 'registerAchievement', achievement: "won-local-council-game" }, '*');
             winModal.classList.remove('hidden');
             winModal.classList.add('flex');
@@ -555,13 +590,32 @@
             }, 10);
         }
 
+        // --- Start Game ---
         function startGame() {
-
             // document.body.requestFullscreen().catch(err => {
             //     console.error("Error attempting to enable full-screen mode:", err);
             // });
 
             document.getElementById("noncountdown").style.display = 'none';
+
+            if (shouldLoadSave) {
+                // Skip countdown, start instantly
+                startOverlay.style.display = 'none';
+                // Initialize background music
+                backgroundMusic = new Audio('music.mp3');
+                backgroundMusic.loop = true;
+                backgroundMusic.volume = 0.2;
+                backgroundMusic.play();
+
+                // Load start time from localStorage
+                startTimestamp = parseInt(localStorage.getItem('lcgame_startTime'), 10) || Date.now();
+                updateStopwatchDisplay();
+                stopwatchInterval = setInterval(updateStopwatchDisplay, 33);
+
+                autoLoadFile();
+                return;
+            }
+
             const countdownAudio = new Audio('321.mp3');
             countdownAudio.play();
             setTimeout(() => {
@@ -571,10 +625,6 @@
                 backgroundMusic.volume = 0.2;
 
                 countdown.style.display = 'block';
-
-
-
-
 
                 let count = 3;
                 countdown.textContent = count;
@@ -587,6 +637,16 @@
                         clearInterval(countInterval);
                         startOverlay.style.display = 'none';
                         backgroundMusic.play();
+
+                        // Start stopwatch only for new save
+                        if (!shouldLoadSave) {
+                            startStopwatch();
+                        } else {
+                            // Load start time from localStorage
+                            startTimestamp = parseInt(localStorage.getItem('lcgame_startTime'), 10) || Date.now();
+                            updateStopwatchDisplay();
+                            stopwatchInterval = setInterval(updateStopwatchDisplay, 33);
+                        }
                     }
                 }, 300);
             }, 350);
@@ -649,34 +709,6 @@
                 };
             }
         });
-
-        // --- Start Game ---
-        function startGame() {
-            document.getElementById("noncountdown").style.display = 'none';
-            const countdownAudio = new Audio('321.mp3');
-            countdownAudio.play();
-            setTimeout(() => {
-                backgroundMusic = new Audio('music.mp3');
-                backgroundMusic.loop = true;
-                backgroundMusic.volume = 0.2;
-
-                countdown.style.display = 'block';
-
-                let count = 3;
-                countdown.textContent = count;
-                autoLoadFile();
-                const countInterval = setInterval(() => {
-                    count--;
-                    if (count > 0) {
-                        countdown.textContent = count;
-                    } else {
-                        clearInterval(countInterval);
-                        startOverlay.style.display = 'none';
-                        backgroundMusic.play();
-                    }
-                }, 300);
-            }, 350);
-        }
 
         // --- Auto Load File ---
         function loadShapefile(buffer) {
