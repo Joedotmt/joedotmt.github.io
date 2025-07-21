@@ -153,6 +153,8 @@
 </head>
 
 <body class="bg-gray-100">
+    <div style="position: fixed; bottom: 0; right: 0; z-index: 1001; color: white;"><img onclick="backgroundMusic.volume = (backgroundMusic.volume == 0) ? 0.2 : 0; musictoggle.src = (backgroundMusic.volume == 0) ? 'musicoff.png' : 'musicon.png'; " id="musictoggle" src="musicon.png" width="32" height="32"></div>
+
     <iframe style="display: none;" id="achievementsIframe" src="/achievements.html"></iframe>
 
     <a href="/" class="fixed-logo"><img id="logoimg" src="/assets/joe-logo.webp" width="100" alt="Logo"
@@ -193,6 +195,10 @@
                 <div class="w-full bg-gray-200 h-2.5 mt-2">
                     <div id="progress-bar" class="bg-blue-600 h-2.5" style="width: 0%"></div>
                 </div>
+                <!-- Stopwatch Display -->
+                <div class="mt-2 text-xl font-mono text-gray-800">
+                    Time: <span id="stopwatch">00:00.00</span>
+                </div>
             </div>
         </div>
     </div>
@@ -211,6 +217,7 @@
         <div class="transform transition-all scale-95 opacity-0" id="win-modal-content">
             <h1 class="text-6xl font-bold mb-4">🎉 You Win! 🎉</h1>
             <p class="text-2xl mb-6">You've successfully named all the shapes!</p>
+            <p class="text-2xl mb-6">Final Time: <span id="final-time">00:00.00</span></p>
             <button id="play-again"
                 class="bg-white text-green-600 font-bold py-3 px-8 rounded-full text-lg hover:bg-gray-100 transition-transform hover:scale-105">Play
                 Again</button>
@@ -564,6 +571,7 @@
                 backgroundMusic.volume = 0.2;
 
                 countdown.style.display = 'block';
+
 
 
 
