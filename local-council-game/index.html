@@ -153,7 +153,9 @@
 </head>
 
 <body class="bg-gray-100">
-    <div style="position: fixed; bottom: 0; right: 0; z-index: 1001; color: white;"><img onclick="backgroundMusic.volume = (backgroundMusic.volume == 0) ? 0.2 : 0; musictoggle.src = (backgroundMusic.volume == 0) ? 'musicoff.png' : 'musicon.png'; " id="musictoggle" src="musicon.png" width="32" height="32"></div>
+    <div style="position: fixed; bottom: 0; right: 0; z-index: 1001; color: white;"><img
+            onclick="backgroundMusic.volume = (backgroundMusic.volume == 0) ? 0.2 : 0; musictoggle.src = (backgroundMusic.volume == 0) ? 'musicoff.png' : 'musicon.png'; "
+            id="musictoggle" src="musicon.png" width="32" height="32"></div>
 
     <iframe style="display: none;" id="achievementsIframe" src="/achievements.html"></iframe>
 
@@ -300,20 +302,37 @@
         function normalizeString(str) {
             if (!str) return '';
             let normalized = str.toLowerCase();
+
             // Specific Maltese character replacements
             normalized = normalized.replace(/ġ/g, 'g');
             normalized = normalized.replace(/ħ/g, 'h');
             normalized = normalized.replace(/ċ/g, 'c');
             normalized = normalized.replace(/ż/g, 'z');
-            // General diacritic removal for characters like à, é, etc.
+
+            // General diacritic removal
             normalized = normalized.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-            // Replace hyphens and different dash types with a space
+
+            // Replace hyphens and dashes with a space
             normalized = normalized.replace(/[-–—]/g, ' ');
+
+            // Remove apostrophes
             normalized = normalized.replace(/[']/g, '');
-            // Remove consecutive spaces and trim
+
+            // Remove extra spaces and trim
             normalized = normalized.replace(/\s+/g, ' ').trim();
+
+            // **Remove all letters before the last space unless "san" is present**
+            if (!normalized.includes('san') && !normalized.includes('bay') ) {
+                const lastSpaceIndex = normalized.lastIndexOf(' ');
+                if (lastSpaceIndex !== -1) {
+                    normalized = normalized.substring(lastSpaceIndex + 1);
+                }
+            }
+
             return normalized;
         }
+
+
 
         // --- Game Logic ---
         function handleFile(e) {
@@ -502,7 +521,8 @@
             const normalizedNames = names.map(name => normalizeString(name));
 
             // Check if any of the normalized names matches the user's guess
-            const isCorrect = normalizedNames.includes(normalizedGuess);
+            let isCorrect = normalizedNames.includes(normalizedGuess)
+
 
             if (isCorrect) {
                 handleCorrectGuess();

@@ -73,7 +73,7 @@
   },
   {
     "LocalityId": 41,
-    "Names": "Msida"
+    "Names": "Msida, imsida"
   },
   {
     "LocalityId": 46,
@@ -105,7 +105,7 @@
   },
   {
     "LocalityId": 61,
-    "Names": "Xbiex"
+    "Names": "Xbiex,ta'xbiex, ta' xbiex"
   },
   {
     "LocalityId": 10,
@@ -137,7 +137,7 @@
   },
   {
     "LocalityId": 40,
-    "Names": "Mqabba"
+    "Names": "Mqabba, imqabba"
   },
   {
     "LocalityId": 49,
@@ -153,7 +153,7 @@
   },
   {
     "LocalityId": 2,
-    "Names": "Mdina,Notabile"
+    "Names": "Mdina,Notabile,imdina"
   },
   {
     "LocalityId": 7,
@@ -189,7 +189,7 @@
   },
   {
     "LocalityId": 68,
-    "Names": "Mtarfa"
+    "Names": "Mtarfa,imtarfa"
   },
   {
     "LocalityId": 24,
@@ -201,7 +201,7 @@
   },
   {
     "LocalityId": 38,
-    "Names": "Mġarr"
+    "Names": "Mġarr, imgarr"
   },
   {
     "LocalityId": 39,
@@ -213,7 +213,7 @@
   },
   {
     "LocalityId": 55,
-    "Names": "San Pawl Il-Baħar,Saint Paul's Bay, St. Paul's Bay"
+    "Names": "San Pawl Il-Baħar,Saint Paul's Bay, St. Paul's Bay, St Paul's Bay"
   },
   {
     "LocalityId": 11,
