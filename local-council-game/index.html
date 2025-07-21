@@ -62,12 +62,13 @@
         }
 
         #countdown {
-            animation: pulse 0.31s infinite ease-out;
+            animation: pulse 0.305s infinite linear;
         }
 
         @keyframes pulse {
             0% {
                 transform: scale(1);
+                opacity: 1;
             }
 
             100% {
@@ -127,15 +128,41 @@
             color: white;
             z-index: 1001;
         }
+
+        button:hover {
+            color: rgb(132, 158, 255);
+            text-decoration: underline;
+        }
+
+        .fixed-logo {
+            z-index: 5002;
+            width: fit-content;
+            position: fixed;
+            left: 0;
+            top: 0;
+        }
+
+        .fixed-logo:hover {
+            scale: 1.05;
+        }
     </style>
 </head>
 
 <body class="bg-gray-100">
+    <a href="/" class="fixed-logo"><img id="logoimg" src="/assets/joe-logo.webp" width="100" alt="Logo"
+            class="logo" /></a>
+    <p href="/" style="color: white; margin-left: 100px; margin-top: 15px; scale: 1; pointer-events: none;"
+        class="fixed-logo">Malta Local Council Guesser</p>
+
     <!-- Start Overlay -->
-    <div id="start-overlay" class="fixed inset-0 bg-black z-[2000] flex items-center justify-center cursor-pointer">
-        <div class="text-white text-8xl font-bold tracking-wider">
-            <div id="countdown" class="hidden">3</div>
-            <div id="click-to-start">Click to Start</div>
+    <div id="start-overlay" class="fixed inset-0 bg-black z-[2000] flex items-center justify-center">
+        <div s class="text-white text-5xl font-bold tracking-wider">
+            <div style="font-size: 120px;" id="countdown" class="hidden">3</div>
+            <div id="noncountdown" style="display: contents;">
+                <button onclick="handleStartClick(GAMEMODE.normal)">Normal Mode</button><br>
+                <button style="margin-top: 10px;" onclick="handleStartClick(GAMEMODE.mouseless)">Mouseless Random
+                    Mode</button>
+            </div>
         </div>
     </div>
 
@@ -208,7 +235,7 @@
 
         const startOverlay = document.getElementById('start-overlay');
         const countdown = document.getElementById('countdown');
-        const clickToStart = document.getElementById('click-to-start');
+
 
         // --- Styles for Shapes ---
         const defaultStyle = { color: "#3388ff", weight: 2, opacity: 1, fillColor: "#3388ff", fillOpacity: 0.3 };
@@ -223,22 +250,27 @@
             // Initialize the map, restricting it to the bounds of Malta
             var myRenderer = L.svg({ padding: 1 });
             map = L.map('map', {
-                zoom: 11,
-                preferCanvas: false,
                 wheelDebounceTime: 1,
                 zoomAnimation: false,
                 doubleClickZoom: false,
                 minZoom: 10,
-                maxBoundsViscosity: 0.5,
                 renderer: myRenderer,
                 zoomControl: false,
                 attributionControl: false,
-                wheelPxPerZoomLevel: 10000,
+                wheelPxPerZoomLevel: 100,
             });
 
-            map.on('movestart', function (e) {
+
+
+            map.on('load', function (e) {
                 hideGuessModal();
             });
+            map.on('movestart', function (e) {
+                if (chosenGamemode === GAMEMODE.normal) {
+                    hideGuessModal();
+                }
+            });
+
         }
 
 
@@ -261,11 +293,9 @@
             normalized = normalized.replace(/ż/g, 'z');
             // General diacritic removal for characters like à, é, etc.
             normalized = normalized.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-            // Ignore anything before the first dash (hyphen or dash-like character)
-            normalized = normalized.replace(/^[^-–—]*[-–—]\s*/, '');
-            normalized = normalized.replace(/^[^ ]*[ ]\s*/, '');
             // Replace hyphens and different dash types with a space
             normalized = normalized.replace(/[-–—]/g, ' ');
+            normalized = normalized.replace(/[']/g, '');
             // Remove consecutive spaces and trim
             normalized = normalized.replace(/\s+/g, ' ').trim();
             return normalized;
@@ -303,7 +333,8 @@
                 }
 
                 geoJsonLayer = L.geoJSON(geojson, { style: defaultStyle, onEachFeature }).addTo(map);
-                map.fitBounds(geoJsonLayer.getBounds().pad(0));
+                map.fitBounds(geoJsonLayer.getBounds());
+                map.panBy([0, 20]);
                 totalShapes = geojson.features.length;
                 updateProgress();
 
@@ -317,9 +348,7 @@
         }
 
         function onEachFeature(feature, layer) {
-            // Store both names on the layer. Fallback to empty string if one is missing.
-            layer.lauName = feature.properties.LAU_Name || '';
-            layer.lauLatin = feature.properties.LAU_Latin || '';
+            layer.maltalocalityid = feature.properties.LocalityId || '';
             layer.isGuessed = false;
             layer.on({ mouseover: highlightFeature, mouseout: resetHighlight, click: selectFeatureForGuessing });
         }
@@ -342,8 +371,27 @@
             }
         }
 
+        // Add this function before selectFeatureForGuessing
+        function selectRandomUnguessedFeature() {
+            if (!geoJsonLayer) return;
+
+            const unguessedLayers = [];
+            geoJsonLayer.eachLayer(layer => {
+                if (!layer.isGuessed) {
+                    unguessedLayers.push(layer);
+                }
+            });
+
+            if (unguessedLayers.length > 0) {
+                const randomLayer = unguessedLayers[Math.floor(Math.random() * unguessedLayers.length)];
+                selectFeatureForGuessing({ target: randomLayer });
+            }
+        }
+
         function selectFeatureForGuessing(e) {
-            //L.DomEvent.stop(e);
+            guessInput.value = '';
+
+
             if (selectedLayer && !selectedLayer.isGuessed) {
                 geoJsonLayer.resetStyle(selectedLayer);
             }
@@ -354,7 +402,13 @@
             }
             selectedLayer.setStyle(highlightStyle);
             selectedLayer.bringToFront();
+
+            setTimeout(() => {
+                selectedLayer.setStyle(highlightStyle);
+                selectedLayer.bringToFront();
+            }, 10);
             showGuessModal();
+
         }
 
         // --- Guessing Logic ---
@@ -381,21 +435,65 @@
             correctAudio.play();
         }
 
+        let altNamesData = null;
+
+        // Load altnames.json once on page load
+        async function loadAltNames() {
+            try {
+                const response = await fetch('altnames.json');
+                altNamesData = await response.json();
+                console.log('altnames.json loaded');
+            } catch (error) {
+                console.error('Failed to load altnames.json:', error);
+            }
+        }
+
+        // Get names from the cached data
+        function getLocalityNames(localityId) {
+            if (!altNamesData) {
+                console.warn('Data not loaded yet.');
+                return [];
+            }
+
+            const locality = altNamesData.find(item => item.LocalityId === localityId);
+
+            if (!locality) {
+                console.warn(`Locality with ID ${localityId} not found.`);
+                return [];
+            }
+
+            // Split, trim, and deduplicate
+            return [...new Set(
+                locality.Names.split(',')
+                    .map(name => name.trim())
+                    .filter(name => name.length > 0)
+            )];
+        }
+
+        // Load data once when the page starts
+        window.addEventListener('load', () => {
+            loadAltNames();
+        });
+
+
         function liveCheckGuess() {
             const userGuess = guessInput.value;
             if (!userGuess || !selectedLayer) return;
 
             const normalizedGuess = normalizeString(userGuess);
-            const normalizedLauName = normalizeString(selectedLayer.lauName);
-            const normalizedLauLatin = normalizeString(selectedLayer.lauLatin);
+            const names = getLocalityNames(selectedLayer.maltalocalityid);
 
-            const isCorrect = (normalizedLauName && normalizedGuess == normalizedLauName) ||
-                (normalizedLauLatin && normalizedGuess == normalizedLauLatin);
+            // Normalize the names array
+            const normalizedNames = names.map(name => normalizeString(name));
+
+            // Check if any of the normalized names matches the user's guess
+            const isCorrect = normalizedNames.includes(normalizedGuess);
 
             if (isCorrect) {
                 handleCorrectGuess();
             }
         }
+
 
         // --- UI Management ---
         function updateProgress() {
@@ -410,20 +508,26 @@
         }
 
         function hideGuessModal() {
+
+
             guessDialog.close();
-            
+
             if (selectedLayer && !selectedLayer.isGuessed) {
                 geoJsonLayer.resetStyle(selectedLayer);
             }
             selectedLayer = null;
 
-            setTimeout(() => {
-                guessInput.value = '';
-                guessInput.placeholder = 'Enter name...';
-                guessInput.classList.remove('border-red-500');
 
-
-            }, 200);
+            if (chosenGamemode === GAMEMODE.mouseless) {
+                selectRandomUnguessedFeature();
+            }
+            else {
+                setTimeout(() => {
+                    guessInput.value = '';
+                    guessInput.placeholder = 'Enter name...';
+                    guessInput.classList.remove('border-red-500');
+                }, 200);
+            }
         }
 
         function showWinScreen() {
@@ -441,35 +545,43 @@
             //     console.error("Error attempting to enable full-screen mode:", err);
             // });
 
-            // Initialize background music
-            backgroundMusic = new Audio('music.mp3');
-            backgroundMusic.loop = true;
-            backgroundMusic.volume = 0.2;
-
-            startOverlay.removeEventListener('click', handleStartClick);
-            clickToStart.style.display = 'none';
-            countdown.style.display = 'block';
-
+            document.getElementById("noncountdown").style.display = 'none';
             const countdownAudio = new Audio('321.mp3');
             countdownAudio.play();
+            setTimeout(() => {
+                // Initialize background music
+                backgroundMusic = new Audio('music.mp3');
+                backgroundMusic.loop = true;
+                backgroundMusic.volume = 0.2;
+
+                countdown.style.display = 'block';
 
 
-            let count = 3;
-            countdown.textContent = count;
-            autoLoadFile();
-            const countInterval = setInterval(() => {
-                count--;
-                if (count > 0) {
-                    countdown.textContent = count;
-                } else {
-                    clearInterval(countInterval);
-                    startOverlay.style.display = 'none';
-                    backgroundMusic.play();
-                }
-            }, 300);
+
+
+                let count = 3;
+                countdown.textContent = count;
+                autoLoadFile();
+                const countInterval = setInterval(() => {
+                    count--;
+                    if (count > 0) {
+                        countdown.textContent = count;
+                    } else {
+                        clearInterval(countInterval);
+                        startOverlay.style.display = 'none';
+                        backgroundMusic.play();
+                    }
+                }, 300);
+            }, 350);
+
         }
-
-        function handleStartClick() {
+        const GAMEMODE = {
+            normal: 0,
+            mouseless: 1
+        }
+        let chosenGamemode = 0;
+        function handleStartClick(mode) {
+            chosenGamemode = mode;
             startGame();
         }
 
@@ -494,8 +606,6 @@
             startOverlay.style.display = 'flex';
             startOverlay.style.opacity = '1';
             countdown.style.display = 'none';
-            clickToStart.style.display = 'block';
-            startOverlay.addEventListener('click', handleStartClick);
         }
 
         // --- Event Listeners ---
@@ -513,7 +623,6 @@
         // --- Initial Setup ---
         window.onload = () => {
             initializeMap();
-            startOverlay.addEventListener('click', handleStartClick);
             // Only autoload file after countdown
             startOverlay.style.opacity = '1';
             startOverlay.style.transition = 'opacity 1s';

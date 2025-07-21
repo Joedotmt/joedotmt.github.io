@@ -1,0 +1,278 @@
+[
+  {
+    "LocalityId": 1,
+    "Names": "Valletta,Umilissima, belt, Umilissima"
+  },
+  {
+    "LocalityId": 3,
+    "Names": "Birgu, Vittoriosa"
+  },
+  {
+    "LocalityId": 4,
+    "Names": "Isla, Invicta, Senglea"
+  },
+  {
+    "LocalityId": 5,
+    "Names": "Bormla,Cospicua"
+  },
+  {
+    "LocalityId": 8,
+    "Names": "Żabbar,Hompesch"
+  },
+  {
+    "LocalityId": 17,
+    "Names": "Fgura"
+  },
+  {
+    "LocalityId": 18,
+    "Names": "Furjana,Floriana"
+  },
+  {
+    "LocalityId": 29,
+    "Names": "Kalkara"
+  },
+  {
+    "LocalityId": 33,
+    "Names": "Luqa"
+  },
+  {
+    "LocalityId": 34,
+    "Names": "Marsa"
+  },
+  {
+    "LocalityId": 45,
+    "Names": "Paola,Raħal Ġdid, Casal Nuovo"
+  },
+  {
+    "LocalityId": 57,
+    "Names": "Santa Luċija,Santa Luċija"
+  },
+  {
+    "LocalityId": 62,
+    "Names": "Tarxien"
+  },
+  {
+    "LocalityId": 65,
+    "Names": "Xgħajra"
+  },
+  {
+    "LocalityId": 6,
+    "Names": "Qormi,Pinto"
+  },
+  {
+    "LocalityId": 14,
+    "Names": "Birkirkara,Birkirkara"
+  },
+  {
+    "LocalityId": 21,
+    "Names": "Gżira"
+  },
+  {
+    "LocalityId": 27,
+    "Names": "Ħamrun"
+  },
+  {
+    "LocalityId": 41,
+    "Names": "Msida"
+  },
+  {
+    "LocalityId": 46,
+    "Names": "Pembroke"
+  },
+  {
+    "LocalityId": 47,
+    "Names": "Pieta"
+  },
+  {
+    "LocalityId": 52,
+    "Names": "San Ġiljan, Saint Julians, Saint Julian's, St. Julian's"
+  },
+  {
+    "LocalityId": 53,
+    "Names": "San Ġwann"
+  },
+  {
+    "LocalityId": 58,
+    "Names": "Santa Venera"
+  },
+  {
+    "LocalityId": 59,
+    "Names": "Sliema"
+  },
+  {
+    "LocalityId": 60,
+    "Names": "Swieqi"
+  },
+  {
+    "LocalityId": 61,
+    "Names": "Xbiex"
+  },
+  {
+    "LocalityId": 10,
+    "Names": "Żejtun, Beland"
+  },
+  {
+    "LocalityId": 15,
+    "Names": "Birżebbuġa, B'Buġa"
+  },
+  {
+    "LocalityId": 20,
+    "Names": "Gudja"
+  },
+  {
+    "LocalityId": 26,
+    "Names": "Għaxaq"
+  },
+  {
+    "LocalityId": 31,
+    "Names": "Kirkop"
+  },
+  {
+    "LocalityId": 35,
+    "Names": "Marsaskala"
+  },
+  {
+    "LocalityId": 36,
+    "Names": "Marsaxlokk"
+  },
+  {
+    "LocalityId": 40,
+    "Names": "Mqabba"
+  },
+  {
+    "LocalityId": 49,
+    "Names": "Qrendi"
+  },
+  {
+    "LocalityId": 51,
+    "Names": "Safi"
+  },
+  {
+    "LocalityId": 67,
+    "Names": "Żurrieq"
+  },
+  {
+    "LocalityId": 2,
+    "Names": "Mdina,Notabile"
+  },
+  {
+    "LocalityId": 7,
+    "Names": "Żebbuġ,Rohan"
+  },
+  {
+    "LocalityId": 9,
+    "Names": "Siġġiewi,Ferdinand"
+  },
+  {
+    "LocalityId": 12,
+    "Names": "Attard"
+  },
+  {
+    "LocalityId": 13,
+    "Names": "Balzan"
+  },
+  {
+    "LocalityId": 16,
+    "Names": "Dingli"
+  },
+  {
+    "LocalityId": 28,
+    "Names": "Iklin"
+  },
+  {
+    "LocalityId": 32,
+    "Names": "Lija"
+  },
+  {
+    "LocalityId": 50,
+    "Names": "Rabat"
+  },
+  {
+    "LocalityId": 68,
+    "Names": "Mtarfa"
+  },
+  {
+    "LocalityId": 24,
+    "Names": "Għargħur"
+  },
+  {
+    "LocalityId": 37,
+    "Names": "Mellieħa"
+  },
+  {
+    "LocalityId": 38,
+    "Names": "Mġarr"
+  },
+  {
+    "LocalityId": 39,
+    "Names": "Mosta"
+  },
+  {
+    "LocalityId": 44,
+    "Names": "Naxxar"
+  },
+  {
+    "LocalityId": 55,
+    "Names": "San Pawl Il-Baħar,Saint Paul's Bay, St. Paul's Bay"
+  },
+  {
+    "LocalityId": 11,
+    "Names": "Rabat,Victoria"
+  },
+  {
+    "LocalityId": 19,
+    "Names": "Fontana"
+  },
+  {
+    "LocalityId": 22,
+    "Names": "Għajnsielem u Kemmuna,Għajnsielem and Comino, Comino and Għajnsielem, Kemmuna u Għajnsielem, Għajnsielem"
+  },
+  {
+    "LocalityId": 23,
+    "Names": "Gharb"
+  },
+  {
+    "LocalityId": 25,
+    "Names": "Għasri"
+  },
+  {
+    "LocalityId": 30,
+    "Names": "Kerċem"
+  },
+  {
+    "LocalityId": 42,
+    "Names": "Munxar"
+  },
+  {
+    "LocalityId": 43,
+    "Names": "Nadur"
+  },
+  {
+    "LocalityId": 48,
+    "Names": "Qala"
+  },
+  {
+    "LocalityId": 54,
+    "Names": "Lawrenz"
+  },
+  {
+    "LocalityId": 56,
+    "Names": "Sannat"
+  },
+  {
+    "LocalityId": 63,
+    "Names": "Xagħra"
+  },
+  {
+    "LocalityId": 64,
+    "Names": "Xewkija"
+  },
+  {
+    "LocalityId": 66,
+    "Names": "Żebbuġ"
+  },
+  {
+    "LocalityId": 69,
+    "Names": "Filfla"
+  }
+]
