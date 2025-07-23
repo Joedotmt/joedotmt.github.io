@@ -6,20 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Malta LC Guessing Game</title>
 
-    <!-- Leaflet.js for mapping -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-    <!-- shapefile-js for parsing shapefiles -->
     <script src="https://unpkg.com/shpjs@latest/dist/shp.js"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Pangolin&display=swap" rel="stylesheet">
 
-    <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
 
 
@@ -164,7 +161,6 @@
     <p href="/" style="color: white; margin-left: 100px; margin-top: 15px; scale: 1; pointer-events: none;"
         class="fixed-logo">Malta Local Council Guesser</p>
 
-    <!-- Start Overlay -->
     <div id="start-overlay" class="fixed inset-0 bg-black z-[2000] flex items-center justify-center">
         <div s class="text-white text-5xl font-bold tracking-wider">
             <div style="font-size: 120px;" id="countdown" class="hidden">3</div>
@@ -178,35 +174,35 @@
         </div>
     </div>
 
-    <!-- The main map container -->
     <div id="map"></div>
 
-    <!-- UI Overlay: File Upload and Game Info -->
-    <div id="ui-overlay" class="absolute top-0 left-0 right-0 z-[1000] flex flex-col">
-        <div style="margin-left: auto; margin-right: 10px; width: 50vw; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; overflow: hidden;"
-            class="bg-white/70 backdrop-blur-sm shadow-lg max-w-lg w-full text-center transition-all" id="info-box">
 
-            <!-- File input -->
-            <input type="file" id="file-input" style="display: none;"
-                class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                accept=".zip">
+    <div id="flag-container" style="    border-top-right-radius: 10px; z-index: 1001;
+    border-bottom-right-radius: 10px;
+    overflow: hidden;
+    position: fixed;
+    left: 0;
+    bottom: 70px;" class="hidden my-4 p-2 bg-white/70 backdrop-blur-sm">
+        <img id="flag-image" src="" alt="Local Council Flag" class="h-40">
+    </div>
 
-            <!-- Game progress display (initially hidden) -->
-            <div id="progress-container" class="hidden mt-4">
-                <p class="text-lg font-semibold text-gray-700">Progress: <span id="progress-text"
-                        class="font-bold text-blue-600">0 / 0</span></p>
-                <div class="w-full bg-gray-200 h-2.5 mt-2">
-                    <div id="progress-bar" class="bg-blue-600 h-2.5" style="width: 0%"></div>
-                </div>
-                <!-- Stopwatch Display -->
-                <div class="mt-2 text-xl font-mono text-gray-800">
-                    Time: <span id="stopwatch">00:00.00</span>
-                </div>
+    <div style="    width: 50vw; z-index: 1001;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    overflow: hidden;
+    position: fixed;
+    right: 10px;
+    top: 0;" class="bg-white/70 backdrop-blur-sm shadow-lg max-w-lg w-full text-center transition-all" id="info-box">
+
+        <div id="progress-container" class="mt-4">
+            <p class="text-lg font-semibold text-gray-700">Time: <span style="font-family:monospace;" class="text-blue-600" id="stopwatch">00:00.00</span><br>Progress: <span id="progress-text"
+                    class="font-bold text-blue-600">0 / 0</span></p>
+            <div class="w-full bg-gray-200 h-2.5 mt-2">
+                <div id="progress-bar" class="bg-blue-600 h-2.5" style="width: 0%"></div>
             </div>
         </div>
     </div>
 
-    <!-- Guessing Modal (initially hidden) -->
     <dialog id="guess-dialog">
         <input autocomplete="off" type="text" id="guess-input" style="opacity: 1;"
             class="w-full px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -214,7 +210,6 @@
     </dialog>
 
 
-    <!-- Win Modal (initially hidden) -->
     <div id="win-modal"
         class="hidden absolute inset-0 z-[1002] bg-green-500/80 flex items-center justify-center p-4 text-white text-center">
         <div class="transform transition-all scale-95 opacity-0" id="win-modal-content">
@@ -235,9 +230,8 @@
         let totalShapes = 0;
         let guessedShapes = 0;
         let backgroundMusic;
+        let currentFlagLayer = null; // To store the layer for the current flag guess
 
-        // --- DOM Elements ---
-        const fileInput = document.getElementById('file-input');
         const progressContainer = document.getElementById('progress-container');
         const progressText = document.getElementById('progress-text');
         const progressBar = document.getElementById('progress-bar');
@@ -253,6 +247,9 @@
         const startOverlay = document.getElementById('start-overlay');
         const countdown = document.getElementById('countdown');
 
+        // New DOM elements for Flag Mode
+        const flagContainer = document.getElementById('flag-container');
+        const flagImage = document.getElementById('flag-image');
 
         // --- Styles for Shapes ---
         const defaultStyle = { color: "#3388ff", weight: 2, opacity: 1, fillColor: "#3388ff", fillOpacity: 0.3 };
@@ -323,7 +320,7 @@
             normalized = normalized.replace(/\s+/g, ' ').trim();
 
             // **Remove all letters before the last space unless "san" is present**
-            if (!normalized.includes('san') && !normalized.includes('bay') ) {
+            if (!normalized.includes('san') && !normalized.includes('bay')) {
                 const lastSpaceIndex = normalized.lastIndexOf(' ');
                 if (lastSpaceIndex !== -1) {
                     normalized = normalized.substring(lastSpaceIndex + 1);
@@ -336,55 +333,50 @@
 
 
         // --- Game Logic ---
-        function handleFile(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-
-            resetGame();
-
-            const reader = new FileReader();
-            reader.onload = (event) => loadShapefile(event.target.result);
-            reader.onerror = (err) => {
-                console.error("FileReader error:", err);
-
-            }
-            reader.readAsArrayBuffer(file);
-        }
-
         function loadShapefile(buffer) {
             shp(buffer).then(function (geojson) {
                 if (!geojson || (geojson.features && geojson.features.length === 0)) {
-
                     return;
                 }
-
-                // Check if features have at least one of the required name properties
                 const firstProps = geojson.features[0].properties;
                 if (!firstProps || (firstProps.LAU_Name === undefined && firstProps.LAU_Latin === undefined)) {
-
                     return;
                 }
-
                 geoJsonLayer = L.geoJSON(geojson, { style: defaultStyle, onEachFeature }).addTo(map);
                 map.fitBounds(geoJsonLayer.getBounds());
                 map.panBy([0, 20]);
                 totalShapes = geojson.features.length;
                 updateProgress();
 
-                fileInput.classList.add('hidden');
                 progressContainer.classList.remove('hidden');
                 infoBox.classList.add('md:w-auto');
+
+                // If loading from save, apply saved progress
+                if (shouldLoadSave) {
+                    const { guessedIds } = loadProgressFromLocalStorage();
+                    applySavedProgress(guessedIds);
+                }
+
+                // Start game based on mode after setup is complete
+                if (chosenGamemode === GAMEMODE.flags) {
+                    startNextFlagRound();
+                } else if (chosenGamemode === GAMEMODE.mouseless) {
+                    selectRandomUnguessedFeature();
+                }
+
             }).catch(function (err) {
                 console.error("Shapefile parsing error:", err);
-
             });
         }
 
         function onEachFeature(feature, layer) {
             layer.maltalocalityid = feature.properties.LocalityId || '';
             layer.isGuessed = false;
-            layer.on({ mouseover: highlightFeature, mouseout: resetHighlight, click: selectFeatureForGuessing });
+            layer.on({
+                mouseover: highlightFeature,
+                mouseout: resetHighlight,
+                click: handleLayerClick
+            });
         }
 
         // --- Feature Interaction ---
@@ -405,7 +397,32 @@
             }
         }
 
-        // Add this function before selectFeatureForGuessing
+
+        // NEW: Function to handle clicks based on game mode
+        function handleLayerClick(e) {
+            const clickedLayer = e.target;
+            if (clickedLayer.isGuessed) return;
+
+            if (chosenGamemode === GAMEMODE.flags) {
+                // In flag mode, check if the clicked layer is the correct one for the current flag
+                if (currentFlagLayer && clickedLayer.maltalocalityid === currentFlagLayer.maltalocalityid) {
+                    selectFeatureForGuessing(e); // Correct shape, now prompt for the name
+                } else {
+                    // Optional: Visual feedback for a wrong click
+                    clickedLayer.setStyle({ color: 'red', weight: 3 });
+                    setTimeout(() => {
+                        if (!clickedLayer.isGuessed) {
+                            geoJsonLayer.resetStyle(clickedLayer);
+                        }
+                    }, 300);
+                }
+            } else {
+                // For normal and mouseless modes, any click on an unguessed shape is valid
+                selectFeatureForGuessing(e);
+            }
+        }
+
+
         function selectRandomUnguessedFeature() {
             if (!geoJsonLayer) return;
 
@@ -449,8 +466,6 @@
         function handleCorrectGuess() {
             if (!selectedLayer || selectedLayer.isGuessed) return; // Prevent double processing
 
-
-
             selectedLayer.isGuessed = true;
             selectedLayer.setStyle(guessedStyle);
             selectedLayer.unbindPopup();
@@ -458,21 +473,26 @@
 
             guessedShapes++;
             updateProgress();
-            saveProgressToLocalStorage(); // <-- Save progress here
-            hideGuessModal();
+            saveProgressToLocalStorage();
+            hideGuessModal(); // Just closes the dialog now
+
+            const correctAudio = new Audio('correct.mp3');
+            correctAudio.play();
 
             if (guessedShapes === totalShapes) {
                 showWinScreen();
+            } else {
+                // Move to the next round based on game mode
+                if (chosenGamemode === GAMEMODE.flags) {
+                    startNextFlagRound();
+                } else if (chosenGamemode === GAMEMODE.mouseless) {
+                    selectRandomUnguessedFeature();
+                }
             }
-
-            // Play correct sound
-            const correctAudio = new Audio('correct.mp3');
-            correctAudio.play();
         }
 
         let altNamesData = null;
 
-        // Load altnames.json once on page load
         async function loadAltNames() {
             try {
                 const response = await fetch('altnames.json');
@@ -483,29 +503,17 @@
             }
         }
 
-        // Get names from the cached data
         function getLocalityNames(localityId) {
             if (!altNamesData) {
-                console.warn('Data not loaded yet.');
                 return [];
             }
-
             const locality = altNamesData.find(item => item.LocalityId === localityId);
-
             if (!locality) {
-                console.warn(`Locality with ID ${localityId} not found.`);
                 return [];
             }
-
-            // Split, trim, and deduplicate
-            return [...new Set(
-                locality.Names.split(',')
-                    .map(name => name.trim())
-                    .filter(name => name.length > 0)
-            )];
+            return [...new Set(locality.Names.split(',').map(name => name.trim()).filter(name => name.length > 0))];
         }
 
-        // Load data once when the page starts
         window.addEventListener('load', () => {
             loadAltNames();
         });
@@ -517,13 +525,9 @@
 
             const normalizedGuess = normalizeString(userGuess);
             const names = getLocalityNames(selectedLayer.maltalocalityid);
-
-            // Normalize the names array
             const normalizedNames = names.map(name => normalizeString(name));
 
-            // Check if any of the normalized names matches the user's guess
             let isCorrect = normalizedNames.includes(normalizedGuess)
-
 
             if (isCorrect) {
                 handleCorrectGuess();
@@ -543,9 +547,8 @@
             guessInput.focus();
         }
 
+        // MODIFIED: This function is now simpler and just handles the UI
         function hideGuessModal() {
-
-
             guessDialog.close();
 
             if (selectedLayer && !selectedLayer.isGuessed) {
@@ -553,17 +556,11 @@
             }
             selectedLayer = null;
 
-
-            if (chosenGamemode === GAMEMODE.mouseless) {
-                selectRandomUnguessedFeature();
-            }
-            else {
-                setTimeout(() => {
-                    guessInput.value = '';
-                    guessInput.placeholder = 'Enter name...';
-                    guessInput.classList.remove('border-red-500');
-                }, 200);
-            }
+            setTimeout(() => {
+                guessInput.value = '';
+                guessInput.placeholder = 'Enter name...';
+                guessInput.classList.remove('border-red-500');
+            }, 200);
         }
 
         let stopwatchInterval = null;
@@ -603,6 +600,11 @@
             const elapsed = now - (startTimestamp || now);
             document.getElementById('final-time').textContent = formatTime(elapsed);
             achievementsIframe.contentWindow.postMessage({ type: 'registerAchievement', achievement: "won-local-council-game" }, '*');
+
+            if (chosenGamemode === GAMEMODE.flags) {
+                flagContainer.classList.add('hidden');
+            }
+
             winModal.classList.remove('hidden');
             winModal.classList.add('flex');
             setTimeout(() => {
@@ -611,28 +613,47 @@
             }, 10);
         }
 
+        // NEW: Function to manage the flag guessing rounds
+        function startNextFlagRound() {
+            if (!geoJsonLayer) return;
+
+            hideGuessModal(); // Close any open input dialog
+
+            const unguessedLayers = [];
+            geoJsonLayer.eachLayer(layer => {
+                if (!layer.isGuessed) {
+                    unguessedLayers.push(layer);
+                }
+            });
+
+            if (unguessedLayers.length === 0) {
+                if (guessedShapes === totalShapes) showWinScreen();
+                return;
+            }
+
+            // Select a new random layer for the flag
+            currentFlagLayer = unguessedLayers[Math.floor(Math.random() * unguessedLayers.length)];
+
+            const localityId = currentFlagLayer.maltalocalityid;
+            flagImage.src = `coat-of-arms/${localityId}.png`;
+            flagContainer.classList.remove('hidden');
+        }
+
+
         // --- Start Game ---
         function startGame() {
-            // document.body.requestFullscreen().catch(err => {
-            //     console.error("Error attempting to enable full-screen mode:", err);
-            // });
-
             document.getElementById("noncountdown").style.display = 'none';
 
             if (shouldLoadSave) {
-                // Skip countdown, start instantly
                 startOverlay.style.display = 'none';
-                // Initialize background music
                 backgroundMusic = new Audio('music.mp3');
                 backgroundMusic.loop = true;
                 backgroundMusic.volume = 0.2;
                 backgroundMusic.play();
 
-                // Load start time from localStorage
                 startTimestamp = parseInt(localStorage.getItem('lcgame_startTime'), 10) || Date.now();
                 updateStopwatchDisplay();
                 stopwatchInterval = setInterval(updateStopwatchDisplay, 33);
-
                 autoLoadFile();
                 return;
             }
@@ -640,7 +661,6 @@
             const countdownAudio = new Audio('321.mp3');
             countdownAudio.play();
             setTimeout(() => {
-                // Initialize background music
                 backgroundMusic = new Audio('music.mp3');
                 backgroundMusic.loop = true;
                 backgroundMusic.volume = 0.2;
@@ -659,11 +679,9 @@
                         startOverlay.style.display = 'none';
                         backgroundMusic.play();
 
-                        // Start stopwatch only for new save
                         if (!shouldLoadSave) {
                             startStopwatch();
                         } else {
-                            // Load start time from localStorage
                             startTimestamp = parseInt(localStorage.getItem('lcgame_startTime'), 10) || Date.now();
                             updateStopwatchDisplay();
                             stopwatchInterval = setInterval(updateStopwatchDisplay, 33);
@@ -717,7 +735,6 @@
             startGame();
         }
 
-        // --- Start Overlay Button ---
         document.addEventListener('DOMContentLoaded', () => {
             const continueBtn = document.getElementById("continueLastSave")
             let progress = loadProgressFromLocalStorage()
@@ -732,43 +749,18 @@
             }
         });
 
-        // --- Auto Load File ---
-        function loadShapefile(buffer) {
-            shp(buffer).then(function (geojson) {
-                if (!geojson || (geojson.features && geojson.features.length === 0)) {
-                    return;
-                }
-                const firstProps = geojson.features[0].properties;
-                if (!firstProps || (firstProps.LAU_Name === undefined && firstProps.LAU_Latin === undefined)) {
-                    return;
-                }
-                geoJsonLayer = L.geoJSON(geojson, { style: defaultStyle, onEachFeature }).addTo(map);
-                map.fitBounds(geoJsonLayer.getBounds());
-                map.panBy([0, 20]);
-                totalShapes = geojson.features.length;
-                updateProgress();
-
-                fileInput.classList.add('hidden');
-                progressContainer.classList.remove('hidden');
-                infoBox.classList.add('md:w-auto');
-
-                // If loading from save, apply saved progress
-                if (shouldLoadSave) {
-                    const { guessedIds } = loadProgressFromLocalStorage();
-                    applySavedProgress(guessedIds);
-                }
-            }).catch(function (err) {
-                console.error("Shapefile parsing error:", err);
-            });
-        }
-
         // --- Event Listeners ---
-        // fileInput.addEventListener('change', handleFile);
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') { hideGuessModal(); }
+            if (e.key === 'Escape') {
+                if (chosenGamemode === GAMEMODE.flags && guessedShapes < totalShapes) {
+                    startNextFlagRound(); // Skips to the next flag
+                } else {
+                    hideGuessModal(); // Original behavior for other modes
+                }
+            }
         });
-        guessInput.addEventListener('input', liveCheckGuess); // Check on every keystroke
-        guessInput.addEventListener('keyup', (e) => { if (e.key === 'Enter') manualCheckGuess(); });
+
+        guessInput.addEventListener('input', liveCheckGuess);
         playAgainBtn.addEventListener('click', () => {
             window.location.reload()
         });
@@ -776,12 +768,10 @@
         // --- Initial Setup ---
         window.onload = () => {
             initializeMap();
-            // Only autoload file after countdown
             startOverlay.style.opacity = '1';
             startOverlay.style.transition = 'opacity 1s';
         };
 
-        // Add a new function to load the default file automatically
         function autoLoadFile() {
             fetch('Malta-LAU2.zip')
                 .then(response => response.arrayBuffer())
