@@ -171,8 +171,9 @@
             <div id="noncountdown" style="display: flex; flex-direction: column; gap: 0.2em;">
                 <button style="display: none;" id="continueLastSave">Continue last save</button>
                 <button onclick="handleStartClick(GAMEMODE.normal)">Normal Mode</button>
-                <button onclick="handleStartClick(GAMEMODE.mouseless)">Mouseless Random
+                <button onclick="handleStartClick(GAMEMODE.mouseless)">Mouseless
                     Mode</button>
+                <button onclick="handleStartClick(GAMEMODE.flags)">Guess the Flag</button>
             </div>
         </div>
     </div>
@@ -674,7 +675,8 @@
         }
         const GAMEMODE = {
             normal: 0,
-            mouseless: 1
+            mouseless: 1,
+            flags: 2
         }
         let chosenGamemode = 0;
         // --- LocalStorage Helpers ---

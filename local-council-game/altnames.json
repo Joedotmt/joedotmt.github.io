@@ -1,7 +1,8 @@
 [
   {
     "LocalityId": 1,
-    "Names": "Valletta,Umilissima, belt, Umilissima"
+    "Names": "Valletta,Umilissima, belt, Umilissima",
+    "Flag": "valletta.png"
   },
   {
     "LocalityId": 3,
@@ -253,7 +254,7 @@
   },
   {
     "LocalityId": 54,
-    "Names": "Lawrenz"
+    "Names": "Lawrenz, San Lawrenz"
   },
   {
     "LocalityId": 56,
