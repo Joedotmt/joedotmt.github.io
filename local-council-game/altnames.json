@@ -1,8 +1,7 @@
 [
   {
     "LocalityId": 1,
-    "Names": "Valletta,Umilissima, belt, Umilissima",
-    "Flag": "valletta.png"
+    "Names": "Valletta,Umilissima, belt, Umilissima"
   },
   {
     "LocalityId": 3,
@@ -42,7 +41,7 @@
   },
   {
     "LocalityId": 45,
-    "Names": "Paola,Raħal Ġdid, Casal Nuovo"
+    "Names": "Paola,Raħal Ġdid, Raħal il-Ġdid, Casal Nuovo"
   },
   {
     "LocalityId": 57,
