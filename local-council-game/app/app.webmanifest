@@ -1,7 +1,7 @@
 {
-    "name": "Joe's Malta Locality Guessing Game",
+    "name": "Locality Guessing Game",
     "short_name": "Locality Game",
-    "start_url": "/local-council-game",
+    "start_url": "/local-council-game/index.html",
     "display": "fullscreen",
     "icons": [
         {

@@ -6,14 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Malta LC Guessing Game</title>
 
-    <link rel="manifest" href="app.webmanifest">
+    <link rel="manifest" href="app/app.webmanifest">
 
     <!-- leaflet 1.9.4 -->
-    <link rel="stylesheet" href="leaflet.css" crossorigin="" />
-    <script src="leaflet.js" crossorigin=""></script>
+    <link rel="stylesheet" href="app/leaflet.css" crossorigin="" />
+    <script src="app/leaflet.js" crossorigin=""></script>
 
     <!-- shp 6.1.0 -->
-    <script src="shp.js"></script>
+    <script src="app/shp.js"></script>
 
     <style>
         /* latin-ext */
@@ -22,7 +22,7 @@
             font-style: normal;
             font-weight: 400;
             font-display: swap;
-            src: url(cY9GfjGcW0FPpi-tWMfD79zqiA.woff2) format('woff2');
+            src: url(app/cY9GfjGcW0FPpi-tWMfD79zqiA.woff2) format('woff2');
             unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
         }
 
@@ -32,12 +32,15 @@
             font-style: normal;
             font-weight: 400;
             font-display: swap;
-            src: url(cY9GfjGcW0FPpi-tWMfN79w.woff2) format('woff2');
+            src: url(app/cY9GfjGcW0FPpi-tWMfN79w.woff2) format('woff2');
             unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
         }
     </style>
 
-    <script src="tailwind.js"></script>
+    <script src="app/tailwind.js"></script>
+
+
+
 
 
     <style>
@@ -171,13 +174,12 @@
 
 <body class="bg-gray-100">
     <div style="position: fixed; bottom: 0; right: 0; z-index: 1001; color: white;"><img
-            onclick="backgroundMusic.volume = (backgroundMusic.volume == 0) ? 0.2 : 0; musictoggle.src = (backgroundMusic.volume == 0) ? 'musicoff.png' : 'musicon.png'; "
-            id="musictoggle" src="musicon.png" width="32" height="32"></div>
+            onclick="backgroundMusic.volume = (backgroundMusic.volume == 0) ? 0.2 : 0; musictoggle.src = (backgroundMusic.volume == 0) ? 'app/musicoff.png' : 'app/musicon.png'; "
+            id="musictoggle" src="app/musicon.png" width="32" height="32"></div>
 
     <iframe style="display: none;" id="achievementsIframe" src="/achievements.html"></iframe>
 
-    <a href="/" class="fixed-logo"><img id="logoimg" src="joe-logo.webp" width="100" alt="Logo"
-            class="logo" /></a>
+    <a href="/" class="fixed-logo"><img id="logoimg" src="app/joe-logo.webp" width="100" alt="Logo" class="logo" /></a>
     <p href="/" style="color: white; margin-left: 100px; margin-top: 15px; scale: 1; pointer-events: none;"
         class="fixed-logo">Malta Local Council Guesser</p>
 
@@ -243,7 +245,19 @@
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script src="app/app.js"></script>
+
+    <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js', {
+      scope: './'
+    }).then(function(reg) {
+      console.log('Service Worker Registered!', reg);
+    }).catch(function(error) {
+      console.log('Service Worker registration failed:', error);
+    });
+  }
+</script>
 </body>
 
 </html>

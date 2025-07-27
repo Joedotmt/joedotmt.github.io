@@ -270,7 +270,7 @@ let altNamesData = null;
 
 async function loadAltNames() {
     try {
-        const response = await fetch('altnames.json');
+        const response = await fetch('app/altnames.json');
         altNamesData = await response.json();
         console.log('altnames.json loaded');
     } catch (error) {
@@ -548,7 +548,7 @@ window.onload = () => {
 };
 
 function autoLoadFile() {
-    fetch('Malta-LAU2.zip')
+    fetch('app/Malta-LAU2.zip')
         .then(response => response.arrayBuffer())
         .then(buffer => loadShapefile(buffer))
         .catch(err => {
