@@ -46,6 +46,7 @@ function initializeMap() {
         renderer: myRenderer,
         zoomControl: false,
         attributionControl: false,
+        zoomSnap: 0,
         wheelPxPerZoomLevel: 100,
     });
 
