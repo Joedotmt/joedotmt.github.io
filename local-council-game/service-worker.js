@@ -73,8 +73,8 @@ const urlsToCache = [
   './app/joe-logo.webp',
   './app/leaflet.css',
   './app/icon-512.png',
+  './app/pangolin2.woff2',
   './app/shp.js',
-  './app/cY9GfjGcW0FPpi-tWMfD79zqiA.woff2',
   './app/app.webmanifest',
   './app/tailwind.js',
   './app/music.mp3',
@@ -82,9 +82,9 @@ const urlsToCache = [
   './app/Malta-LAU2.zip',
   './app/correct.mp3',
   './app/musicon.png',
+  './app/pangolin1.woff2',
   './app/leaflet.js',
   './app/altnames.json',
-  './app/cY9GfjGcW0FPpi-tWMfN79w.woff2',
   './app/321.mp3',
 ];
 /*
