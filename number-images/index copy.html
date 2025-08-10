@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Pixel Image Generator</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 0;
+      margin: 0 0;
+    }
+
+    input,
+    button {
+      margin: 5px 0;
+      display: block;
+    }
+
+    canvas {
+      outline: 2px solid black;
+      margin: 0;
+      image-rendering: pixelated;
+      width: 100%;
+    }
+
+    .canvas-container {
+      position: sticky;
+      right: 0;
+      top: 5px;
+      overflow-y: scroll;
+      overflow-x: visible;
+      height: calc(100dvh - 10px);
+    }
+
+    textarea {
+      field-sizing: content;
+    }
+
+    div {
+      width: 50%;
+    }
+  </style>
+</head>
+
+<body>
+
+
+  <div style="display: flex; width: 100%; gap: 10px; min-height: 100dvh;">
+    <div>
+      <h1>Pixel Image Generator</h1>
+      <label>Upload Image: <input type="file" id="fileInput" accept="image/*"></label>
+      <label>Image number (length of width number + width + RGB pixel values): <textarea id="dataInput" rows="4"
+          style="width:100%"></textarea>
+
+        <textarea id="base65536output" rows="4"
+          style="width:100%"></textarea>
+        
+        </label>
+    </div>
+    <div class="canvas-container">
+      <canvas id="canvas" height="0"></canvas>
+    </div>
+  </div>
+
+  <script type="module">
+    import { encode, decode } from 'https://cdn.jsdelivr.net/npm/base65536@5.0.0/src/index.min.js';
+
+    /*
+    // Example: encode an integer
+    const number = 12345;
+    const bytes = new Uint8Array(new ArrayBuffer(4));
+    new DataView(bytes.buffer).setUint32(0, number, false); // big-endian
+
+    const encoded = encode(bytes);
+    console.log('Encoded:', encoded);
+
+    // To decode back
+    const decoded = decode(encoded);
+    const originalNumber = new DataView(decoded.buffer).getUint32(0, false);
+    console.log('Decoded:', originalNumber);
+    */
+    const dataInput = document.getElementById('dataInput');
+    const fileInput = document.getElementById('fileInput');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const base65536Output = document.getElementById('base65536output');
+
+    let debounceTimer;
+    function debounce(fn, delay) {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(fn, delay);
+    }
+
+    function generateImage() {
+      let fullStr = dataInput.value.trim();
+      if (!fullStr) return;
+
+      const widthLen = parseInt(fullStr.charAt(0));
+      if (!widthLen || fullStr.length < 1 + widthLen) return;
+      const width = parseInt(fullStr.substr(1, widthLen));
+
+      let dataStr = fullStr.slice(1 + widthLen);
+      // Pad missing pixel data with zeros so each pixel has 9 chars
+      const totalCharsNeeded = Math.ceil(dataStr.length / 9) * 9;
+      if (dataStr.length < totalCharsNeeded) {
+        dataStr = dataStr.padEnd(totalCharsNeeded, '0');
+      }
+
+      const numPixels = Math.floor(dataStr.length / 9);
+      const height = Math.ceil(numPixels / width);
+
+      const imageData = ctx.createImageData(width, height);
+      let offset = 0;
+      for (let p = 0; p < numPixels; p++) {
+        const r = parseInt(dataStr.slice(offset, offset + 3)) || 0;
+        const g = parseInt(dataStr.slice(offset + 3, offset + 6)) || 0;
+        const b = parseInt(dataStr.slice(offset + 6, offset + 9)) || 0;
+        const idx = p * 4;
+        imageData.data[idx] = r;
+        imageData.data[idx + 1] = g;
+        imageData.data[idx + 2] = b;
+        imageData.data[idx + 3] = 255;
+        offset += 9;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      ctx.putImageData(imageData, 0, 0);
+    }
+
+    dataInput.addEventListener('input', () => debounce(generateImage, 10));
+
+    fileInput.addEventListener('change', function () {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        const img = new Image();
+        img.onload = function () {
+          const maxDim = 512;
+          let scale = Math.min(maxDim / img.width, maxDim / img.height, 1);
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = Math.floor(img.width * scale);
+          tempCanvas.height = Math.floor(img.height * scale);
+          const tempCtx = tempCanvas.getContext('2d');
+          tempCtx.drawImage(img, 0, 0, tempCanvas.width, tempCanvas.height);
+
+          const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+          const widthStr = tempCanvas.width.toString();
+          let numStr = widthStr.length + widthStr; // prepend width length and width
+          for (let i = 0; i < imgData.data.length; i += 4) {
+            numStr += imgData.data[i].toString().padStart(3, '0') +
+              imgData.data[i + 1].toString().padStart(3, '0') +
+              imgData.data[i + 2].toString().padStart(3, '0');
+          }
+          dataInput.value = numStr;
+          generateImage();
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  </script>
+</body>
+
+</html>

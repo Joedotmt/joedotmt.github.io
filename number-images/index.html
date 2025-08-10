@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Number Images</title>
+  <style>
+    body {
+      font-family: "pangolin",sans-serif;
+      padding: 0;
+      margin: 0 0;
+      margin-left: 10px;
+    }
+
+    input,
+    button {
+      margin: 5px 0;
+      display: block;
+    }
+
+    canvas {
+      outline: 2px solid black;
+      margin: 0;
+      image-rendering: pixelated;
+      width: 100%;
+    }
+    h4{
+      margin-bottom: 1px;
+    }
+
+    .canvas-container {
+      position: sticky;
+      right: 0;
+      top: 5px;
+      overflow-y: scroll;
+      overflow-x: visible;
+      height: calc(100dvh - 10px);
+    }
+
+    div {
+      width: 50%;
+    }
+
+    .compress-section {
+      border: 1px solid #ccc;
+      margin: 10px 0;
+      border-radius: 5px;
+      background: #f9f9f9;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .copy-btn {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 3px;
+      font-size: 12px;
+    }
+
+    .copy-btn:hover {
+      background: #45a049;
+    }
+
+    .share-text {
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+    }
+  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pangolin&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+  <div style="display: flex; width: 100%; gap: 10px; min-height: 100dvh;">
+    <div>
+      <h1><a href="/">Joe</a> Number Images</h1>
+      <label>Upload Image: <input type="file" id="fileInput" accept="image/*"></label>
+
+      <label>Image number (width length + width + RGB pixel values) (e.g. 264... meaning 64 wide) (the pixels wrap):
+        <textarea id="dataInput" rows="10" style="width:100%"
+          placeholder="Enter image data or paste compressed data here"></textarea>
+      </label>
+
+      <div class="compress-section">
+        <button class="copy-btn" onclick="copyCompressed()">Copy Share Link</button>
+        <div class="share-text">Generates a compact link with your image data!</div>
+
+        <h4>Decode Share Link</h4>
+        <input autocomplete="off" id="compressedInput" rows="3" style="width:90%"
+          placeholder="Paste share link here - it will auto-decode"></input>
+      </div>
+    </div>
+    <div class="canvas-container">
+      <canvas id="canvas" height="0"></canvas>
+    </div>
+  </div>
+
+  <script type="module">
+    import { encode, decode } from 'https://cdn.jsdelivr.net/npm/base65536@5.0.0/src/index.min.js';
+
+    const dataInput = document.getElementById('dataInput');
+    const fileInput = document.getElementById('fileInput');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const compressedInput = document.getElementById('compressedInput');
+
+    let debounceTimer;
+    function debounce(fn, delay) {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(fn, delay);
+    }
+
+    // Simple RLE compression for pixel data
+    function compressPixelData(dataStr) {
+      if (!dataStr) return '';
+
+      let compressed = '';
+      let i = 0;
+
+      while (i < dataStr.length) {
+        const chunk = dataStr.slice(i, i + 9);
+        if (chunk.length < 9) break;
+
+        let count = 1;
+        let j = i + 9;
+
+        // Count consecutive identical 9-char chunks
+        while (j < dataStr.length && dataStr.slice(j, j + 9) === chunk) {
+          count++;
+          j += 9;
+        }
+
+        if (count > 1) {
+          // Store as: count(4 digits) + chunk(9 digits)
+          compressed += count.toString().padStart(4, '0') + chunk;
+        } else {
+          // Store as: 0001 + chunk
+          compressed += '0001' + chunk;
+        }
+
+        i = j;
+      }
+
+      return compressed;
+    }
+
+    // Decompress RLE pixel data
+    function decompressPixelData(compressed) {
+      let decompressed = '';
+      let i = 0;
+
+      while (i < compressed.length) {
+        if (i + 13 > compressed.length) break;
+
+        const count = parseInt(compressed.slice(i, i + 4));
+        const chunk = compressed.slice(i + 4, i + 13);
+
+        for (let j = 0; j < count; j++) {
+          decompressed += chunk;
+        }
+
+        i += 13;
+      }
+
+      return decompressed;
+    }
+
+    function compressImageData(imageNumStr) {
+      if (!imageNumStr) return '';
+
+      try {
+        const widthLen = parseInt(imageNumStr.charAt(0));
+        const header = imageNumStr.slice(0, 1 + widthLen);
+        const pixelData = imageNumStr.slice(1 + widthLen);
+
+        // Compress pixel data using RLE
+        const compressedPixels = compressPixelData(pixelData);
+        const fullCompressed = header + compressedPixels;
+
+        // Convert to bytes
+        const bytes = new TextEncoder().encode(fullCompressed);
+
+        // Encode with base65536
+        const encoded = encode(bytes);
+
+        return encoded;
+      } catch (e) {
+        console.error('Compression error:', e);
+        return '';
+      }
+    }
+
+    function decompressImageData(base65536Str) {
+      try {
+        // Decode from base65536
+        const bytes = decode(base65536Str);
+        const compressed = new TextDecoder().decode(bytes);
+
+        // Extract header
+        const widthLen = parseInt(compressed.charAt(0));
+        const header = compressed.slice(0, 1 + widthLen);
+        const compressedPixels = compressed.slice(1 + widthLen);
+
+        // Decompress pixel data
+        const pixelData = decompressPixelData(compressedPixels);
+
+        return header + pixelData;
+      } catch (e) {
+        console.error('Decompression error:', e);
+        return '';
+      }
+    }
+
+    function generateImage() {
+      let fullStr = dataInput.value.trim();
+      if (!fullStr) return;
+
+      // Check if this might be compressed data (contains non-numeric characters)
+      if (!/^\d+$/.test(fullStr)) {
+        // Try to decompress
+        const decompressed = decompressImageData(fullStr);
+        if (decompressed) {
+          fullStr = decompressed;
+          dataInput.value = fullStr; // Update the input with decompressed data
+        } else {
+          return; // Invalid compressed data
+        }
+      }
+
+      const widthLen = parseInt(fullStr.charAt(0));
+      if (!widthLen || fullStr.length < 1 + widthLen) return;
+      const width = parseInt(fullStr.substr(1, widthLen));
+
+      let dataStr = fullStr.slice(1 + widthLen);
+      // Pad missing pixel data with zeros so each pixel has 9 chars
+      const totalCharsNeeded = Math.ceil(dataStr.length / 9) * 9;
+      if (dataStr.length < totalCharsNeeded) {
+        dataStr = dataStr.padEnd(totalCharsNeeded, '0');
+      }
+
+      const numPixels = Math.floor(dataStr.length / 9);
+      const height = Math.ceil(numPixels / width);
+
+      const imageData = ctx.createImageData(width, height);
+      let offset = 0;
+      for (let p = 0; p < numPixels; p++) {
+        const r = parseInt(dataStr.slice(offset, offset + 3)) || 0;
+        const g = parseInt(dataStr.slice(offset + 3, offset + 6)) || 0;
+        const b = parseInt(dataStr.slice(offset + 6, offset + 9)) || 0;
+        const idx = p * 4;
+        imageData.data[idx] = r;
+        imageData.data[idx + 1] = g;
+        imageData.data[idx + 2] = b;
+        imageData.data[idx + 3] = 255;
+        offset += 9;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      ctx.putImageData(imageData, 0, 0);
+    }
+
+    window.copyCompressed = function () {
+      const imageData = dataInput.value.trim();
+      if (!imageData || !/^\d+$/.test(imageData)) {
+        alert('No valid image data to share');
+        return;
+      }
+
+      const compressed = compressImageData(imageData);
+      if (!compressed) {
+        alert('Failed to compress image data');
+        return;
+      }
+
+      const shareLink = 'https://joe.mt/#' + compressed;
+      const btn = event.target;
+      const originalText = btn.textContent;
+
+      function setCopied() {
+        btn.textContent = 'Copied!';
+        // Restore on mouseleave
+        btn.addEventListener('mouseleave', function handler() {
+          btn.textContent = originalText;
+          btn.removeEventListener('mouseleave', handler);
+        });
+      }
+
+      navigator.clipboard.writeText(shareLink).then(() => {
+        setCopied();
+      }).catch(() => {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = shareLink;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        setCopied();
+      });
+    }
+
+    window.decodeCompressed = function (input) {
+      if (!input) {
+        input = compressedInput.value.trim();
+      }
+      if (!input) return false;
+
+      // Extract compressed data from URL if it's a share link
+      if (input.startsWith('https://joe.mt/#')) {
+        input = input.substring('https://joe.mt/#'.length);
+      }
+
+      const decompressed = decompressImageData(input);
+      if (decompressed) {
+        dataInput.value = decompressed;
+        generateImage();
+        return true;
+      } else {
+        console.error('Invalid share link or compressed data');
+        return false;
+      }
+    }
+
+    dataInput.addEventListener('input', () => debounce(generateImage, 10));
+
+    // Auto-decode when pasting into compressed input
+    compressedInput.addEventListener('input', function () {
+      const input = this.value.trim();
+      if (input) {
+        if (decodeCompressed(input)) {
+          // Clear the input after successful decode
+          setTimeout(() => this.value = '', 100);
+        }
+      }
+    });
+
+    // Check URL on page load for direct links
+    window.addEventListener('load', function () {
+      const hash = window.location.hash;
+      if (hash && hash.length > 1) {
+        const compressedData = hash.substring(1); // Remove the #
+        if (decodeCompressed(compressedData)) {
+          console.log('Loaded image from URL');
+        }
+      }
+    });
+
+    fileInput.addEventListener('change', function () {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        const img = new Image();
+        img.onload = function () {
+          const maxDim = 256;
+          let scale = Math.min(maxDim / img.width, maxDim / img.height, 1);
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = Math.floor(img.width * scale);
+          tempCanvas.height = Math.floor(img.height * scale);
+          const tempCtx = tempCanvas.getContext('2d');
+          tempCtx.drawImage(img, 0, 0, tempCanvas.width, tempCanvas.height);
+
+          const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+          const widthStr = tempCanvas.width.toString();
+          let numStr = widthStr.length + widthStr; // prepend width length and width
+          for (let i = 0; i < imgData.data.length; i += 4) {
+            numStr += imgData.data[i].toString().padStart(3, '0') +
+              imgData.data[i + 1].toString().padStart(3, '0') +
+              imgData.data[i + 2].toString().padStart(3, '0');
+          }
+          dataInput.value = numStr;
+          generateImage();
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  </script>
+</body>
+
+</html>
