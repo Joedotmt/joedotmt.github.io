@@ -279,7 +279,7 @@
         return;
       }
 
-      const shareLink = 'https://joe.mt/number-images#' + compressed;
+      const shareLink = 'https://joe.mt/number-images/#' + compressed;
       const btn = event.target;
       const originalText = btn.textContent;
 
@@ -313,8 +313,8 @@
       if (!input) return false;
 
       // Extract compressed data from URL if it's a share link
-      if (input.startsWith('https://joe.mt/#')) {
-        input = input.substring('https://joe.mt/#'.length);
+      if (input.startsWith('https://joe.mt/number-images/#')) {
+        input = input.substring('https://joe.mt/number-images/#'.length);
       }
 
       const decompressed = decompressImageData(input);
