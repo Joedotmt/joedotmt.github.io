@@ -1,7 +1,7 @@
 [
   {
     "LocalityId": 1,
-    "Names": "Valletta,Umilissima, belt, Umilissima"
+    "Names": "Valletta, Umilissima, Belt"
   },
   {
     "LocalityId": 3,
@@ -13,11 +13,11 @@
   },
   {
     "LocalityId": 5,
-    "Names": "Bormla,Cospicua"
+    "Names": "Bormla, Cospicua"
   },
   {
     "LocalityId": 8,
-    "Names": "Żabbar,Hompesch"
+    "Names": "Żabbar, Hompesch"
   },
   {
     "LocalityId": 17,
@@ -25,7 +25,7 @@
   },
   {
     "LocalityId": 18,
-    "Names": "Furjana,Floriana"
+    "Names": "Furjana, Floriana"
   },
   {
     "LocalityId": 29,
@@ -41,11 +41,11 @@
   },
   {
     "LocalityId": 45,
-    "Names": "Paola,Raħal Ġdid, Raħal il-Ġdid, Casal Nuovo"
+    "Names": "Paola, Raħal Ġdid, Raħal il-Ġdid, Casal Nuovo"
   },
   {
     "LocalityId": 57,
-    "Names": "Santa Luċija,Santa Luċija"
+    "Names": "Santa Luċija"
   },
   {
     "LocalityId": 62,
@@ -57,11 +57,11 @@
   },
   {
     "LocalityId": 6,
-    "Names": "Qormi,Pinto"
+    "Names": "Qormi, Pinto"
   },
   {
     "LocalityId": 14,
-    "Names": "Birkirkara,Birkirkara"
+    "Names": "Birkirkara"
   },
   {
     "LocalityId": 21,
@@ -73,7 +73,7 @@
   },
   {
     "LocalityId": 41,
-    "Names": "Msida, imsida"
+    "Names": "L-Imsida, Msida"
   },
   {
     "LocalityId": 46,

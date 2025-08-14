@@ -5,11 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Malta LC Guessing Game</title>
-
-    <link rel="manifest" href="app/app.webmanifest">
+    <!-- 
+    <link rel="manifest" href="app/app.webmanifest"> -->
 
     <!-- leaflet 1.9.4 -->
-    <link rel="stylesheet" href="app/leaflet.css"/>
+    <link rel="stylesheet" href="app/leaflet.css" />
     <script src="app/leaflet.js"></script>
 
     <!-- shp 6.1.0 -->
@@ -17,6 +17,27 @@
 
     <link rel="prefetch" href="app/pangolin1.woff2">
     <link rel="prefetch" href="app/pangolin2.woff2">
+
+    <script>
+        // Unregister all service workers
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                for (let registration of registrations) {
+                    registration.unregister();
+                }
+            });
+        }
+
+        // Delete all caches
+        if ('caches' in window) {
+            caches.keys().then(names => {
+                for (let name of names) {
+                    caches.delete(name);
+                }
+            });
+        }
+    </script>
+
 
     <style>
         /* latin-ext */
@@ -188,6 +209,7 @@
         class="fixed-logo">Malta Local Council Guesser</p>
 
     <div id="start-overlay" class="fixed inset-0 bg-black z-[2000] flex items-center justify-center">
+        <a style="position: fixed; right: 0; top: 0; color: white;" href="./coas/">COA Directory</a>
         <div s class="text-white text-5xl font-bold tracking-wider">
             <div style="font-size: 120px;" id="countdown" class="hidden">3</div>
             <div id="noncountdown" style="display: flex; flex-direction: column; gap: 0.2em;">
@@ -195,7 +217,7 @@
                 <button onclick="handleStartClick(GAMEMODE.normal)">Normal Mode</button>
                 <button onclick="handleStartClick(GAMEMODE.mouseless)">Mouseless
                     Mode</button>
-                <button onclick="handleStartClick(GAMEMODE.flags)">Guess the Flag</button>
+                <button onclick="handleStartClick(GAMEMODE.flags)">Guess the Flag Mode</button>
             </div>
         </div>
     </div>
@@ -249,9 +271,9 @@
         </div>
     </div>
 
-    <script src="app/app.js?v=3"></script>
+    <script src="app/app.js?v=4"></script>
 
-    <script>
+    <!-- <script>
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('service-worker.js', {
       scope: './'
@@ -261,7 +283,7 @@
       console.log('Service Worker registration failed:', error);
     });
   }
-</script>
+</script> -->
 </body>
 
 </html>

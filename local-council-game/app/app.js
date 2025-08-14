@@ -252,7 +252,7 @@ function handleCorrectGuess() {
     saveProgressToLocalStorage();
     hideGuessModal(); // Just closes the dialog now
 
-    const correctAudio = new Audio('correct.mp3');
+    const correctAudio = new Audio('app/correct.mp3');
     correctAudio.play();
 
     if (guessedShapes === totalShapes) {
@@ -422,7 +422,7 @@ function startGame() {
 
     if (shouldLoadSave) {
         startOverlay.style.display = 'none';
-        backgroundMusic = new Audio('music.mp3');
+        backgroundMusic = new Audio('app/music.mp3');
         backgroundMusic.loop = true;
         backgroundMusic.volume = 0.2;
         backgroundMusic.play();
@@ -434,10 +434,10 @@ function startGame() {
         return;
     }
 
-    const countdownAudio = new Audio('321.mp3');
+    const countdownAudio = new Audio('app/321.mp3');
     countdownAudio.play();
     setTimeout(() => {
-        backgroundMusic = new Audio('music.mp3');
+        backgroundMusic = new Audio('app/music.mp3');
         backgroundMusic.loop = true;
         backgroundMusic.volume = 0.2;
 

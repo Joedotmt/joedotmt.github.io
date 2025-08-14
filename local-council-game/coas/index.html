@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Malta LC Game</title>
+    <style>
+        body {
+            font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background-color: #fef7ff; /* Material 3 Surface */
+            color: #1d1b20; /* Material 3 On Surface */
+            margin: 0;
+            padding: 20px;
+            overflow-y: scroll;
+        }
+        #main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #1d1b20;
+            font-weight: 500;
+        }
+        #search {
+            width: 100%;
+            padding: 16px;
+            font-size: 1.2em;
+            margin-bottom: 24px;
+            box-sizing: border-box;
+            background-color: #fef7ff;
+            border: 1px solid #79747e; /* Material 3 Outline */
+            color: #1d1b20;
+            border-radius: 16px;
+            box-shadow: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        #search::placeholder {
+            color: #49454f; /* Material 3 On Surface Variant */
+        }
+        #search:focus {
+            outline: none;
+            border-color: #6750a4; /* Material 3 Primary */
+            box-shadow: 0 0 0 2px #eaddff; /* Material 3 Primary Container focus ring */
+        }
+        #results {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .locality {
+            background-color: #fffbfe; /* Material 3 Surface Container Highest */
+            border: 1px solid #cac4d0; /* Material 3 Outline Variant */
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 16px;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            transition-timing-function: cubic-bezier(0.075, 0.82, 0.165, 1);
+            cursor: pointer;
+        }
+        .locality:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-color: #79747e;
+        }
+        .locality img {
+            max-width: 60px;
+            height: auto;
+            border-radius: 4px;
+        }
+        .locality .text-content {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            text-align: left;
+            overflow: hidden;
+        }
+        .locality .id {
+            font-size: 0.8em;
+            color: #49454f; /* Material 3 On Surface Variant */
+        }
+        .locality .names {
+            font-size: 1.1em;
+            font-weight: 500;
+            color: #1d1b20;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .locality .details {
+            font-size: 0.9em;
+            color: #49454f;
+            margin-top: 4px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .locality .info strong {
+            color: #1d1b20;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div id="main">
+        <a href="../index.html">Back to game</a>
+        <h1>Coat of Arms Database</h1>
+        <h3>All information here is published officially by the government, these are the OFFICIAL coat of arms images. (apart from filfla)</h3>
+        <input type="text" id="search" autocomplete="off" placeholder="Search for a locality...">
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById('search');
+        const resultsContainer = document.getElementById('results');
+        let localities = [];
+
+        // Fetch the data and initialize the page
+        fetch('../app/originalnames.json')
+            .then(response => response.json())
+            .then(data => {
+                localities = data;
+                displayLocalities(localities);
+            })
+            .catch(error => {
+                console.error('Error fetching locality data:', error);
+                resultsContainer.innerHTML = '<p>Could not load locality data.</p>';
+            });
+
+        // Add event listener for the search input
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredLocalities = localities.filter(locality => {
+                const name = locality.LAU_Name || '';
+                const latinName = locality.LAU_Latin || '';
+                return name.toLowerCase().includes(searchTerm) || latinName.toLowerCase().includes(searchTerm);
+            });
+            displayLocalities(filteredLocalities);
+        });
+
+        // Function to display localities
+        function displayLocalities(data) {
+            resultsContainer.innerHTML = '';
+            if (data.length === 0) {
+                resultsContainer.innerHTML = '<p>No matching localities found.</p>';
+                return;
+            }
+            data.forEach(locality => {
+                const localityElement = document.createElement('div');
+                localityElement.classList.add('locality');
+
+                const imageUrl = `${locality.LocalityId}.png`;
+                localityElement.addEventListener('click', () => {
+                    window.open(imageUrl, '_blank');
+                });
+
+                const name = locality.LAU_Name;
+                const latinName = locality.LAU_Latin;
+                const displayName = latinName && latinName !== name ? `${name} (${latinName})` : name;
+
+                localityElement.innerHTML = `
+                    <img src="${imageUrl}" alt="Coat of Arms for ${name}" onerror="this.style.display='none'">
+                    <div class="text-content">
+                        <div class="names">${displayName}</div>
+                        <div class="details">
+                            <span class="id">ID: ${locality.LocalityId}</span>
+                            <span class="info"><strong>Region:</strong> ${locality.Region}</span>
+                            <span class="info"><strong>Population:</strong> ${locality.Population.toLocaleString()}</span>
+                            <span class="info"><strong>Area:</strong> ${locality.Area_Km2.toFixed(2)} km²</span>
+                        </div>
+                    </div>
+                `;
+                resultsContainer.appendChild(localityElement);
+            });
+        }
+    </script>
+</body>
+</html>
