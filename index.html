@@ -8,8 +8,31 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Pangolin&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=arrow_left_alt,arrow_right_alt,open_in_new" />
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=arrow_left_alt,arrow_right_alt,open_in_new" />
     <style>
+        /* === GENERAL & ROOT STYLES === */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-image: url(home/sliema.webp);
+            backdrop-filter: blur(50px);
+            background-repeat: round;
+            background-size: cover;
+            color: white;
+            font-family: 'Pangolin', "comic sans ms";
+            display: flex;
+            min-height: fit-content;
+            height: 100dvh;
+            align-items: flex-start;
+            justify-content: flex-start;
+            overflow-x: hidden;
+        }
+
         a {
             text-decoration: none;
             color: inherit;
@@ -17,22 +40,20 @@
             transform-origin: 50px 50%;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         a:active {
             scale: 0.9;
         }
 
-
+        /* Custom Scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
             opacity: 0;
             transition: opacity 0.3s ease;
+        }
+
+        ::-webkit-scrollbar:hover {
+            opacity: 1;
         }
 
         ::-webkit-scrollbar-track {
@@ -45,20 +66,45 @@
             transition: background-color 0.3s ease;
         }
 
-        ::-webkit-scrollbar:hover {
-            opacity: 1;
-        }
-
         ::-webkit-scrollbar-thumb:hover {
             background-color: rgba(255, 255, 255, 0.2);
         }
 
-        .logo {
-            width: 120px;
-            margin-bottom: 20px;
-            transition: 0.2s cubic-bezier(0.075, 0.82, 0.165, 1);
+        /* === LAYOUT === */
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            width: 40dvw;
         }
 
+        .right-column {
+            display: flex;
+            width: 60dvw;
+        }
+
+        /* === COMPONENTS === */
+        /* Logo */
+        .logo-container {
+            width: min(500px, 100%);
+            height: 150px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            clip-path: polygon(0 0, 100% 0, 95% 100%, 0 80%);
+        }
+
+        .logo {
+            width: 50%;
+            margin: 1em;
+            aspect-ratio: 1.904;
+            transition: 0.2s cubic-bezier(0.075, 0.82, 0.165, 1);
+        }
 
         @media (hover: hover) {
             .logo:hover {
@@ -66,28 +112,7 @@
             }
         }
 
-        div.list {
-            display: flex;
-            flex-direction: column;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            background-size: cover;
-            font-family: 'Pangolin', "comic sans ms";
-            background-image: url(home/sliema.webp);
-            backdrop-filter: blur(50px);
-            background-repeat: round;
-            color: white;
-            display: flex;
-            min-height: fit-content;
-            height: 100dvh;
-            align-items: flex-start;
-            justify-content: flex-start;
-            overflow-x: hidden;
-        }
-
+        /* Main Menu */
         .menu-container {
             transform: translateX(0px);
             margin-left: min(3vw, 50px);
@@ -118,100 +143,6 @@
             max-width: 500px;
         }
 
-        .logo-container {
-            width: min(500px, 100%);
-            height: 150px;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: Arial, sans-serif;
-            clip-path: polygon(0 0, 100% 0, 95% 100%, 0 80%);
-        }
-
-        .banner {
-            background: rgba(0, 0, 0, 0.6);
-            padding: 50px;
-            margin: auto;
-            margin: 1em;
-            margin-left: 0;
-            text-align: center;
-            font-size: 1.2em;
-            clip-path: polygon(1% 5%, 99% 0, 100% 95%, 5% 100%);
-        }
-
-        .longbanner {
-            clip-path: polygon(4px 31px, 99% 0, 100% calc(100% - 23px), 5% 100%)
-        }
-
-        .left-column {
-            flex-direction: column;
-            display: flex;
-            width: 40dvw;
-        }
-
-        .logo {
-            aspect-ratio: 1.904;
-            width: 50%;
-            margin: 1em;
-        }
-
-        .right-column {
-            display: flex;
-            width: 60dvw;
-        }
-
-        .contact-banner-content {
-            text-align: left;
-            font-size: 1.5em;
-            gap: 1em;
-            display: flex;
-            flex-direction: column;
-        }
-
-        #FaceBanner {
-            background: url(home/face1.jpg);
-            height: 400px;
-            width: 400px;
-            background-size: contain;
-        }
-
-        .footer {
-            overflow: visible;
-            margin-top: 20px;
-            background: url(assets/blueprint.webp) repeat center;
-            background-size: 150%;
-            padding: 30px;
-            display: flex;
-            transition: 2s cubic-bezier(0.075, 0.82, 0.165, 1);
-            justify-content: space-between;
-            align-items: center;
-            container: footer / inline-size;
-            clip-path: polygon(1px 5px, calc(100% - 10px) 0, 100% calc(100% - 10px), 5px calc(100% - 10px));
-        }
-
-        @media (hover: hover) {
-            .footer:hover {
-                background-size: 170%;
-            }
-        }
-
-        .icedjelly-logo {
-            width: 200px;
-            margin-left: min(5em, 5vw);
-        }
-
-        @media (max-width: 1000px) {
-            .footer {
-                display: flex;
-                flex-direction: column;
-            }
-        }
-
         .link-list>a {
             color: white;
             font-size: 32px;
@@ -229,6 +160,12 @@
             transition: translate 0.5s cubic-bezier(0.075, 0.82, 0.165, 1);
         }
 
+        .link-list>a .material-symbols-outlined {
+            opacity: 0.2;
+            margin-left: 5px;
+            transition: opacity 0s ease;
+        }
+
         @media (hover: hover) {
             .link-list>a:hover {
                 translate: 5px;
@@ -238,18 +175,194 @@
             .link-list>a:hover .material-symbols-outlined {
                 opacity: 1;
             }
+        }
 
-            .smo:hover {
-                background-color: black;
+        /* Banners */
+        .banner {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 50px;
+            margin: 1em 1em 1em 0;
+            text-align: center;
+            font-size: 1.2em;
+            clip-path: polygon(1% 5%, 99% 0, 100% 95%, 5% 100%);
+        }
+
+        .longbanner {
+            clip-path: polygon(4px 31px, 99% 0, 100% calc(100% - 23px), 5% 100%);
+        }
+
+        #FaceBanner {
+            background: url(home/face1.jpg) no-repeat center center;
+            background-size: contain;
+            height: 400px;
+            width: 400px;
+        }
+
+        #IcedJellyBanner {
+            font-size: 2em;
+        }
+
+        #AchievementsBanner {
+            display: none;
+        }
+
+        #achievementsIframe {
+            width: 100%;
+            height: 300px;
+            border: none;
+        }
+
+        #SitemapBanner {
+            font-size: 1em;
+        }
+
+        /* Footer & Project Sections */
+        .footer {
+            overflow: visible;
+            margin-top: 20px;
+            background: url(assets/blueprint.webp) repeat center;
+            background-size: 150%;
+            padding: 30px;
+            display: flex;
+            transition: background-size 2s cubic-bezier(0.075, 0.82, 0.165, 1);
+            justify-content: space-between;
+            align-items: center;
+            container: footer / inline-size;
+            clip-path: polygon(1px 5px, calc(100% - 10px) 0, 100% calc(100% - 10px), 5px calc(100% - 10px));
+        }
+
+        @media (hover: hover) {
+            .footer:hover {
+                background-size: 170%;
             }
         }
 
-        .link-list>a .material-symbols-outlined {
-            opacity: 0.2;
-            margin-left: 5px;
-            transition: opacity 0s ease;
+        .icedjelly-logo {
+            width: 200px;
+            margin-left: min(5em, 5vw);
         }
 
+        embed {
+            width: 20dvw;
+            aspect-ratio: 2;
+        }
+
+        /* === MIGRATED FROM INLINE STYLES === */
+        .noscript-message {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 100;
+            background-color: black;
+            width: 100%;
+            height: 100%;
+            padding: 2em;
+        }
+
+        #ConstructionBanner {
+            width: 100%;
+            font-size: 2em;
+        }
+
+        #ConstructionBanner h1 {
+            font-size: 1em;
+        }
+
+        #ConstructionBanner>p {
+            margin-top: 1em;
+        }
+
+        .social-links-container {
+            margin-top: 1em;
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .social-link {
+            background-color: black;
+            padding: 5px;
+            flex: 1;
+            align-content: center;
+        }
+
+        .social-link:hover {
+            outline: 2px solid rgb(124, 124, 124);
+        }
+
+        .social-link.discord {
+            color: #b9bfff;
+        }
+
+        .social-link.email {
+            color: #e1e1e1;
+        }
+
+        .social-link.youtube {
+            color: #ff2441;
+        }
+
+        .social-link.more-links {
+            color: #e1e1e1;
+            text-wrap: nowrap;
+        }
+
+        .youtube-embed {
+            margin-top: 5px;
+            border: 0;
+        }
+
+        /* Project Showcase Sections (use .footer class) */
+        .project-showcase {
+            background-position: center;
+            background-size: cover;
+        }
+
+        #showreel-showcase {
+            background-position: center;
+            background-size: cover;
+            flex-direction: column;
+        }
+
+        #showreel-showcase a {
+            scale: 1;
+        }
+
+        #showreel-showcase img {
+            width: 100%;
+            height: 100%;
+            max-height: 40vh;
+            aspect-ratio: 16/9;
+        }
+
+        #hopdodge-showcase {
+            background-image: url(home/hopdodge.png);
+        }
+
+        #sassls-showcase {
+            background-image: url(home/SASSLS.png);
+            color: black;
+        }
+
+        #sassls-showcase a {
+            color: blue;
+        }
+
+        #mva-showcase {
+            background-image: url(home/vdmt.jpg);
+        }
+
+        #mva-showcase img {
+            width: 100px;
+        }
+
+        #rmg-showcase {
+            background-image: url(home/rmg.jpg);
+            background-color: rgba(0, 0, 0, 0.2);
+            background-blend-mode: darken;
+        }
+
+        /* Smo stands for "Social Media Outlined" maybe? */
         .smo {
             padding: 0.2em;
             background-color: rgba(0, 0, 0, 0.5);
@@ -258,27 +371,30 @@
             color: white;
         }
 
-        #SitemapBanner {
-            font-size: 1em;
-        }
-
-        embed {
-            width: 20dvw;
-            aspect-ratio: 2;
-        }
-
-        /* Responsive Styles */
-        @media (max-width: 800px) {
-
-            .left-column,
-            .right-column {
-                width: 100%;
+        @media (hover: hover) {
+            .smo:hover {
+                background-color: black;
             }
+        }
 
+        /* === RESPONSIVE STYLES === */
+        @media (max-width: 1000px) {
+            .footer {
+                display: flex;
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 800px) {
             body {
                 flex-direction: column;
                 height: fit-content;
                 min-height: 100dvh;
+            }
+
+            .left-column,
+            .right-column {
+                width: 100%;
             }
 
             .selection-background {
@@ -290,7 +406,7 @@
             }
 
             .banner {
-                margin: 0em;
+                margin: 0;
                 width: 100dvw;
                 padding: 50px 20px;
                 clip-path: polygon(0% 30px, 100% 0, 100% 100%, 0% 100%);
@@ -324,10 +440,9 @@
 
 <body>
     <noscript>
-        <div style="position: fixed; left: 0; top:0; z-index: 100; background-color: black; width: 100%; height: 100%; padding: 2em;">
+        <div class="noscript-message">
             Why do you have javascript disabled??????
             <br />no website for you!
-
         </div>
     </noscript>
     <div class="left-column">
@@ -339,96 +454,98 @@
         <div class="selection-background"></div>
         <div class="main-menu link-list">
             <a href="#home">Home</a>
-            <a href="#contact">Contact & Links</a>
-            <a href="#achievements">Your Achievements</a>
+
             <a href="#sitemap">All Pages</a>
-            <a href="https://icedjelly.com" target="_blank" rel="noopener noreferrer">IcedJelly.com
-                <span class="material-symbols-outlined">open_in_new</span>
-            </a>
+
+            <a href="#achievements">Your Achievements</a>
             <a href="#selfie">Selfie</a>
         </div>
     </div>
     <div class="right-column">
-        <div style="width: 100%; font-size: 2em;" class="banner longbanner" id="ConstructionBanner">
-            <h1 style="font-size: 1em">I make games, videos, and software</h1>
-            <h5>This is the website for Joe Grech Esposito in Malta. Some things may still be on icedjelly.com as I work on migrating.</h5>
-            <div style="background-position: 50% 50%; background-size: cover; flex-direction: column;" class="footer">
-                <p>Watch the showreel</p>
-                <a target="_blank" href="https://www.youtube.com/embed/V-432v8IUVE?modestbranding=1&autoplay=1&controls=1&fs=1&loop=0&rel=0&showinfo=0&disablekb=1" style="scale: 1;">
-                    <img style="width: 100%; height: 100%; aspect-ratio: 16/9;" src="/home/showreel.jpg"></img>
+        <div class="banner longbanner" id="ConstructionBanner">
+            <h1>I make games, videos, and software</h1>
+            <p>This is the website for <strong>Joe Grech Esposito</strong> in Malta.</p>
+
+            <div class="social-links-container">
+                <a href="https://discord.gg/hBpxPVSRN7" target="_blank" class="social-link discord">
+                    Discord<br>@joedotmt
+                </a>
+                <a href="mailto:joe@joe.mt" class="social-link email">
+                    Email<br>joe@joe.mt
+                </a>
+                <a href="https://www.youtube.com/@icedjelly" target="_blank" class="social-link youtube">
+                    YouTube
+                </a>
+                <a href="/links" class="social-link more-links">
+                    More links
                 </a>
             </div>
-            <div style="background: url(home/hopdodge.png); background-position: 50% 50%; background-size: cover;" class="footer">
-                <p>HopDodge is a 3D puzzle platforming game. Create and share levels using the steam workshop. You have all the freedom you need to create your own adventures.</p>
+
+            <div id="showreel-showcase" class="footer">
+                <p>Watch the showreel</p>
+                <a target="_blank"
+                    href="https://www.youtube.com/embed/V-432v8IUVE?modestbranding=1&autoplay=1&controls=1&fs=1&loop=0&rel=0&showinfo=0&disablekb=1">
+                    <img src="/home/showreel.jpg" alt="Showreel Thumbnail">
+                </a>
+            </div>
+            <div id="showreel-showcase" class="footer">
+                <p>Most recent video</p>
+                <iframe class="youtube-embed" width="361" height="500" src="https://www.youtube.com/embed/06TKs2p7jCg"
+                title="The electoral register privacy DISASTER"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+            </div>
+            
+            <p>Here are some of the things I've worked on</p>
+            <div id="hopdodge-showcase" class="footer project-showcase">
+                <p>HopDodge is a 3D puzzle platforming game. Create and share levels using the steam workshop. You have
+                    all the freedom you need to create your own adventures.</p>
                 <embed src="home/hdb.html" />
             </div>
-            <div style="background: url(home/rmg.jpg); background-position: 50% 50%; background-size: cover; background-color: rgba(0, 0, 0, 0.2); background-blend-mode: darken;" class="footer">
-                <p>Relaxing Mini Golf is a work-in-progress 2D puzzle game that combines the fun of mini golf with engaging puzzle mechanics. Well- if you can even call it golf.</p>
+            <div id="sassls-showcase" class="footer project-showcase">
+                <p>SASSLS is a free, open-source Library Management System designed to help Maltese schools manage their
+                    libraries efficiently, in an effort to promote reading among secondary schools in Malta.
+                    <a href="https://github.com/Joedotmt/SASSLS">Available on GitHub</a>
+                </p>
+            </div>
+            <div id="mva-showcase" class="footer project-showcase">
+                <img src="https://raw.githubusercontent.com/Joedotmt/mva/refs/heads/main/branding/Logo%20Pack/seal%20black.png"
+                    alt="MVA Seal" />
+                <p>The Malta Veterans Association commissioned me to develop a website and membership management
+                    platform to streamline operations and serve as the official information hub for veterans of the
+                    Malta Armed Forces.
+                </p>
+            </div>
+            <div id="rmg-showcase" class="footer project-showcase">
+                <p>Relaxing Mini Golf is a work-in-progress 2D puzzle game that combines the fun of mini golf with
+                    engaging puzzle mechanics. Well- if you can even call it golf.</p>
                 <embed src="home/rmgb.html" />
-            </div>
-            <div style="background: url(home/SASSLS.png); background-position: 50% 50%; background-size: cover; color: black;" class="footer">
-                <p>SASSLS is a free, open-source Library Management System designed to help Maltese schools manage their libraries efficiently, in an effort to promote reading among secondary schools in Malta.
-                    <a style="color: blue;" href="https://github.com/Joedotmt/SASSLS">Available on GitHub</a>
-                </p>
-            </div>
-            <div style="background: url(home/vdmt.jpg); background-position: 50% 50%; background-size: cover;" class="footer">
-                <img width="100" src="https://raw.githubusercontent.com/Joedotmt/mva/refs/heads/main/branding/Logo%20Pack/seal%20black.png" />
-                <p>Veterans.mt is a website commissioned by the Malta Veterans Association, to organize, and provide an official source of information for the veterans of the Malta Armed Forces
-                </p>
-            </div>
-        </div>
-        <div class="banner" id="ContactBanner">
-            <h1>Contact Me</h1>
-            <div class="contact-banner-content">
-                <div>
-                    💬 Discord:
-
-                    <a href="https://discord.gg/U7m7u3af" style="color: #5865F2;">
-                        @joedotmt
-                    </a>
-                    <br />
-                    Response within a day. Preferred option.
-
-                </div>
-                <div>
-                    📧 Email:
-
-                    <a href="mailto:joe@joe.mt" style="color: #D44638;">
-                        joe@joe.mt
-                    </a>
-                    <br />
-                    Response takes a while.
-
-                </div>
-                <div style="flex-direction: column; display: flex; gap: 5px;">
-                    <a class="menu-item smo" href="/links">
-                        All my links
-                    </a>
-                    <a style="font-size: 0.7em;" class="menu-item smo" href="/c">Minimal Contacts Page</a>
-                </div>
             </div>
         </div>
         <div class="banner" id="FaceBanner"></div>
-        <div class="banner" id="IcedJellyBanner" style="font-size: 2em;">Go to IcedJelly.com</div>
-        <div class="banner" id="AchievementsBanner" style="display: none;">
-            <iframe src="/achievements.html" id="achievementsIframe" style="width: 100%; height: 300px;"></iframe>
+        <div class="banner" id="IcedJellyBanner">Go to IcedJelly.com</div>
+        <div class="banner" id="AchievementsBanner">
+            <iframe src="/achievements.html" id="achievementsIframe"></iframe>
         </div>
         <div class="banner" id="SitemapBanner">
             <h1>List of all pages</h1>
             <div class="link-list">
-                <a target="_blank" href="/links">All links</a>
+                
                 <a target="_blank" href="/local-council-game">(NEW!) Local Council Game</a>
-                <a target="_blank" href="/number-images">(NEW2!) Number images</a>
-                <a target="_blank" href="/bombvideo">Bomb</a>
-                <a target="_blank" href="/veterans">Veterans</a>
+                <a target="_blank" href="/number-images">Number images</a>
                 <a target="_blank" href="/deconstuctions">Deconstructions</a>
+                <a target="_blank" href="https://joe.mt/gun">Gun for 2d</a>
                 <a target="_blank" href="/thebestsortingalgorithm">Best sorting algorithm</a>
                 <a target="_blank" href="/dejansamazinginteractivepythonthing">Dejan's Python Thing</a>
                 <a target="_blank" href="https://joe.mt/SASSLS">Library System</a>
+
+                <a target="_blank" href="/links">All links</a>
+                <a href="https://icedjelly.com" target="_blank" rel="noopener noreferrer">IcedJelly.com<span class="material-symbols-outlined">open_in_new</span></a>
+                <a target="_blank" href="/bombvideo">Bomb</a>
+                <a target="_blank" href="/veterans">Veterans</a>
                 <a target="_blank" href="/c">Minimal Contact</a>
                 <a target="_blank" href="https://joe.mt/evil-image-converter">Evil Image Converter</a>
                 <a target="_blank" href="/minecraft-entity-detection-maker">Minecraft Entity Detection Generator</a>
-                <a target="_blank" href="https://joe.mt/gun">Gun for 2d</a>
                 <a target="_blank" href="https://joe.mt/imnotaskingyoutowatchthisvideo">INAYTWTV</a>
                 <a target="_blank" href="https://joe.mt/ics-location-image-gen">.ics Timetable Locations to Image</a>
                 <a target="_blank" href="https://mpc-hc.uk.mt">MPC-HC New Website</a>
@@ -440,8 +557,7 @@
         const selectionBg = document.querySelector('.selection-background');
         let activeItem = null;
 
-        function selectItem(item)
-        {
+        function selectItem(item) {
             activeItem = item;
 
             // Clear selections and hide banners
@@ -455,7 +571,6 @@
             // Determine which banner to show
             const text = item.textContent.trim();
             const banners = {
-                Contact: ContactBanner,
                 Selfie: {
                     element: FaceBanner, action: () =>
                         document.getElementById("AchievementsBanner")
@@ -472,19 +587,17 @@
 
             const match = Object.entries(banners).find(([key]) => text.includes(key));
 
-            if (match)
-            {
+            if (match) {
                 const [key, config] = match;
                 if (config.action) config.action();
                 (config.element || config).style.display = config.element ? 'flex' : 'block';
-            } else
-            {
+            } else {
                 ConstructionBanner.style.display = 'block';
             }
         }
 
-        function updateSelectionPosition()
-        {
+        function updateSelectionPosition() {
+            if (!activeItem) return;
             selectionBg.style.top = `${activeItem.offsetTop - 10}px`;
             selectionBg.style.left = `${activeItem.offsetLeft}px`;
         }
@@ -492,11 +605,13 @@
         // Initial setup
         const initialItem = document.querySelector(`a[href="${location.hash || "#home"}"]`)
             || document.querySelector(".menu-item");
-        selectItem(initialItem);
+        if (initialItem) {
+            selectItem(initialItem);
+        }
+
 
         // Event listeners
-        window.addEventListener("hashchange", () =>
-        {
+        window.addEventListener("hashchange", () => {
             const targetItem = document.querySelector(`a[href="${location.hash || "#home"}"]`);
             targetItem && selectItem(targetItem);
         });

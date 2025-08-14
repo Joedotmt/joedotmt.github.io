@@ -33,6 +33,7 @@
 
         /* HEADER with placeholder background */
         header {
+            position: relative;
             width: 100%;
             background: url('header.png') no-repeat center center;
             background-color: rgba(0, 0, 0, 0.5);
@@ -167,8 +168,10 @@
         }
 
         .fixed-logo {
+            position: absolute;
+            top: 0.5em;
+            left: 0.5em;
             z-index: 1;
-            margin-top: 1em;
             width: fit-content;
         }
 
@@ -182,10 +185,11 @@
     <!-- HEADER -->
     <header>
         <iframe id="achievementsIframe" src="/achievements.html"></iframe>
-        <a href="/" class="fixed-logo"><img id="logoimg" src="/assets/joe-logo.webp" width="100" alt="Logo" class="logo" /></a>
+        <a href="/" class="fixed-logo"><img id="logoimg" src="/assets/joe-logo.webp" width="150" alt="Logo" class="logo" /></a>
         <h1>All of my links (:</h1>
         <p>Use Ctrl+F to search for any link/website/page/account to do with Joe Grech Esposito</p>
     </header>
+
     <!-- Main Options (Discord, Main Contact) -->
     <section>
         <a target="_blank" href="https://discord.gg/hBpxPVSRN7">
@@ -198,7 +202,7 @@
         <a href="mailto:joe@joe.mt">
             <div class="link-item">
                 <img class="link-icon" src="mail.svg" alt="Icon">
-                <span class="link-text">Mail</span>
+                <span class="link-text">Email</span>
                 <span class="link-username">Secondary Contact Option</span>
             </div>
         </a>
