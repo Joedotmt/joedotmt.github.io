@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Group Voice Chat</title>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <style>
+    body{margin:0;background:#2b2d31;color:#f2f3f5;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;height:100vh}
+    header{background:#1e1f22;width:100%;padding:12px;text-align:center;font-weight:bold}
+    main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+    input,button{padding:10px 14px;border-radius:8px;border:none;font-size:16px}
+    input{background:#1f2124;color:#f2f3f5;width:240px}
+    button{cursor:pointer;font-weight:bold}
+    .primary{background:#5865f2;color:white}
+    .secondary{background:#3b3d43;color:white}
+    #participants{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:20px}
+    .card{background:#313338;padding:12px 16px;border-radius:12px;min-width:120px;text-align:center}
+    .avatar{width:48px;height:48px;border-radius:50%;background:#4e5058;display:grid;place-items:center;font-weight:bold;font-size:18px;margin:0 auto 8px}
+  </style>
+</head>
+<body>
+  <header>🔊 Group Voice Chat</header>
+  <main>
+    <input id="roomCode" placeholder="Enter room code" />
+    <div style="display:flex;gap:12px">
+      <button class="primary" id="createBtn">Create & Join Room</button>
+      <button class="secondary" id="joinBtn">Join Room</button>
+    </div>
+    <div id="status">Not connected</div>
+    <div id="participants"></div>
+  </main>
+  <audio id="localAudio" autoplay muted></audio>
+
+  <script>
+    let peer, roomName, localStream;
+    const peers = {}; // peerId -> call
+
+    async function initMedia(){
+      if(!localStream){
+        localStream = await navigator.mediaDevices.getUserMedia({ audio:true });
+        document.getElementById("localAudio").srcObject = localStream;
+      }
+    }
+
+    function setStatus(text){ document.getElementById("status").innerText = text; }
+
+    function addParticipant(id){
+      if(document.getElementById("p-"+id)) return;
+      const card = document.createElement("div");
+      card.className = "card"; card.id = "p-"+id;
+      const avatar = document.createElement("div");
+      avatar.className = "avatar"; avatar.innerText = id.slice(0,2).toUpperCase();
+      const label = document.createElement("div");
+      label.innerText = id;
+      card.appendChild(avatar); card.appendChild(label);
+      const audio = document.createElement("audio");
+      audio.autoplay = true; audio.playsInline = true; audio.id = "a-"+id;
+      card.appendChild(audio);
+      document.getElementById("participants").appendChild(card);
+    }
+
+    function removeParticipant(id){
+      const el = document.getElementById("p-"+id);
+      if(el) el.remove();
+    }
+
+    async function createPeer(){
+      peer = new Peer(undefined, {
+        config:{iceServers:[{urls:'stun:stun.l.google.com:19302'}]}
+      });
+
+      peer.on('open', id=>{
+        setStatus("Connected as "+id+" in room "+roomName);
+        addParticipant(id);
+      });
+
+      peer.on('call', call=>{
+        call.answer(localStream);
+        call.on('stream', remoteStream=>{
+          addParticipant(call.peer);
+          document.getElementById("a-"+call.peer).srcObject = remoteStream;
+        });
+        call.on('close', ()=>removeParticipant(call.peer));
+        peers[call.peer] = call;
+      });
+    }
+
+    async function joinRoom(){
+      await initMedia();
+      await createPeer();
+
+      // Directory hack: peers in same room use predictable IDs
+      const myId = roomName + "-" + Math.random().toString(36).slice(2,6);
+      peer.destroy();
+      peer = new Peer(myId, {config:{iceServers:[{urls:'stun:stun.l.google.com:19302'}]}});
+
+      peer.on('open', id=>{
+        setStatus("Joined room "+roomName+" as "+id);
+        addParticipant(id);
+        // Fetch peers in room
+        peer.listAllPeers(list=>{
+          list.filter(p=>p.startsWith(roomName+"-") && p!==id).forEach(otherId=>{
+            const call = peer.call(otherId, localStream);
+            call.on('stream', remoteStream=>{
+              addParticipant(call.peer);
+              document.getElementById("a-"+call.peer).srcObject = remoteStream;
+            });
+            call.on('close', ()=>removeParticipant(call.peer));
+            peers[otherId]=call;
+          });
+        });
+      });
+
+      peer.on('call', call=>{
+        call.answer(localStream);
+        call.on('stream', remoteStream=>{
+          addParticipant(call.peer);
+          document.getElementById("a-"+call.peer).srcObject = remoteStream;
+        });
+        call.on('close', ()=>removeParticipant(call.peer));
+        peers[call.peer]=call;
+      });
+    }
+
+    document.getElementById("createBtn").onclick = ()=>{
+      roomName = Math.random().toString(36).slice(2,8);
+      document.getElementById("roomCode").value = roomName;
+      joinRoom();
+    };
+
+    document.getElementById("joinBtn").onclick = ()=>{
+      roomName = document.getElementById("roomCode").value.trim();
+      if(!roomName){alert("Enter a room code");return;}
+      joinRoom();
+    };
+  </script>
+</body>
+</html>
