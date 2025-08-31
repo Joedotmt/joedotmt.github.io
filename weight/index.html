@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <title>Weight Loss Competition Tracker</title>
+    <link rel="icon" href="favicon.ico">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,500..700;1,500..700&display=swap" rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pocketbase/0.25.0/pocketbase.umd.js"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/beercss@3.9.7/dist/cdn/beer.min.css" rel="stylesheet">
+    <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.9.7/dist/cdn/beer.min.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+
+
+    <link rel="stylesheet" href="styles.css?v=3">
+</head>
+
+<body class="light">
+    <a class="privacylink" style="right: 0;" onclick="toggleHiddenWeights()">Toggle Smoothing</a>
+    <a class="privacylink" href="./privacy/">Privacy Notice</a>
+    <header style="flex-direction: row; align-items: center; justify-content: space-between;">
+        <h1 style="margin: 1em 0em; margin-right: 1em;">Weight Loss Competition Tracker</h1>
+        <button id="signinbutton" onclick="setSigninDialogMode('signin'); localStorage.clear()">Sign Out</button>
+    </header>
+
+    <dialog class="max" style="justify-content: center; align-items: center; align-content: center;" id="signindialog">
+        <div id="sid_progress">
+            <progress id="sid_progressbar" class="circle large"></progress>
+
+            <div style="display: contents;" id="loadingtext">
+                <div>AAAAAAAAAA</div>
+                <div>LOADING.. .</div>
+                <div>GOTTA GO FAST</div>
+                <div>URANIUM TIME</div>
+                <div>200000 calories</div>
+                <div>!!!!!!!!!!!</div>
+                <div>FATASS</div>
+                <div>BRRRRRR</div>
+                <div>WOAMAAPAO</div>
+                <div>HELP HELP HELP</div>
+                <div>92.251.80.174</div>
+            </div>
+
+        </div>
+        <div id="sid_words" style="display: none;">
+            <h5 style="text-align: center;">Who are you?</h5>
+            <nav id="participantButtons" class="center-align">
+                <form id="signinForm" style="display: flex; flex-direction: column; gap: 1em;">
+
+
+                    <div style="margin:0" class="field label suffix border">
+                        <input type="text" autocomplete="off" id="usernameInput" required>
+                        <label>Username</label>
+                        <i>person</i>
+                    </div>
+
+                    <div style="margin:0" class="field label suffix border">
+                        <input id="passwordInput" type="password" autocomplete="current-password" required>
+                        <label>Password</label>
+                        <i>password</i>
+                    </div>
+
+
+                    <button type="submit" onclick="setSigninDialogMode('loading');">Sign In</button>
+                    <button type="button" id="guestSignInButton">Sign in as Guest</button>
+                </form>
+            </nav>
+        </div>
+    </dialog>
+
+    <main style="display: flex; flex-direction: column;">
+        <div style="    display: flex;
+        margin: 1em;
+        align-items: center;">
+            <h1 style="text-align: center; width: 50%;" id="welcomeText">Hello </h1>
+
+            <button style="width: 50%; box-sizing: border-box;" onclick="weightFormDialog.showModal()" id='logweightbutton'>Log Weight</button>
+
+        </div>
+
+        <!-- tabs wont work without these -->
+        <div id="tab1" class="page">
+        </div>
+        <div id="tab2" class="page">
+        </div>
+        <div id="tab3" class="page">
+        </div>
+        <!-- ---------------------------- -->
+
+
+
+        <div class="hzvl" style="display: flex;">
+            <div class="ththiuejr" style="width: 50%; height: 90vh;">
+                <div class="tabs" id="GraphTabs">
+                    <a class="active ripple" data-ui="#tab1">Absolute</a>
+                    <a class="ripple" data-ui="#tab2">Relative</a>
+                    <a class="ripple" data-ui="#tab3">Progress</a>
+                </div>
+                <div style="height: calc(100% - 5px);">
+                    <canvas id="ProgressGraph"></canvas>
+                </div>
+            </div>
+            <ul style="width: 50%;" id="recordList" class="list border">
+            </ul>
+        </div>
+    </main>
+
+    <dialog id="weightFormDialog" class="max">
+        <h2 style="margin-bottom: 1em;">Log Weight</h2>
+
+        <div style="padding: 1em; gap: 1em; display: flex; flex-direction: column;">
+
+            <div style="margin: 0;" class="field label suffix border">
+                <input type="number" id="weightInput" step="0.1" min="71" required>
+                <label>Weight (kg)</label>
+                <i>scale</i>
+            </div>
+
+        </div>
+
+        <nav class="right-align">
+            <button onclick="weightFormDialog.close()" class="border">Cancel</button>
+            <button style="margin: 0;" id="submitButton">Submit</button>
+        </nav>
+    </dialog>
+
+    <script src="app.js?v=9"></script>
+</body>
+
+</html>
