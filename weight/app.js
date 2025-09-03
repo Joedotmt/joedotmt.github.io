@@ -182,9 +182,7 @@ function groupWeights(weights) {
 // In renderRecordList, update the user goal logic – assume the authenticated user holds their own goal.
 function renderRecordList(groupedWeights) {
     let html = '';
-    // Get all group names
     const allNames = Object.keys(groupedWeights);
-    // Sort so that currentUser's name comes first
     allNames.sort((a, b) => {
         if (a === currentUser.username) return -1;
         if (b === currentUser.username) return 1;
@@ -192,7 +190,6 @@ function renderRecordList(groupedWeights) {
     });
     allNames.forEach(name => {
         const elements = groupedWeights[name];
-        // Use currentUser.goal if the group corresponds to the logged in user; otherwise assume a goal of 0.
         const goal = elements[0].expand.user.goal;
         const height_m = elements[0].expand.user.height_cm / 100;
         const startingWeight = elements[elements.length - 1].weight;
@@ -201,7 +198,7 @@ function renderRecordList(groupedWeights) {
         const totalToLose = (startingWeight - goal);
         const progressPercent = totalToLose ? ((weightLost / totalToLose) * 100).toFixed(1) : 0;
         const bmi = currentWeight / (height_m * height_m);
-        //
+        
         html += `<article style="padding: 0; border-bottom: .0625rem solid var(--surface-variant); box-shadow: none; border-radius:0;">
   <progress class="max" value="${progressPercent}" max="100"></progress>
 <h3 style="margin:0em 0.8rem;">${name}</h3>
@@ -216,7 +213,9 @@ function renderRecordList(groupedWeights) {
         <div style="display:flex; gap:0.5em; align-items:center">${progressPercent}%<progress value="${progressPercent}" max="100" class="large"></progress></div>
       </li>`;
         elements.forEach((x, i) => {
-            const date = new Date(x.created).toLocaleDateString("en-GB", { day: "2-digit", month: "long" });
+            // Use date field if present, otherwise fall back to created
+            const recordDate = x.date ? new Date(x.date) : new Date(x.created);
+            const date = recordDate.toLocaleDateString("en-GB", { day: "2-digit", month: "long" });
             html += `<li style="${i ? "" : "background-color: var(--inverse-primary);"}">
         <div>${date}</div>
         ${x.weight}kg
@@ -227,6 +226,7 @@ function renderRecordList(groupedWeights) {
     recordList.innerHTML = html;
 }
 
+// Calculate goal line values based on currentUserWeights and mode
 function calculateGoalLineValues(currentUserWeights, mode) {
     const weights = currentUserWeights.length
         ? currentUserWeights
@@ -270,7 +270,12 @@ async function updateCharts() {
             return {
                 label: name,
                 data: elements
-                    .sort((a, b) => Date.parse(a.created) - Date.parse(b.created))
+                    .sort((a, b) => {
+                        // Sort using date field if present, otherwise use created
+                        const dateA = a.date ? new Date(a.date) : new Date(a.created);
+                        const dateB = b.date ? new Date(b.date) : new Date(b.created);
+                        return dateA - dateB;
+                    })
                     .map(x => {
                         let y;
                         if (mode === "Relative") {
@@ -280,8 +285,12 @@ async function updateCharts() {
                         } else { // Absolute
                             y = x.weight;
                         }
-                        // Preserve whether the original record was marked hidden so we can filter in-chart
-                        return { x: new Date(x.created), y, _hidden: !!x.hidden };
+                        // Use date field if present, otherwise fall back to created
+                        return { 
+                            x: x.date ? new Date(x.date) : new Date(x.created), 
+                            y, 
+                            _hidden: !!x.hidden 
+                        };
                     }),
                 borderColor: colors[getColorIndex(name)],
                 fill: false,
