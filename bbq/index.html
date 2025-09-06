@@ -70,7 +70,6 @@
             margin-top: 1rem;
             margin-bottom: 1rem;
             display: none;
-            /* Initially hidden */
         }
 
         .message-success {
@@ -83,18 +82,13 @@
             color: var(--on-error-container);
         }
 
-        /* Styling for individual date items in the "All Chosen Dates" list */
         .date-count-item {
             padding: 0.75rem;
             border: 1px solid var(--outline);
-            /* Default border */
             border-radius: var(--small-shape);
             margin-bottom: 0.75rem;
-            /* Increased margin slightly */
             background-color: var(--surface-container);
-            /* Default background */
             transition: background-color 0.3s, border-color 0.3s;
-            /* Smooth transitions */
         }
 
         .date-count-item .date-info {
@@ -106,13 +100,11 @@
 
         .date-count-item .date-value {
             color: var(--on-surface);
-            /* Ensure good contrast for the date itself */
         }
 
         .date-count-item .availability-count {
             font-weight: bold;
             color: var(--primary);
-            /* Highlight the count */
         }
 
         .date-count-item .attendees-list {
@@ -122,17 +114,13 @@
         }
 
         .date-count-item .chip {
-            /* Ensure chips are styled well within items */
             margin-top: 0.5rem;
             display: inline-block;
         }
 
-
-        /* Style for dates with the MOST attendees */
         .date-count-item.most-popular {
             border: 2px solid var(--primary);
             background-color: var(--primary-container);
-            /* Adjust padding if border thickness changes overall size, current padding should be fine */
         }
 
         .date-count-item.most-popular .date-value {
@@ -141,29 +129,22 @@
 
         .date-count-item.most-popular .availability-count {
             color: var(--primary);
-            /* Or var(--on-primary-container) if background is dark enough */
         }
 
         .date-count-item.most-popular .attendees-list {
             color: var(--on-primary-container);
         }
 
-
-        /* Style for dates with ONLY ONE attendee */
         .date-count-item.single-attendee {
             background-color: var(--surface-container-lowest);
-            /* Very neutral background */
             border-color: var(--outline-variant);
-            /* Lighter border */
         }
 
         .date-count-item.single-attendee .date-value,
         .date-count-item.single-attendee .availability-count,
         .date-count-item.single-attendee .attendees-list {
             color: var(--on-surface-variant);
-            /* Lower contrast text */
         }
-
 
         #allSubmissions li {
             padding: 0.25rem 0;
@@ -212,17 +193,20 @@
                 <i>event_available</i>
                 Submit Your Availability
             </button>
+
+            <span id="userDisplay" class="medium-text" style="margin-left:1rem; color:var(--on-surface-variant);"></span>
+            <button id="signInBtn" class="round border ripple" style="margin-left:1rem;" onclick="signIn()">
+                <i>login</i> Sign In
+            </button>
+            <button id="signOutBtn" class="round border ripple hidden" style="margin-left:0.5rem;" onclick="signOut()">
+                <i>logout</i> Sign Out
+            </button>
         </nav>
 
         <dialog id="upload-dates-dialog" class="large bottom">
             <article class="card round large-padding">
                 <h2 class="large-text">Submit Your Availability</h2>
                 <form id="dateForm">
-                    <div style="margin: 0; margin-top: 3em;" class="field label border large round">
-                        <input type="text" id="name" name="name" required>
-                        <label for="name">Username</label>
-                    </div>
-
                     <div class="field large prefix border round">
                         <i>calendar_month</i>
                         <input type="text" id="dates" name="dates" required placeholder="Click to pick dates">
@@ -273,28 +257,12 @@
     </div>
 
     <script>
-        // --- BeerCSS dialog fallback for show/hide ---
-        window.dialog = window.dialog || {
-            show: sel =>
-            {
-                const d = document.querySelector(sel);
-                if (d && typeof d.showModal === "function") d.showModal();
-                else if (d) d.setAttribute("open", "");
-            },
-            hide: sel =>
-            {
-                const d = document.querySelector(sel);
-                if (d && typeof d.close === "function") d.close();
-                else if (d) d.removeAttribute("open");
-            }
-        };
         // --- Configuration ---
-        const POCKETBASE_URL = 'https://petition.pockethost.io/'; // Hardcoded PocketBase URL
+        const POCKETBASE_URL = 'https://petition.pockethost.io/';
         const COLLECTION_NAME = 'bbq_poll';
 
         // --- DOM Elements ---
         const dateForm = document.getElementById('dateForm');
-        const nameInput = document.getElementById('name');
         const datesInput = document.getElementById('dates');
         const submitLoading = document.getElementById('submitLoading');
         const resultsLoading = document.getElementById('resultsLoading');
@@ -303,87 +271,126 @@
         const popularDatesDiv = document.getElementById('popularDates');
         const allSubmissionsUl = document.getElementById('allSubmissions');
         const messageArea = document.getElementById('messageArea');
+        const signInBtn = document.getElementById('signInBtn');
+        const signOutBtn = document.getElementById('signOutBtn');
+        const userDisplay = document.getElementById('userDisplay');
 
         let pb = null;
         let unsubscribeCallback = null;
         let flatpickrInstance;
 
-        function initializeFlatpickr()
-        {
+        function initializeFlatpickr() {
             flatpickrInstance = flatpickr(datesInput, {
                 mode: "multiple",
                 dateFormat: "Y-m-d",
                 minDate: "today",
-                "locale": {
-                    "firstDayOfWeek": 1 // start week on Monday
+                locale: {
+                    firstDayOfWeek: 1
                 }
             });
         }
 
-        function showMessage(message, type = 'success', duration = 5000)
-        {
+        function showMessage(message, type = 'success', duration = 5000) {
             messageArea.textContent = message;
-            messageArea.className = ''; // Reset classes
-            if (type === 'success')
-            {
+            messageArea.className = '';
+            if (type === 'success') {
                 messageArea.classList.add('message-success');
-            } else
-            {
+            } else {
                 messageArea.classList.add('message-error');
             }
             messageArea.style.display = 'block';
-            if (duration > 0)
-            {
-                setTimeout(() =>
-                {
+            if (duration > 0) {
+                setTimeout(() => {
                     messageArea.textContent = '';
                     messageArea.style.display = 'none';
                 }, duration);
             }
         }
 
-        function updateConnectionStatus(message, isError = false)
-        {
+        function updateConnectionStatus(message, isError = false) {
             connectionStatus.textContent = message;
             connectionStatus.style.color = isError ? 'var(--error)' : 'var(--primary)';
         }
 
-        async function initializePocketBaseClient()
-        {
-            updateConnectionStatus('Connecting to PocketBase...', false);
-            if (unsubscribeCallback)
-            {
-                try { unsubscribeCallback(); } catch (e) { console.warn('Error unsubscribing:', e); }
-                unsubscribeCallback = null;
+        async function initializePocketBaseClient() {
+            updateConnectionStatus('Initializing PocketBase client...', false);
+            
+            pb = new PocketBase(POCKETBASE_URL);
+            pb.autoCancellation(false);
+
+            if (pb.authStore.isValid) {
+                updateConnectionStatus('Authenticated. Subscribing to updates...', false);
+                showSignedInState();
+                await subscribeToRealtime();
+            } else {
+                updateConnectionStatus('Not signed in. Click "Sign In" to authenticate.', true);
+                showSignedOutState();
             }
-            try
-            {
-                pb = new PocketBase(POCKETBASE_URL);
-                updateConnectionStatus('Connection established. Subscribing...', false);
-                unsubscribeCallback = await pb.collection(COLLECTION_NAME).subscribe('*', function (e)
-                {
+
+            await fetchAndDisplayResults();
+        }
+
+        async function subscribeToRealtime() {
+            try {
+                if (unsubscribeCallback) {
+                    await unsubscribeCallback();
+                    unsubscribeCallback = null;
+                }
+                
+                unsubscribeCallback = await pb.collection(COLLECTION_NAME).subscribe('*', function (e) {
                     console.log('Realtime event:', e.action, e.record);
                     showMessage(`Data updated: ${e.action}.`, 'success', 2000);
                     fetchAndDisplayResults();
                 });
+                
                 updateConnectionStatus('Subscribed to real-time updates.', false);
-                await fetchAndDisplayResults();
-            } catch (error)
-            {
-                console.error('PocketBase Init/Sub Error:', error);
-                showMessage(`Error connecting/subscribing: ${error.message}. Check console.`, 'error');
-                updateConnectionStatus(`Error: ${error.message}`, true);
-                resultsError.textContent = `Failed to connect: ${error.message}. Ensure PocketBase is running at ${POCKETBASE_URL}.`;
-                resultsError.classList.remove('hidden');
-                resultsLoading.classList.add('hidden');
-                pb = null;
+            } catch (error) {
+                console.warn('Realtime subscribe error:', error);
+                updateConnectionStatus('Could not subscribe to real-time updates.', true);
             }
         }
 
-        async function fetchAndDisplayResults()
-        {
-            if (!pb)
-            {
+        function showSignedInState() {
+            signInBtn.classList.add('hidden');
+            signOutBtn.classList.remove('hidden');
+            const user = pb?.authStore?.model;
+            const name = user?.name || user?.username || user?.email || '';
+            userDisplay.textContent = name ? `Signed in: ${name}` : 'Signed in';
+        }
+
+        function showSignedOutState() {
+            signInBtn.classList.remove('hidden');
+            signOutBtn.classList.add('hidden');
+            userDisplay.textContent = '';
+            
+            if (unsubscribeCallback) {
+                unsubscribeCallback().catch(e => console.warn('Error unsubscribing:', e));
+                unsubscribeCallback = null;
+            }
+        }
+
+        function signIn() {
+            const returnUrl = window.location.href;
+            window.location.href = `/account/?redirect=${encodeURIComponent(returnUrl)}`;
+        }
+
+        async function signOut() {
+            if (!pb) pb = new PocketBase(POCKETBASE_URL);
+            
+            if (unsubscribeCallback) {
+                await unsubscribeCallback();
+                unsubscribeCallback = null;
+            }
+            
+            pb.authStore.clear();
+            showMessage('Signed out.', 'success', 2000);
+            showSignedOutState();
+            updateConnectionStatus('Signed out. Click "Sign In" to authenticate.', true);
+            await fetchAndDisplayResults();
+        }
+
+        async function fetchAndDisplayResults() {
+            if (!pb) {
                 resultsLoading.classList.add('hidden');
                 return;
             }
@@ -393,33 +400,31 @@
             popularDatesDiv.innerHTML = '<p class="small-text">Loading...</p>';
             allSubmissionsUl.innerHTML = '<p class="small-text">Loading...</p>';
 
-            try
-            {
+            try {
                 const records = await pb.collection(COLLECTION_NAME).getFullList({
                     sort: '-created',
+                    expand: 'user'
                 });
 
-                if (records.length === 0)
-                {
+                if (records.length === 0) {
                     popularDatesDiv.innerHTML = '<p class="small-text">No submissions yet. Be the first!</p>';
                     allSubmissionsUl.innerHTML = '<p class="small-text">No submissions yet.</p>';
                     resultsLoading.classList.add('hidden');
                     return;
                 }
 
+                // Aggregate dates
                 const dateCounts = {};
-                records.forEach(record =>
-                {
-                    if (record.available_dates && Array.isArray(record.available_dates))
-                    {
-                        record.available_dates.forEach(dateStr =>
-                        {
-                            if (!dateCounts[dateStr])
-                            {
+                records.forEach(record => {
+                    if (record.available_dates && Array.isArray(record.available_dates)) {
+                        record.available_dates.forEach(dateStr => {
+                            if (!dateCounts[dateStr]) {
                                 dateCounts[dateStr] = { count: 0, people: [] };
                             }
                             dateCounts[dateStr].count++;
-                            dateCounts[dateStr].people.push(record.name);
+                            console.log(record)
+                            const personName = record.name || record?.expand?.user?.name || 'UNKNOWN';
+                            dateCounts[dateStr].people.push(personName);
                         });
                     }
                 });
@@ -430,192 +435,180 @@
                         count: data.count,
                         people: data.people.join(', ')
                     }))
-                    .sort((a, b) => b.count - a.count || new Date(a.date) - new Date(b.date)); // Sort by count, then by date
+                    .sort((a, b) => b.count - a.count || new Date(a.date) - new Date(b.date));
 
-                popularDatesDiv.innerHTML = ''; // Clear previous content
-                if (aggregatedDates.length > 0)
-                {
-                    const maxCount = aggregatedDates[0].count; // Highest number of people available for any date
+                // Display popular dates
+                popularDatesDiv.innerHTML = '';
+                if (aggregatedDates.length > 0) {
+                    const maxCount = aggregatedDates[0].count;
 
-                    aggregatedDates.forEach(item =>
-                    {
+                    aggregatedDates.forEach(item => {
                         const itemDiv = document.createElement('div');
-                        itemDiv.classList.add('date-count-item'); // Base class
+                        itemDiv.classList.add('date-count-item');
 
-                        if (item.count === 1)
-                        {
+                        if (item.count === 1) {
                             itemDiv.classList.add('single-attendee');
-                        } else if (item.count === maxCount)
-                        { // maxCount will be > 1 here due to the sort and previous condition
+                        } else if (item.count === maxCount && maxCount > 1) {
                             itemDiv.classList.add('most-popular');
                         }
                         
-                        const displayDate = new Date(item.date + 'T00:00:00Z').toLocaleDateString('en-US', {
-                            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC'
+                        const displayDate = new Date(item.date + 'T00:00:00').toLocaleDateString('en-US', {
+                            weekday: 'long', 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric'
                         });
 
                         itemDiv.innerHTML = `
                             <div class="date-info">
                                 <strong class="medium-text date-value">${displayDate}:</strong>
-                                <span class="availability-count"> ${item.count} ${item.count === 1 ? 'person available' : 'people available'}</span>
+                                <span class="availability-count">${item.count} ${item.count === 1 ? 'person' : 'people'} available</span>
                             </div>
-                            <p class="attendees-list small-text">Available: ${item.people || 'None'}</p>
+                            <p class="attendees-list small-text">Available: ${item.people}</p>
                             ${(item.count === maxCount && maxCount > 1) ? '<span class="chip primary extra small-padding round">Top Choice!</span>' : ''}
                         `;
                         popularDatesDiv.appendChild(itemDiv);
                     });
-                } else
-                {
+                } else {
                     popularDatesDiv.innerHTML = '<p class="small-text">No dates submitted yet.</p>';
                 }
 
+                // Display all submissions
                 allSubmissionsUl.innerHTML = '';
-                records.forEach(record =>
-                {
+                records.forEach(record => {
                     const li = document.createElement('li');
                     const datesString = record.available_dates
-                        ? record.available_dates.map(d => new Date(d + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })).join(', ')
+                        ? record.available_dates.map(d => {
+                            const date = new Date(d + 'T00:00:00');
+                            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        }).join(', ')
                         : 'No dates';
-                    li.innerHTML = `<strong>${record.name || 'Anonymous'}</strong> available on: <span style="color: var(--secondary);">${datesString}</span> <em class="small-text" style="color: var(--on-surface-variant);">(Submitted: ${new Date(record.created).toLocaleString()})</em>`;
+                    const displayName = record.name || record.expand.user.name || 'Anonymous';
+                    const createdDate = new Date(record.created).toLocaleString();
+                    li.innerHTML = `<strong>${displayName}</strong> available on: <span style="color: var(--secondary);">${datesString}</span> <em class="small-text" style="color: var(--on-surface-variant);">(Submitted: ${createdDate})</em>`;
                     allSubmissionsUl.appendChild(li);
                 });
 
-            } catch (error)
-            {
+            } catch (error) {
                 console.error("Error fetching results:", error);
-                resultsError.textContent = `Failed to load results: ${error.message}.`;
+                resultsError.textContent = `Failed to load results: ${error.message}`;
                 resultsError.classList.remove('hidden');
-                popularDatesDiv.innerHTML = '';
-                allSubmissionsUl.innerHTML = '';
-                updateConnectionStatus(`Error fetching results: ${error.message}`, true);
-            } finally
-            {
+                popularDatesDiv.innerHTML = '<p class="small-text">Error loading data.</p>';
+                allSubmissionsUl.innerHTML = '<p class="small-text">Error loading data.</p>';
+                updateConnectionStatus(`Error: ${error.message}`, true);
+            } finally {
                 resultsLoading.classList.add('hidden');
             }
         }
 
-        dateForm.addEventListener('submit', async (event) =>
-        {
+        dateForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-            if (!pb)
-            {
-                showMessage('PocketBase is not connected. Please wait or check console.', 'error');
+
+            if (!pb?.authStore?.isValid) {
+                showMessage('You must sign in before submitting availability.', 'error');
                 return;
             }
+
             submitLoading.classList.remove('hidden');
             document.getElementById('submitButton').setAttribute('disabled', 'true');
             messageArea.style.display = 'none';
 
-            // --- CHANGE 1 START: Always submit username in uppercase ---
-            const name = nameInput.value.trim().toUpperCase();
-            // --- CHANGE 1 END ---
+            const user = pb.authStore.model;
+            const name = (user?.name || user?.username || user?.email || 'ERROR').toUpperCase();
 
-            const selectedDates = flatpickrInstance.selectedDates.map(date =>
-            {
+            const selectedDates = flatpickrInstance.selectedDates.map(date => {
                 const year = date.getFullYear();
-                const month = ('0' + (date.getMonth() + 1)).slice(-2);
-                const day = ('0' + date.getDate()).slice(-2);
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
                 return `${year}-${month}-${day}`;
             });
 
-            if (!name || selectedDates.length === 0)
-            {
-                showMessage('Please enter your name and select at least one date.', 'error');
+            if (selectedDates.length === 0) {
+                showMessage('Please select at least one date.', 'error');
                 submitLoading.classList.add('hidden');
                 document.getElementById('submitButton').removeAttribute('disabled');
                 return;
             }
 
-            const dataToSubmit = { name: name, available_dates: selectedDates };
+            const dataToSubmit = { 
+                name: name, 
+                available_dates: selectedDates,
+                user: pb.authStore.model.id
+            };
 
-            try
-            {
-                // Check if a record with this name already exists
-                const existing = await pb.collection(COLLECTION_NAME).getFullList({
-                    filter: `name="${name.replace(/"/g, '\\"')}"`
-                });
-
-                if (existing.length > 0)
-                {
-                    // Update the first matching record
-                    const recordId = existing[0].id;
-                    await pb.collection(COLLECTION_NAME).update(recordId, dataToSubmit);
-                    showMessage('Your availability was updated successfully!', 'success');
+            try {
+                // Check for existing submission
+                let existing = null;
+                try {
+                    existing = await pb.collection(COLLECTION_NAME).getFirstListItem(
+                        `user = "${pb.authStore.model.id}"`
+                    );
+                } catch (e) {
+                    // No existing record found
                 }
-                else
-                {
-                    // Create a new record
+
+                if (existing) {
+                    await pb.collection(COLLECTION_NAME).update(existing.id, dataToSubmit);
+                    showMessage('Your availability was updated successfully!', 'success');
+                } else {
                     await pb.collection(COLLECTION_NAME).create(dataToSubmit);
                     showMessage('Availability submitted successfully!', 'success');
                 }
+                
                 dateForm.reset();
                 flatpickrInstance.clear();
-                // Close the dialog after successful submit
-                ui('#upload-dates-dialog');
-            } catch (error)
-            {
+                if (typeof ui === 'function') ui('#upload-dates-dialog');
+                
+            } catch (error) {
                 console.error("Error submitting form:", error);
-                showMessage(`Submission failed: ${error.message}. Check console.`, 'error');
+                showMessage(`Submission failed: ${error.message}`, 'error');
                 updateConnectionStatus(`Error submitting: ${error.message}`, true);
-            } finally
-            {
+            } finally {
                 submitLoading.classList.add('hidden');
                 document.getElementById('submitButton').removeAttribute('disabled');
             }
         });
 
-        // --- CHANGE 2 START: New function to pre-fill dates for existing users ---
-        async function handleUsernameBlur() {
-            if (!pb) return; // Don't do anything if pocketbase isn't connected
-
-            const name = nameInput.value.trim().toUpperCase();
-            if (!name) { // If the name field is empty, clear the calendar
-                flatpickrInstance.clear();
-                return;
-            }
-
+        // Load user's existing dates when signed in
+        async function loadUserDates() {
+            if (!pb?.authStore?.isValid) return;
+            
             try {
-                // Look for a user with the entered name (case-insensitive)
-                const record = await pb.collection(COLLECTION_NAME).getFirstListItem(`name = "${name}"`);
+                const existing = await pb.collection(COLLECTION_NAME).getFirstListItem(
+                    `user = "${pb.authStore.model.id}"`
+                );
                 
-                // If the user is found and has dates, populate the calendar
-                if (record && record.available_dates) {
-                    flatpickrInstance.setDate(record.available_dates, true); // setDate and trigger change event
-                    showMessage(`Welcome back, ${name}! Your previous dates have been loaded.`, 'success', 3000);
+                if (existing?.available_dates) {
+                    flatpickrInstance.setDate(existing.available_dates, true);
+                    const userName = pb.authStore.model.name || pb.authStore.model.username || '';
+                    showMessage(`Welcome back${userName ? ', ' + userName : ''}! Your previous dates have been loaded.`, 'success', 3000);
                 }
-            } catch (error) {
-                // This error is expected when a user is not found.
-                if (error.status === 404) {
-                    console.log(`User "${name}" not found. New user.`);
-                    flatpickrInstance.clear(); // Clear dates for a new user
-                } else {
-                    console.error("Error fetching user data:", error);
-                    showMessage(`Could not check for existing user: ${error.message}`, 'error');
-                }
+            } catch (err) {
+                // No existing submission found
             }
         }
-        // --- CHANGE 2 END ---
 
-
-        document.addEventListener('DOMContentLoaded', () =>
-        {
+        // Initialize on DOM load
+        document.addEventListener('DOMContentLoaded', async () => {
             initializeFlatpickr();
-            initializePocketBaseClient();
+            await initializePocketBaseClient();
             
-            // --- CHANGE 3: Attach the new function to the username input's 'blur' event ---
-            nameInput.addEventListener('blur', handleUsernameBlur);
+            // Check if returning from auth
+            if (pb?.authStore?.isValid) {
+                await loadUserDates();
+            }
         });
 
-        window.addEventListener('offline', () =>
-        {
+        // Handle offline/online events
+        window.addEventListener('offline', () => {
             updateConnectionStatus('Connection lost. You are offline.', true);
-            showMessage('You appear to be offline. Changes will not be saved or reflected.', 'error', 0); // Duration 0 means persistent
+            showMessage('You appear to be offline. Changes will not be saved.', 'error', 0);
         });
-        window.addEventListener('online', () =>
-        {
+
+        window.addEventListener('online', async () => {
             updateConnectionStatus('Connection restored. Re-initializing...', false);
-            showMessage('You are back online. Attempting to reconnect...', 'success', 3000);
-            initializePocketBaseClient();
+            showMessage('You are back online. Reconnecting...', 'success', 3000);
+            await initializePocketBaseClient();
         });
     </script>
 </body>
