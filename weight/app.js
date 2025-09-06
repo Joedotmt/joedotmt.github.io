@@ -61,7 +61,7 @@ async function tryRestoreAuth() {
             const { token, model } = JSON.parse(pbAuth);
             pocketBase.authStore.save(token, model);
             // Try to refresh the session
-            await pocketBase.collection('users').authRefresh();
+            await pocketBase.collection('fat_users').authRefresh();
             currentUser = pocketBase.authStore.model;
             updateWelcomeTextAndWords();
 
@@ -87,7 +87,7 @@ async function signIn(username, password) {
         return;
     }
     try {
-        await pocketBase.collection('users').authWithPassword(username, password);
+        await pocketBase.collection('fat_users').authWithPassword(username, password);
         currentUser = pocketBase.authStore.model;
     } catch (e) {
         console.error("Error during sign in:", e);
