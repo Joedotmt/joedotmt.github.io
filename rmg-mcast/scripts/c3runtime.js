@@ -1354,6 +1354,7 @@ self.C3_ExpressionFuncs = [
 			const f0 = p._GetNode(0).GetBoundMethod();
 			return () => f0(0, 360);
 		},
+		() => "menu",
 		() => 1,
 		p => {
 			const f0 = p._GetNode(0).GetBoundMethod();
@@ -1465,8 +1466,6 @@ self.C3_ExpressionFuncs = [
 		() => "level1",
 		() => "level",
 		() => "instructions",
-		() => "same",
-		() => "menu",
 		() => "next",
 		p => {
 			const f0 = p._GetNode(0).GetBoundMethod();
@@ -1551,12 +1550,25 @@ self.C3_ExpressionFuncs = [
 			return () => (C3.lerp(n0.ExpObject(), v1.GetValue(), 0.05) + n2.ExpInstVar());
 		},
 		p => {
+			const f0 = p._GetNode(0).GetBoundMethod();
+			return () => ((f0()) === ("lose") ? 1 : 0);
+		},
+		() => "\"random\"",
+		p => {
 			const v0 = p._GetNode(0).GetVar();
-			return () => (v0.GetValue()).toString();
+			return () => ((v0.GetValue()) === ("level5") ? 1 : 0);
+		},
+		p => {
+			const v0 = p._GetNode(0).GetVar();
+			return () => ((v0.GetValue()) === ("victory") ? 1 : 0);
 		},
 		p => {
 			const v0 = p._GetNode(0).GetVar();
 			return () => ((v0.GetValue()) === ("menu") ? 1 : 0);
+		},
+		p => {
+			const v0 = p._GetNode(0).GetVar();
+			return () => (v0.GetValue()).toString();
 		},
 		p => {
 			const v0 = p._GetNode(0).GetVar();
@@ -1607,10 +1619,6 @@ self.C3_ExpressionFuncs = [
 		p => {
 			const n0 = p._GetNode(0);
 			return () => (n0.ExpObject() + 10);
-		},
-		p => {
-			const f0 = p._GetNode(0).GetBoundMethod();
-			return () => ((f0()) === ("lose") ? 1 : 0);
 		},
 		() => 960,
 		() => 540,

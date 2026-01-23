@@ -117,7 +117,6 @@ self.C3_GetObjectRefTable = function () {
 		C3.Plugins.System.Acts.AddVar,
 		C3.Plugins.Sprite.Cnds.IsVisible,
 		C3.Plugins.Audio.Cnds.IsAnyPlaying,
-		C3.Plugins.System.Cnds.CompareVar,
 		C3.Plugins.Audio.Acts.StopAll,
 		C3.Plugins.System.Acts.SetLayerVisible,
 		C3.Plugins.Mouse.Cnds.OnObjectClicked,
