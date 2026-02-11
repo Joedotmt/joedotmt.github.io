@@ -1,6 +1,7 @@
 const pb = new PocketBase('https://joemt.fly.dev');
 let allNotes = [];
 let currentFolder = 'all';
+let currentNoteId = null;
 
 async function loadNotes() {
   try {
@@ -9,10 +10,10 @@ async function loadNotes() {
     });
     
     populateFolders();
-    displayNotes(allNotes);
+    filterByFolder('all', document.querySelector('[data-folder="all"]'));
   } catch (error) {
     console.error('Error loading notes:', error);
-    document.getElementById('notes-container').innerHTML = 
+    document.getElementById('note-detail').innerHTML = 
       '<p class="error">Failed to load notes</p>';
   }
 }
@@ -45,6 +46,7 @@ function populateFolders() {
 
 function filterByFolder(folder, element) {
   currentFolder = folder;
+  currentNoteId = null;
   
   // Close mobile menu
   closeMobileMenu();
@@ -55,47 +57,67 @@ function filterByFolder(folder, element) {
   });
   element.classList.add('active');
   
-  // Filter and display
+  // Filter notes
   const filtered = folder === 'all' 
     ? allNotes 
     : allNotes.filter(note => note.folder === folder);
   
-  displayNotes(filtered);
+  displayNotesList(filtered);
+  showEmptyNoteDetail();
 }
 
-function displayNotes(notes) {
-  const container = document.getElementById('notes-container');
+function displayNotesList(notes) {
+  const notesList = document.getElementById('notes-list');
   
   if (notes.length === 0) {
-    container.innerHTML = '<p class="empty">No notes found</p>';
+    notesList.innerHTML = '<li class="empty-state">No notes</li>';
     return;
   }
   
-  container.innerHTML = notes.map(note => `
-    <div class="note-card">
-      <h2>${escapeHtml(note.title)}</h2>
-      <p class="note-content">${escapeHtml(note.content)}</p>
-      <div class="note-footer">
-        ${formatDate(note.updated)}
-      </div>
-    </div>
+  notesList.innerHTML = notes.map(note => `
+    <li class="notes-list-item" data-note-id="${note.id}">
+      <div class="notes-list-item-title">${escapeHtml(note.title)}</div>
+    </li>
   `).join('');
+  
+  // Add click handlers
+  document.querySelectorAll('.notes-list-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const noteId = item.getAttribute('data-note-id');
+      selectNote(noteId);
+    });
+  });
 }
 
-function formatDate(dateString) {
-  const date = new Date(dateString);
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
+function selectNote(noteId) {
+  currentNoteId = noteId;
   
-  if (date.toDateString() === today.toDateString()) {
-    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-  } else if (date.toDateString() === yesterday.toDateString()) {
-    return 'Yesterday';
-  } else if (date.getFullYear() === today.getFullYear()) {
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  // Update active state in list
+  document.querySelectorAll('.notes-list-item').forEach(item => {
+    item.classList.remove('active');
+  });
+  document.querySelector(`[data-note-id="${noteId}"]`).classList.add('active');
+  
+  // Find and display the note
+  const note = allNotes.find(n => n.id === noteId);
+  if (note) {
+    displayNoteDetail(note);
   }
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+}
+
+function displayNoteDetail(note) {
+  const container = document.getElementById('note-detail');
+  document.getElementById('note-title').textContent = escapeHtml(note.title);
+  
+  container.innerHTML = `
+    <div class="note-detail-content">${escapeHtml(note.content)}</div>
+  `;
+}
+
+function showEmptyNoteDetail() {
+  const container = document.getElementById('note-detail');
+  document.getElementById('note-title').textContent = 'Notes';
+  container.innerHTML = '<p class="empty">Select a note to view</p>';
 }
 
 function escapeHtml(text) {
