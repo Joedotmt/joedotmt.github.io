@@ -10,7 +10,7 @@ async function loadNotes() {
     });
     
     populateFolders();
-    filterByFolder('all', document.querySelector('[data-folder="all"]'));
+    filterByFolder('', document.querySelector('[data-folder=""]'));
   } catch (error) {
     console.error('Error loading notes:', error);
     document.getElementById('note-detail').innerHTML = 
@@ -29,7 +29,7 @@ function populateFolders() {
   const folderList = document.getElementById('folder-list');
   
   // Clear and rebuild
-  folderList.innerHTML = '<li class="folder-item active" data-folder="all">All Notes</li>';
+  folderList.innerHTML = '<li class="folder-item active" data-folder="">Notes</li>';
   
   Array.from(folders).sort().forEach(folder => {
     const li = document.createElement('li');
@@ -40,8 +40,8 @@ function populateFolders() {
     folderList.appendChild(li);
   });
   
-  const allNotesItem = folderList.querySelector('[data-folder="all"]');
-  allNotesItem.addEventListener('click', () => filterByFolder('all', allNotesItem));
+  const unfiled = folderList.querySelector('[data-folder=""]');
+  unfiled.addEventListener('click', () => filterByFolder('', unfiled));
 }
 
 function filterByFolder(folder, element) {
@@ -58,8 +58,8 @@ function filterByFolder(folder, element) {
   element.classList.add('active');
   
   // Filter notes
-  const filtered = folder === 'all' 
-    ? allNotes 
+  const filtered = folder === '' 
+    ? allNotes.filter(note => !note.folder || note.folder === '')
     : allNotes.filter(note => note.folder === folder);
   
   displayNotesList(filtered);
@@ -75,13 +75,13 @@ function displayNotesList(notes) {
   }
   
   notesList.innerHTML = notes.map(note => `
-    <li class="notes-list-item" data-note-id="${note.id}">
-      <div class="notes-list-item-title">${escapeHtml(note.title)}</div>
+    <li class="folder-item" data-note-id="${note.id}">
+      ${escapeHtml(note.title)}
     </li>
   `).join('');
   
   // Add click handlers
-  document.querySelectorAll('.notes-list-item').forEach(item => {
+  document.querySelectorAll('.folder-item[data-note-id]').forEach(item => {
     item.addEventListener('click', () => {
       const noteId = item.getAttribute('data-note-id');
       selectNote(noteId);
@@ -93,7 +93,7 @@ function selectNote(noteId) {
   currentNoteId = noteId;
   
   // Update active state in list
-  document.querySelectorAll('.notes-list-item').forEach(item => {
+  document.querySelectorAll('.folder-item[data-note-id]').forEach(item => {
     item.classList.remove('active');
   });
   document.querySelector(`[data-note-id="${noteId}"]`).classList.add('active');
@@ -107,16 +107,15 @@ function selectNote(noteId) {
 
 function displayNoteDetail(note) {
   const container = document.getElementById('note-detail');
-  document.getElementById('note-title').textContent = escapeHtml(note.title);
   
   container.innerHTML = `
+    <h1 class="note-title">${escapeHtml(note.title)}</h1>
     <div class="note-detail-content">${escapeHtml(note.content)}</div>
   `;
 }
 
 function showEmptyNoteDetail() {
   const container = document.getElementById('note-detail');
-  document.getElementById('note-title').textContent = 'Notes';
   container.innerHTML = '<p class="empty">Select a note to view</p>';
 }
 
