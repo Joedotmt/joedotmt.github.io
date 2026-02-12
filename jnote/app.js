@@ -129,6 +129,11 @@ function displayNoteDetail(note) {
   const contentInput = document.getElementById('edit-content');
   const saveBtn = document.getElementById('btn-save');
   
+  const autoGrow = (textarea) => {
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+  };
+  
   const checkChanges = () => {
     const titleChanged = titleInput.value !== currentNoteState.title;
     const contentChanged = contentInput.value !== currentNoteState.content;
@@ -136,8 +141,18 @@ function displayNoteDetail(note) {
     saveBtn.disabled = !noteHasChanges;
   };
   
-  titleInput.addEventListener('input', checkChanges);
-  contentInput.addEventListener('input', checkChanges);
+  titleInput.addEventListener('input', () => {
+    autoGrow(titleInput);
+    checkChanges();
+  });
+  contentInput.addEventListener('input', () => {
+    autoGrow(contentInput);
+    checkChanges();
+  });
+  
+  // Initialize heights on load
+  autoGrow(titleInput);
+  autoGrow(contentInput);
   
   document.getElementById('btn-save').addEventListener('click', () => saveNote(note.id));
   document.getElementById('btn-move').addEventListener('click', () => openFolderModal('move', note));
@@ -201,8 +216,10 @@ function openFolderModal(mode, note = null) {
   const modal = document.getElementById('folder-modal');
   const modalHeader = document.getElementById('modal-header');
   const folderSelection = document.getElementById('folder-selection');
+  const customFolderInput = document.getElementById('custom-folder-name');
   
   modalHeader.textContent = mode === 'create' ? 'Create New Note' : 'Move Note to Folder';
+  customFolderInput.value = '';
   
   selectedFolderInModal = mode === 'move' ? (note.folder || '') : '';
   
@@ -230,15 +247,19 @@ function openFolderModal(mode, note = null) {
       document.querySelectorAll('.folder-option').forEach(b => b.classList.remove('selected'));
       e.target.classList.add('selected');
       selectedFolderInModal = e.target.getAttribute('data-folder');
+      customFolderInput.value = '';
     });
   });
   
   folderModalCallback = () => {
+    const customFolder = customFolderInput.value.trim();
+    const targetFolder = customFolder || selectedFolderInModal;
+    
     if (mode === 'create') {
       closeFolderModal();
-      createNewNote(selectedFolderInModal);
+      createNewNote(targetFolder);
     } else if (mode === 'move') {
-      moveNoteToFolder(note.id, selectedFolderInModal);
+      moveNoteToFolder(note.id, targetFolder);
       closeFolderModal();
     }
   };
@@ -327,10 +348,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const createBtn = document.getElementById('btn-create-note');
   createBtn.addEventListener('click', () => openFolderModal('create'));
   
-  const folderModal = document.getElementById('folder-modal');
   const confirmBtn = document.getElementById('folder-modal-confirm');
   const cancelBtn = document.getElementById('folder-modal-cancel');
-  const customFolderBtn = document.getElementById('custom-folder-btn');
+  const customFolderInput = document.getElementById('custom-folder-name');
   
   confirmBtn.addEventListener('click', () => {
     if (folderModalCallback) {
@@ -339,11 +359,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   
   cancelBtn.addEventListener('click', closeFolderModal);
-  
-  customFolderBtn.addEventListener('click', () => {
-    const input = document.getElementById('custom-folder-input');
-    input.style.display = input.style.display === 'none' ? 'flex' : 'none';
-  });
   
   window.addEventListener('resize', () => {
     if (window.innerWidth > 768) {
