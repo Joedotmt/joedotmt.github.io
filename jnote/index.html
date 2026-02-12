@@ -15,6 +15,22 @@
 <body>
     <div class="overlay" id="overlay"></div>
 
+    <div class="modal" id="folder-modal">
+        <div class="modal-content">
+            <h2 class="modal-header" id="modal-header">Select Folder</h2>
+            <div class="folder-selection" id="folder-selection"></div>
+            <button class="btn-secondary" id="custom-folder-btn">Create New Folder</button>
+            <div class="folder-input-wrapper" id="custom-folder-input" style="display: none;">
+                <input type="text" id="custom-folder-name" placeholder="Folder name">
+                <button id="custom-folder-add">Add</button>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" id="folder-modal-cancel">Cancel</button>
+                <button class="btn-primary" id="folder-modal-confirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <div class="top-bar">
         <button class="menu-button show ripple" id="menu-button">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -23,8 +39,8 @@
                 <line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
         </button>
+        <button class="btn-primary" id="btn-create-note" style="margin-left: auto;">+ New Note</button>
     </div>
-
 
     <div class="app-container">
         <div class="sidebar" id="sidebar">
