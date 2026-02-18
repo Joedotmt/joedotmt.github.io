@@ -1,407 +1,317 @@
 const pb = new PocketBase('https://joemt.fly.dev');
 let allNotes = [];
-let currentFolder = 'all';
+let currentFolder = 'Notes';
 let currentNoteId = null;
 let folderModalCallback = null;
 let selectedFolderInModal = '';
 let currentNoteState = { title: '', content: '' };
-let noteHasChanges = false;
 
-async function loadNotes() {
-  try {
-    const fetched = await pb.collection('jnote').getFullList({ sort: '-updated', filter: 'deleted=false' });
+// ─── Core GUI Update ──────────────────────────────────────────────────────────
 
-    allNotes = fetched.map(n => ({
-      id: n.id,
-      title: n.title || '[untitled]',
-      folder: n.folder || 'Notes',
-      updated: n.updated,
-      hasContent: false
-    }));
+function updateGUI() {
+  // 1. Rebuild folder list
+  const folders = ['Notes', ...new Set(allNotes.map(n => n.folder).filter(f => f && f !== 'Notes'))].sort((a, b) =>
+    a === 'Notes' ? -1 : b === 'Notes' ? 1 : a.localeCompare(b)
+  );
 
+  const folderList = document.getElementById('folder-list');
+  folderList.innerHTML = folders.map(folder => `
+    <li onclick="filterByFolder('${escapeHtml(folder)}')"
+        class="folder-item ${folder === currentFolder ? 'active' : ''}"
+        data-folder="${escapeHtml(folder)}">
+      ${escapeHtml(folder)}
+    </li>
+  `).join('');
 
-    displayFolders();
-    updateGUI();
-  } catch (error) {
-    console.error('Error loading notes:', error);
-    document.getElementById('note-detail').innerHTML =
-      '<p class="error">Failed to load notes</p>';
+  // 2. Rebuild notes list
+  renderNoteList();
+
+  // 3. Update note detail pane
+  if (!currentNoteId) {
+    document.getElementById('note-detail').innerHTML = '<p class="empty">Select a note to view</p>';
   }
 }
 
-function displayFolders() {
-  const folders = new Set();
-  folders.add('Notes');
-  allNotes.forEach(note => {
-    folders.add(note.folder);
-  });
-
-  const folderList = document.getElementById('folder-list');
-
-  folderList.innerHTML = `<li onclick="filterByFolder('Notes', this)" class="folder-item" data-folder="Notes">
-        Notes
-      </li>`;
-
-  Array.from(folders).sort().forEach(folder => {
-    if (folder === 'Notes') return; // Already added
-    folderList.innerHTML += `
-      <li onclick="filterByFolder('${folder}', this)" class="folder-item" data-folder="${folder}">
-        ${folder}
-      </li>
-    `;
-  });
-}
-
-function filterByFolder(folder, element) {
-  currentFolder = folder;
-  currentNoteId = null;
-
-  // Close mobile menu
-  closeMobileMenu();
-
-  updateGUI();
-}
-
-/**
- * Displays a list of notes in the UI.
- * @param {list} notes - The list of notes to display.
- */
-function displayNotes(notes) {
+function renderNoteList() {
+  const notes = allNotes.filter(n => n.folder === currentFolder);
   const notesList = document.getElementById('notes-list');
 
   if (notes.length === 0) {
     notesList.innerHTML = '<li class="empty-state">No notes</li>';
-    return;
-  }
+  } else {
+    notesList.innerHTML = notes.map(note => `
+      <li class="folder-item ${note.id === currentNoteId ? 'active' : ''}"
+          data-note-id="${note.id}">
+        ${escapeHtml(note.title) || '[untitled]'}
+      </li>
+    `).join('');
 
-  notesList.innerHTML = notes.map(note => `
-    <li class="folder-item" data-note-id="${note.id}">
-      ${escapeHtml(note.title)}
-    </li>
-  `).join('');
-
-  // Add click handlers
-  document.querySelectorAll('.folder-item[data-note-id]').forEach(item => {
-    item.addEventListener('click', () => {
-      const noteId = item.getAttribute('data-note-id');
-      selectNote(noteId);
+    notesList.querySelectorAll('[data-note-id]').forEach(item => {
+      item.addEventListener('click', () => selectNote(item.dataset.noteId));
     });
-  });
+  }
 }
 
-function selectNote(noteId) {
-  (async () => {
-    currentNoteId = noteId;
-    noteHasChanges = false;
+// ─── Data Loading ─────────────────────────────────────────────────────────────
 
-    document.querySelectorAll('.folder-item[data-note-id]').forEach(item => item.classList.remove('active'));
-    const activeEl = document.querySelector(`[data-note-id="${noteId}"]`);
-    if (activeEl) activeEl.classList.add('active');
-
-    const noteIndex = allNotes.findIndex(n => n.id === noteId);
-    const local = noteIndex !== -1 ? allNotes[noteIndex] : null;
-
-    const container = document.getElementById('note-detail');
-    if (!local || !local.hasContent) {
-      container.innerHTML = '<p class="empty">Loading note...</p>';
-      try {
-        const full = await pb.collection('jnote').getOne(noteId);
-        full.hasContent = true;
-        allNotes[noteIndex] = full;
-        displayNoteDetail(full);
-      } catch (err) {
-        console.error('Error fetching note:', err);
-        container.innerHTML = '<p class="error">Failed to load note</p>';
-      }
-    } else {
-      displayNoteDetail(local);
-    }
-  })();
+async function loadNotes() {
+  try {
+    const fetched = await pb.collection('jnote').getFullList({ sort: '-updated', filter: 'deleted=false' });
+    allNotes = fetched.map(n => ({
+      id: n.id,
+      title: n.title,
+      folder: n.folder || 'Notes',
+      updated: n.updated,
+      hasContent: false
+    }));
+    updateGUI();
+  } catch (err) {
+    console.error('Error loading notes:', err);
+    document.getElementById('note-detail').innerHTML = '<p class="error">Failed to load notes</p>';
+  }
 }
 
-function displayNoteDetail(note) {
+// ─── Folder & Note Selection ──────────────────────────────────────────────────
+
+function filterByFolder(folder) {
+  currentFolder = folder;
+  currentNoteId = null;
+  closeMobileMenu();
+  updateGUI();
+}
+
+async function selectNote(noteId) {
+  currentNoteId = noteId;
+  updateGUI(); // Reflect active states immediately
+
+  const noteIndex = allNotes.findIndex(n => n.id === noteId);
+  const local = allNotes[noteIndex];
+
   const container = document.getElementById('note-detail');
 
+  if (!local?.hasContent) {
+    container.innerHTML = '<p class="empty">Loading note...</p>';
+    try {
+      const full = await pb.collection('jnote').getOne(noteId);
+      full.hasContent = true;
+      if (full.folder == "") full.folder = 'Notes';
+      allNotes[noteIndex] = full;
+      renderNoteDetail(full);
+    } catch (err) {
+      console.error('Error fetching note:', err);
+      container.innerHTML = '<p class="error">Failed to load note</p>';
+    }
+  } else {
+    renderNoteDetail(local);
+  }
+}
+
+// ─── Note Detail Rendering ────────────────────────────────────────────────────
+
+function renderNoteDetail(note) {
   currentNoteState = { title: note.title, content: note.content };
 
+  const container = document.getElementById('note-detail');
   container.innerHTML = `
     <div class="note-actions">
       <button class="btn-primary" id="btn-save" disabled>Save</button>
       <button class="btn-secondary" id="btn-move">Move</button>
       <button class="btn-secondary" id="btn-delete">Delete</button>
     </div>
-    <textarea class="note-title editable" id="edit-title">${escapeHtml(note.title)}</textarea>
-    <textarea class="note-detail-content editable" id="edit-content">${escapeHtml(note.content)}</textarea>
+    <textarea placeholder="Title" class="note-title" id="edit-title">${escapeHtml(note.title)}</textarea>
+    <textarea placeholder="Take a note..." class="note-detail-content editable" id="edit-content">${escapeHtml(note.content)}</textarea>
   `;
 
-  const titleInput = document.getElementById('edit-title');
-  const contentInput = document.getElementById('edit-content');
+  const titleEl = document.getElementById('edit-title');
+  const contentEl = document.getElementById('edit-content');
+
+
+  const autoGrow = el => { el.style.height = '1em'; el.style.height = el.scrollHeight + 'px'; };
+
   const saveBtn = document.getElementById('btn-save');
 
-  const autoGrow = (textarea) => {
-    textarea.style.height = '1em';
-    textarea.style.height = textarea.scrollHeight + 'px';
-  };
-
-  const checkChanges = () => {
-    const titleChanged = titleInput.value !== currentNoteState.title;
-    const contentChanged = contentInput.value !== currentNoteState.content;
-    noteHasChanges = titleChanged || contentChanged;
-    saveBtn.disabled = !noteHasChanges;
-  };
-
-  titleInput.addEventListener('input', () => {
-    autoGrow(titleInput);
-    checkChanges();
-  });
-  contentInput.addEventListener('input', () => {
-    autoGrow(contentInput);
-    checkChanges();
+  [titleEl, contentEl].forEach(el => {
+    el.addEventListener('input', () => {
+      autoGrow(el);
+      setCanSave(true);
+    });
+    autoGrow(el);
   });
 
-  // Initialize heights on load
-  autoGrow(titleInput);
-  autoGrow(contentInput);
-
-  document.getElementById('btn-save').addEventListener('click', () => saveNote(note.id));
+  saveBtn.addEventListener('click', () => saveNote(note.id));
   document.getElementById('btn-move').addEventListener('click', () => openFolderModal('move', note));
   document.getElementById('btn-delete').addEventListener('click', () => deleteNote(note.id));
 }
+
+// ─── CRUD Operations ──────────────────────────────────────────────────────────
 
 async function saveNote(noteId) {
   const title = document.getElementById('edit-title').value.trim();
   const content = document.getElementById('edit-content').value.trim();
 
   try {
-    const updatedNote = await pb.collection('jnote').update(noteId, {
-      title,
-      content
-    });
+    const updated = await pb.collection('jnote').update(noteId, { title, content });
+    updated.hasContent = true;
 
-    const noteIndex = allNotes.findIndex(n => n.id === noteId);
-    if (noteIndex !== -1) {
-      updatedNote.hasContent = true;
-      allNotes[noteIndex] = updatedNote;
-    }
+    const idx = allNotes.findIndex(n => n.id === noteId);
+    if (idx !== -1) allNotes[idx] = updated;
 
-    // Update title in the notes list sidebar (if visible)
-    const noteListEl = document.querySelector(`[data-note-id="${noteId}"]`);
-    if (noteListEl) {
-      noteListEl.innerHTML = escapeHtml(updatedNote.title || '[untitled]');
-    }
+    currentNoteState = { title: updated.title, content: updated.content };
 
-    currentNoteState = { title: updatedNote.title, content: updatedNote.content };
-    noteHasChanges = false;
-    document.getElementById('btn-save').disabled = true;
-    displayNoteDetail(updatedNote);
-  } catch (error) {
-    console.error('Error saving note:', error);
+
+
+    setCanSave(false);
+
+    renderNoteList();
+  } catch (err) {
+    console.error('Error saving note:', err);
     alert('Failed to save note');
   }
 }
 
-async function deleteNote(noteId) {
-  if (!confirm('Are you sure you want to delete this note?')) {
-    return;
-  }
-
-  try {
-    // Mark note as deleted instead of deleting it permanently
-    await pb.collection('jnote').update(noteId, { deleted: true });
-    allNotes = allNotes.filter(n => n.id !== noteId);
-    currentNoteId = null;
-  } catch (error) {
-    console.error('Error deleting note:', error);
-    alert('Failed to delete note');
-  }
-}
-
-function updateGUI() {
-  displayNotes(getNotesInCurrentFolder());
-  if (currentNoteId == null) {
-    showEmptyNoteDetail();
-  }
-
-  // Update active state for folders
-  document.querySelectorAll('.folder-item').forEach(item => {
-    item.classList.remove('active');
-  });
-  document.querySelector(`.folder-item[data-folder="${currentFolder}"]`)?.classList.add('active');
-}
-
-function getNotesInCurrentFolder() {
-  return currentFolder === ''
-    ? allNotes.filter(note => !note.folder || note.folder === '')
-    : allNotes.filter(note => note.folder === currentFolder);
-}
-
-function openFolderModal(mode, note = null) {
-  const modal = document.getElementById('folder-modal');
-  const modalHeader = document.getElementById('modal-header');
-  const folderSelection = document.getElementById('folder-selection');
-  const customFolderInput = document.getElementById('custom-folder-name');
-
-  modalHeader.textContent = mode === 'create' ? 'Create New Note' : 'Move Note to Folder';
-  customFolderInput.value = '';
-
-  selectedFolderInModal = mode === 'move' ? (note.folder || '') : '';
-
-  const folders = new Set();
-  allNotes.forEach(n => {
-    if (n.folder) {
-      folders.add(n.folder);
-    }
-  });
-
-  folderSelection.innerHTML = Array.from(folders).sort().map(folder => `
-    <button class="folder-option ${selectedFolderInModal === folder ? 'selected' : ''}" data-folder="${folder}">
-      ${escapeHtml(folder)}
-    </button>
-  `).join('');
-
-  folderSelection.innerHTML += `
-    <button class="folder-option ${selectedFolderInModal === '' ? 'selected' : ''}" data-folder="">
-      Notes
-    </button>
-  `;
-
-  document.querySelectorAll('.folder-option').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      document.querySelectorAll('.folder-option').forEach(b => b.classList.remove('selected'));
-      e.target.classList.add('selected');
-      selectedFolderInModal = e.target.getAttribute('data-folder');
-      customFolderInput.value = '';
-    });
-  });
-
-  folderModalCallback = () => {
-    const customFolder = customFolderInput.value.trim();
-    const targetFolder = customFolder || selectedFolderInModal;
-
-    if (mode === 'create') {
-      closeFolderModal();
-      createNewNote(targetFolder);
-    } else if (mode === 'move') {
-      moveNoteToFolder(note.id, targetFolder);
-      closeFolderModal();
-    }
-  };
-
-  modal.classList.add('show');
+function setCanSave(noteHasChanges) {
+  const saveBtn = document.getElementById('btn-save');
+  if (!saveBtn) return;
+  saveBtn.disabled = !noteHasChanges;
 }
 
 async function createNewNote(folder) {
   try {
     const newNote = await pb.collection('jnote').create({
-      title: 'Note',
+      title: '',
       content: '',
-      folder: folder || ''
+      folder: folder || 'Notes'
     });
 
-    const minimal = {
+    allNotes.push({
       id: newNote.id,
-      title: newNote.title || 'Note',
-      folder: newNote.folder || '',
+      title: newNote.title,
+      folder: newNote.folder || 'Notes',
       updated: newNote.updated,
       hasContent: true,
       content: newNote.content
-    };
-    allNotes.push(minimal);
-    displayFolders();
-    filterByFolder(folder, document.querySelector(`[data-folder="${folder}"]`));
-    selectNote(newNote.id);
-  } catch (error) {
-    console.error('Error creating note:', error);
+    });
+
+    currentFolder = folder || 'Notes';
+    currentNoteId = newNote.id;
+    updateGUI();
+    renderNoteDetail(newNote);
+  } catch (err) {
+    console.error('Error creating note:', err);
     alert('Failed to create note');
+  }
+}
+
+async function deleteNote(noteId) {
+  if (!confirm('Are you sure you want to delete this note?')) return;
+
+  try {
+    await pb.collection('jnote').update(noteId, { deleted: true });
+    allNotes = allNotes.filter(n => n.id !== noteId);
+    currentNoteId = null;
+    updateGUI();
+  } catch (err) {
+    console.error('Error deleting note:', err);
+    alert('Failed to delete note');
   }
 }
 
 async function moveNoteToFolder(noteId, folder) {
   try {
-    const updatedNote = await pb.collection('jnote').update(noteId, {
-      folder: folder || ''
-    });
+    const updated = await pb.collection('jnote').update(noteId, { folder: folder || 'Notes' });
+    updated.hasContent = true;
 
-    const noteIndex = allNotes.findIndex(n => n.id === noteId);
-    if (noteIndex !== -1) {
-      updatedNote.hasContent = true;
-      allNotes[noteIndex] = updatedNote;
-    }
+    const idx = allNotes.findIndex(n => n.id === noteId);
+    if (idx !== -1) allNotes[idx] = updated;
 
-    displayFolders();
-    filterByFolder(currentFolder, document.querySelector(`[data-folder="${currentFolder}"]`));
-  } catch (error) {
-    console.error('Error moving note:', error);
+    updateGUI();
+  } catch (err) {
+    console.error('Error moving note:', err);
     alert('Failed to move note');
   }
 }
 
-function closeFolderModal() {
+// ─── Folder Modal ─────────────────────────────────────────────────────────────
+
+function openFolderModal(mode, note = null) {
   const modal = document.getElementById('folder-modal');
-  modal.classList.remove('show');
+  const customFolderInput = document.getElementById('custom-folder-name');
+
+  document.getElementById('modal-header').textContent =
+    mode === 'create' ? 'Create New Note' : 'Move Note to Folder';
+
+  customFolderInput.value = '';
+  selectedFolderInModal = mode === 'move' ? (note?.folder || '') : '';
+
+  const folders = [...new Set(allNotes.map(n => n.folder).filter(Boolean))].sort();
+  const folderSelection = document.getElementById('folder-selection');
+
+  folderSelection.innerHTML = folders.map(folder => `
+    <button class="folder-option ${selectedFolderInModal === folder ? 'selected' : ''}"
+            data-folder="${escapeHtml(folder)}">
+      ${escapeHtml(folder)}
+    </button>
+  `).join('');
+
+  folderSelection.querySelectorAll('.folder-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      folderSelection.querySelectorAll('.folder-option').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedFolderInModal = btn.dataset.folder;
+      customFolderInput.value = '';
+    });
+  });
+
+  folderModalCallback = () => {
+    const targetFolder = customFolderInput.value.trim() || selectedFolderInModal;
+    closeFolderModal();
+    if (mode === 'create') createNewNote(targetFolder);
+    else if (mode === 'move') moveNoteToFolder(note.id, targetFolder);
+  };
+
+  modal.classList.add('show');
+}
+
+function closeFolderModal() {
+  document.getElementById('folder-modal').classList.remove('show');
   folderModalCallback = null;
 }
 
-function escapeHtml(text) {
-  text = text == null ? '' : String(text);
-  const map = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;'
-  };
-  return text.replace(/[&<>\"']/g, m => map[m]);
-}
+// ─── Mobile Menu ──────────────────────────────────────────────────────────────
 
 function openMobileMenu() {
-  const sidebar = document.getElementById('sidebar');
-  const overlay = document.getElementById('overlay');
-  sidebar.classList.add('show');
-  overlay.classList.add('show');
+  document.getElementById('sidebar').classList.add('show');
+  document.getElementById('overlay').classList.add('show');
 }
 
 function closeMobileMenu() {
-  const sidebar = document.getElementById('sidebar');
-  const overlay = document.getElementById('overlay');
-  sidebar.classList.remove('show');
-  overlay.classList.remove('show');
+  document.getElementById('sidebar').classList.remove('show');
+  document.getElementById('overlay').classList.remove('show');
 }
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+
+function escapeHtml(text) {
+  const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+  return String(text ?? '').replace(/[&<>"']/g, m => map[m]);
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
-  currentFolder = 'Notes';
-
   loadNotes();
 
-  const menuButton = document.getElementById('menu-button');
-  menuButton.addEventListener('click', openMobileMenu);
-
-  const overlay = document.getElementById('overlay');
-  overlay.addEventListener('click', closeMobileMenu);
-
-  const createBtn = document.getElementById('btn-create-note');
-  createBtn.addEventListener('click', () => createNewNote(currentFolder));
-
-  const confirmBtn = document.getElementById('folder-modal-confirm');
-  const cancelBtn = document.getElementById('folder-modal-cancel');
-  const customFolderInput = document.getElementById('custom-folder-name');
-
-  confirmBtn.addEventListener('click', () => {
-    if (folderModalCallback) {
-      folderModalCallback();
+  setInterval(() => {
+    if (currentNoteId) {
+      saveNote(currentNoteId);
     }
-  });
+  }, 1000);
 
-  cancelBtn.addEventListener('click', closeFolderModal);
+  document.getElementById('menu-button').addEventListener('click', openMobileMenu);
+  document.getElementById('overlay').addEventListener('click', closeMobileMenu);
+  document.getElementById('btn-create-note').addEventListener('click', () => createNewNote(currentFolder));
+  document.getElementById('folder-modal-confirm').addEventListener('click', () => folderModalCallback?.());
+  document.getElementById('folder-modal-cancel').addEventListener('click', closeFolderModal);
 
-  window.addEventListener('resize', () => {
-    if (window.innerWidth > 768) {
-      closeMobileMenu();
-    }
-  });
+  window.addEventListener('resize', () => { if (window.innerWidth > 768) closeMobileMenu(); });
 });
-
-function showEmptyNoteDetail() {
-  const container = document.getElementById('note-detail');
-  container.innerHTML = '<p class="empty">Select a note to view</p>';
-}

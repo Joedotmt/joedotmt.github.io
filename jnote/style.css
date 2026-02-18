@@ -4,6 +4,7 @@ body {
     height: 100vh;
     display: flex;
     flex-direction: column;
+    font-family: 'Google Sans', sans-serif;
 }
 
 .app-container {
@@ -15,8 +16,7 @@ body {
 
 .sidebar {
     width: 256px;
-    background: var(--surface);
-    border-right: 1px solid var(--outline);
+    background: var(--surface-container);
     padding: 16px 0;
     overflow-y: auto;
     transition: transform 0.3s ease;
@@ -72,8 +72,7 @@ body {
 
 
 .top-bar {
-    background: var(--surface);
-    border-bottom: 1px solid var(--outline);
+    background: var(--surface-container-high);
     padding: 10px;
     display: flex;
     align-items: center;
@@ -107,15 +106,6 @@ body {
     overflow: auto;
     -webkit-overflow-scrolling: touch;
     padding-right: 8px;
-}
-
-.note-title {
-    font-size: 2.5em;
-    font-weight: 600;
-    margin: 0 0 16px 0;
-    color: var(--on-surface);
-    line-height: 1.2;
-    word-break: break-word;
 }
 
 .note-detail-content {
@@ -330,7 +320,7 @@ button{
     transition: all 0.2s;
 }
 
-.note-title.editable,
+.note-title,
 .note-detail-content.editable {
     background: transparent;
     padding: 0;
@@ -347,10 +337,10 @@ button{
     margin: 0;
 }
 
-.note-title.editable {
-    font-size: 2.5em;
+.note-title {
+    font-size: 2em;
     font-weight: 600;
-    margin: 0 0 16px 0;
+    margin: 0 0 8px 0;
     line-height: 1.2;
     word-break: break-word;
     min-height: 0px;
