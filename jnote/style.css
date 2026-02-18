@@ -54,11 +54,15 @@ body {
 }
 
 .sidebar {
-    width: 256px;
+    width: 100%;
     background: var(--surface-container);
     padding: 0 0;
     overflow-y: auto;
     transition: transform 0.3s ease;
+}
+.whole-sidebar{
+    width: 512px;
+    display: flex;
 }
 
 .sidebar.hidden {
@@ -399,27 +403,31 @@ button {
     cursor: not-allowed;
 }
 
+
+.hide{
+    display: none !important;
+}
+
 @media (max-width: 768px) {
-    .sidebar {
-        width: 256px;
+    .whole-sidebar {
+        width: 100%;
         position: fixed;
         left: 0;
-        top: 0;
         height: 100vh;
         transform: translateX(-100%);
         z-index: 101;
     }
-
-    .sidebar.show {
+    
+    .whole-sidebar.show {
         transform: translateX(0);
+    }
+
+    .folders-panel{
+        background: var(--background);
     }
 
     .menu-button.show {
         display: block;
-    }
-
-    .app-container {
-        flex-direction: column;
     }
 
     .top-bar {

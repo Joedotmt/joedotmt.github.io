@@ -28,6 +28,7 @@ function updateGUI() {
 
   // 3. Update note detail pane
   if (!currentNoteId) {
+    openMobileMenu(); // Ensure menu is open on mobile when no note is selected
     document.getElementById('note-detail').innerHTML = '<p class="empty">Select a note to view</p>';
   }
 }
@@ -76,13 +77,13 @@ async function loadNotes() {
 function filterByFolder(folder) {
   currentFolder = folder;
   currentNoteId = null;
-  closeMobileMenu();
   updateGUI();
 }
 
 async function selectNote(noteId) {
   currentNoteId = noteId;
   updateGUI(); // Reflect active states immediately
+  closeMobileMenu()
 
   const noteIndex = allNotes.findIndex(n => n.id === noteId);
   const local = allNotes[noteIndex];
@@ -292,13 +293,17 @@ function closeFolderModal() {
 // ─── Mobile Menu ──────────────────────────────────────────────────────────────
 
 function openMobileMenu() {
-  document.getElementById('folders-panel').classList.add('show');
+  document.getElementById('whole-sidebar').classList.add('show');
   document.getElementById('overlay').classList.add('show');
+  document.getElementById('menu-button').classList.add('hide');
+  document.getElementById('btn-create-note').classList.remove('hide');
 }
 
 function closeMobileMenu() {
-  document.getElementById('folders-panel').classList.remove('show');
+  document.getElementById('whole-sidebar').classList.remove('show');
   document.getElementById('overlay').classList.remove('show');
+  document.getElementById('menu-button').classList.remove('hide');
+  // document.getElementById('btn-create-note').classList.add('hide');
 }
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
@@ -311,6 +316,8 @@ function escapeHtml(text) {
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
+  openMobileMenu(); // Open menu on mobile by default
+
   loadNotes();
 
   document.getElementById('menu-button').addEventListener('click', openMobileMenu);
