@@ -9,11 +9,17 @@ let noteHasChanges = false;
 
 async function loadNotes() {
   try {
-    allNotes = await pb.collection('jnote').getFullList({
-      sort: '-updated',
-    });
-    
-    populateFolders();
+    const fetched = await pb.collection('jnote').getFullList({ sort: '-updated', filter: 'deleted=false' });
+
+    allNotes = fetched.map(n => ({
+      id: n.id,
+      title: n.title || '[untitled]',
+      folder: n.folder || '',
+      updated: n.updated,
+      hasContent: false
+    }));
+
+    displayFolders();
     filterByFolder('', document.querySelector('[data-folder=""]'));
   } catch (error) {
     console.error('Error loading notes:', error);
@@ -22,7 +28,7 @@ async function loadNotes() {
   }
 }
 
-function populateFolders() {
+function displayFolders() {
   const folders = new Set();
   allNotes.forEach(note => {
     if (note.folder) {
@@ -32,23 +38,19 @@ function populateFolders() {
   
   const folderList = document.getElementById('folder-list');
   
-  // Clear and rebuild
-  folderList.innerHTML = '<li class="folder-item active" data-folder="">Notes</li>';
+  folderList.innerHTML = '';
   
   Array.from(folders).sort().forEach(folder => {
-    const li = document.createElement('li');
-    li.className = 'folder-item';
-    li.textContent = folder;
-    li.setAttribute('data-folder', folder);
-    li.addEventListener('click', () => filterByFolder(folder, li));
-    folderList.appendChild(li);
+    folderList.innerHTML += `
+      <li onclick="filterByFolder('${folder}', this)" class="folder-item" data-folder="${folder}">
+        ${folder}
+      </li>
+    `;
   });
-  
-  const unfiled = folderList.querySelector('[data-folder=""]');
-  unfiled.addEventListener('click', () => filterByFolder('', unfiled));
 }
 
 function filterByFolder(folder, element) {
+  console.log('Filtering by folder:', folder);
   currentFolder = folder;
   currentNoteId = null;
   
@@ -60,17 +62,15 @@ function filterByFolder(folder, element) {
     item.classList.remove('active');
   });
   element.classList.add('active');
-  
-  // Filter notes
-  const filtered = folder === '' 
-    ? allNotes.filter(note => !note.folder || note.folder === '')
-    : allNotes.filter(note => note.folder === folder);
-  
-  displayNotesList(filtered);
-  showEmptyNoteDetail();
+    
+  updateGUI();
 }
 
-function displayNotesList(notes) {
+/**
+ * Displays a list of notes in the UI.
+ * @param {list} notes - The list of notes to display.
+ */
+function displayNotes(notes) {
   const notesList = document.getElementById('notes-list');
   
   if (notes.length === 0) {
@@ -94,20 +94,33 @@ function displayNotesList(notes) {
 }
 
 function selectNote(noteId) {
-  currentNoteId = noteId;
-  noteHasChanges = false;
-  
-  // Update active state in list
-  document.querySelectorAll('.folder-item[data-note-id]').forEach(item => {
-    item.classList.remove('active');
-  });
-  document.querySelector(`[data-note-id="${noteId}"]`).classList.add('active');
-  
-  // Find and display the note
-  const note = allNotes.find(n => n.id === noteId);
-  if (note) {
-    displayNoteDetail(note);
-  }
+  (async () => {
+    currentNoteId = noteId;
+    noteHasChanges = false;
+
+    document.querySelectorAll('.folder-item[data-note-id]').forEach(item => item.classList.remove('active'));
+    const activeEl = document.querySelector(`[data-note-id="${noteId}"]`);
+    if (activeEl) activeEl.classList.add('active');
+
+    const noteIndex = allNotes.findIndex(n => n.id === noteId);
+    const local = noteIndex !== -1 ? allNotes[noteIndex] : null;
+
+    const container = document.getElementById('note-detail');
+    if (!local || !local.hasContent) {
+      container.innerHTML = '<p class="empty">Loading note...</p>';
+      try {
+        const full = await pb.collection('jnote').getOne(noteId);
+        full.hasContent = true;
+        allNotes[noteIndex] = full;
+        displayNoteDetail(full);
+      } catch (err) {
+        console.error('Error fetching note:', err);
+        container.innerHTML = '<p class="error">Failed to load note</p>';
+      }
+    } else {
+      displayNoteDetail(local);
+    }
+  })();
 }
 
 function displayNoteDetail(note) {
@@ -118,8 +131,8 @@ function displayNoteDetail(note) {
   container.innerHTML = `
     <div class="note-actions">
       <button class="btn-primary" id="btn-save" disabled>Save</button>
-      <button class="btn-secondary" id="btn-move">Move to Folder</button>
-      <button class="btn-danger" id="btn-delete">Delete</button>
+      <button class="btn-secondary" id="btn-move">Move</button>
+      <button class="btn-secondary" id="btn-delete">Delete</button>
     </div>
     <textarea class="note-title editable" id="edit-title">${escapeHtml(note.title)}</textarea>
     <textarea class="note-detail-content editable" id="edit-content">${escapeHtml(note.content)}</textarea>
@@ -130,7 +143,7 @@ function displayNoteDetail(note) {
   const saveBtn = document.getElementById('btn-save');
   
   const autoGrow = (textarea) => {
-    textarea.style.height = 'auto';
+    textarea.style.height = '1em';
     textarea.style.height = textarea.scrollHeight + 'px';
   };
   
@@ -163,11 +176,6 @@ async function saveNote(noteId) {
   const title = document.getElementById('edit-title').value.trim();
   const content = document.getElementById('edit-content').value.trim();
   
-  if (!title) {
-    alert('Title cannot be empty');
-    return;
-  }
-  
   try {
     const updatedNote = await pb.collection('jnote').update(noteId, {
       title,
@@ -176,7 +184,14 @@ async function saveNote(noteId) {
     
     const noteIndex = allNotes.findIndex(n => n.id === noteId);
     if (noteIndex !== -1) {
+      updatedNote.hasContent = true;
       allNotes[noteIndex] = updatedNote;
+    }
+
+    // Update title in the notes list sidebar (if visible)
+    const noteListEl = document.querySelector(`[data-note-id="${noteId}"]`);
+    if (noteListEl) {
+      noteListEl.innerHTML = escapeHtml(updatedNote.title || '[untitled]');
     }
     
     currentNoteState = { title: updatedNote.title, content: updatedNote.content };
@@ -195,21 +210,27 @@ async function deleteNote(noteId) {
   }
   
   try {
-    await pb.collection('jnote').delete(noteId);
-    
+    // Mark note as deleted instead of deleting it permanently
+    await pb.collection('jnote').update(noteId, { deleted: true });
     allNotes = allNotes.filter(n => n.id !== noteId);
     currentNoteId = null;
-    
-    const filtered = currentFolder === ''
-      ? allNotes.filter(note => !note.folder || note.folder === '')
-      : allNotes.filter(note => note.folder === currentFolder);
-    
-    displayNotesList(filtered);
-    showEmptyNoteDetail();
   } catch (error) {
     console.error('Error deleting note:', error);
     alert('Failed to delete note');
   }
+}
+
+function updateGUI(){
+    displayNotes(getNotesInCurrentFolder());
+    if (currentNoteId == null) {
+      showEmptyNoteDetail();
+    }
+}
+
+function getNotesInCurrentFolder() {
+  return currentFolder === ''
+    ? allNotes.filter(note => !note.folder || note.folder === '')
+    : allNotes.filter(note => note.folder === currentFolder);
 }
 
 function openFolderModal(mode, note = null) {
@@ -270,16 +291,23 @@ function openFolderModal(mode, note = null) {
 async function createNewNote(folder) {
   try {
     const newNote = await pb.collection('jnote').create({
-      title: 'Untitled Note',
+      title: 'Note',
       content: '',
       folder: folder || ''
     });
     
-    allNotes.push(newNote);
-    populateFolders();
+    const minimal = {
+      id: newNote.id,
+      title: newNote.title || 'Note',
+      folder: newNote.folder || '',
+      updated: newNote.updated,
+      hasContent: true,
+      content: newNote.content
+    };
+    allNotes.push(minimal);
+    displayFolders();
     filterByFolder(folder, document.querySelector(`[data-folder="${folder}"]`));
     selectNote(newNote.id);
-    enterEditMode(newNote);
   } catch (error) {
     console.error('Error creating note:', error);
     alert('Failed to create note');
@@ -294,10 +322,11 @@ async function moveNoteToFolder(noteId, folder) {
     
     const noteIndex = allNotes.findIndex(n => n.id === noteId);
     if (noteIndex !== -1) {
+      updatedNote.hasContent = true;
       allNotes[noteIndex] = updatedNote;
     }
     
-    populateFolders();
+    displayFolders();
     filterByFolder(currentFolder, document.querySelector(`[data-folder="${currentFolder}"]`));
   } catch (error) {
     console.error('Error moving note:', error);
@@ -312,6 +341,7 @@ function closeFolderModal() {
 }
 
 function escapeHtml(text) {
+  text = text == null ? '' : String(text);
   const map = {
     '&': '&amp;',
     '<': '&lt;',
@@ -319,7 +349,7 @@ function escapeHtml(text) {
     '"': '&quot;',
     "'": '&#039;'
   };
-  return text.replace(/[&<>"']/g, m => map[m]);
+  return text.replace(/[&<>\"']/g, m => map[m]);
 }
 
 function openMobileMenu() {
@@ -346,7 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
   overlay.addEventListener('click', closeMobileMenu);
   
   const createBtn = document.getElementById('btn-create-note');
-  createBtn.addEventListener('click', () => openFolderModal('create'));
+  createBtn.addEventListener('click', () => createNewNote(currentFolder));
   
   const confirmBtn = document.getElementById('folder-modal-confirm');
   const cancelBtn = document.getElementById('folder-modal-cancel');
