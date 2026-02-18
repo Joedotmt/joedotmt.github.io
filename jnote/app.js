@@ -26,6 +26,9 @@ function updateGUI() {
   // 2. Rebuild notes list
   renderNoteList();
 
+  
+  document.getElementById('current-folder-title').textContent = currentFolder;
+
   // 3. Update note detail pane
   if (!currentNoteId) {
     openMobileMenu(); // Ensure menu is open on mobile when no note is selected
@@ -292,18 +295,26 @@ function closeFolderModal() {
 
 // ─── Mobile Menu ──────────────────────────────────────────────────────────────
 
+let menuOpen = false;
 function openMobileMenu() {
-  document.getElementById('whole-sidebar').classList.add('show');
-  document.getElementById('overlay').classList.add('show');
-  document.getElementById('menu-button').classList.add('hide');
-  document.getElementById('btn-create-note').classList.remove('hide');
+  document.getElementById('menu-button').firstElementChild.style.rotate = '0deg';
+
+  document.getElementById('sidebar-panel-container').style.width = document.getElementById('sidebar-panel').getBoundingClientRect().width + 'px';
+  document.getElementById('sidebar-panel-container').style.opacity = '1';
+  menuOpen = true;
 }
 
 function closeMobileMenu() {
-  document.getElementById('whole-sidebar').classList.remove('show');
-  document.getElementById('overlay').classList.remove('show');
-  document.getElementById('menu-button').classList.remove('hide');
-  // document.getElementById('btn-create-note').classList.add('hide');
+  document.getElementById('menu-button').firstElementChild.style.rotate = '180deg';
+
+  document.getElementById('sidebar-panel-container').style.width = '0px';
+  document.getElementById('sidebar-panel-container').style.opacity = '0';
+  menuOpen = false;
+}
+
+function toggleMenu() {
+  if (menuOpen) closeMobileMenu();
+  else openMobileMenu();
 }
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
@@ -320,11 +331,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadNotes();
 
-  document.getElementById('menu-button').addEventListener('click', openMobileMenu);
   document.getElementById('overlay').addEventListener('click', closeMobileMenu);
   document.getElementById('btn-create-note').addEventListener('click', () => createNewNote(currentFolder));
   document.getElementById('folder-modal-confirm').addEventListener('click', () => folderModalCallback?.());
   document.getElementById('folder-modal-cancel').addEventListener('click', closeFolderModal);
-
-  window.addEventListener('resize', () => { if (window.innerWidth > 768) closeMobileMenu(); });
 });

@@ -46,24 +46,14 @@ body {
     font-family: 'Google Sans', sans-serif;
 }
 
-.app-container {
-    display: flex;
-    flex: 1 1 auto;
-    height: 100%;
-    overflow: hidden;
-}
-
 .sidebar {
     width: 100%;
-    background: var(--surface-container);
     padding: 0 0;
     overflow-y: auto;
     transition: transform 0.3s ease;
 }
-.whole-sidebar{
-    width: 512px;
-    display: flex;
-}
+
+
 
 .sidebar.hidden {
     transform: translateX(-100%);
@@ -117,27 +107,39 @@ body {
 
 
 .top-bar {
-    background: var(--surface-container-high);
+    background: transparent;
     padding: 0px;
     display: flex;
     align-items: center;
     gap: 16px;
     z-index: 1;
+    width: 100%;
+    height: 48px;
+}
+
+#btn-create-note {
+    padding: 0;
+    width: stretch;
+    height: 40px;
+    border-radius: 0;
+    position: absolute;
+    bottom: 0;
 }
 
 .menu-button {
-    display: none;
+    display: flex;
     background: var(--surface-container-highest);
     border: none;
     cursor: pointer;
-    padding: 5px;
     color: var(--on-surface);
     border-radius: 0px;
+    border-bottom-right-radius: 5px;
     margin: 0;
-}
-
-.menu-button.show {
-    display: block;
+    padding: 0;
+    height: 48px;
+    width: 60px;
+    position: fixed;
+    top: 0;
 }
 
 .top-bar h1 {
@@ -147,11 +149,12 @@ body {
 }
 
 #note-detail {
-    width: 100%;
-    max-width: 700px;
     overflow: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-right: 8px;
+    border: var(--surface-container-highest) solid 3px;
+    border-radius: 10px;
+    padding: 24px;
+    height: calc(100vh - 80px);
+    width: min(100%, 700px);
 }
 
 .note-detail-content {
@@ -204,22 +207,6 @@ body {
 
 .modal.show {
     display: flex;
-}
-
-.content {
-    display: flex;
-    justify-content: center;
-    flex: 1 1 auto;
-    overflow: hidden;
-}
-
-.main-content {
-    padding: 2em;
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    overflow: hidden;
 }
 
 .modal-content {
@@ -353,8 +340,9 @@ button {
 .note-actions {
     display: flex;
     gap: 8px;
-    margin-bottom: 24px;
+    margin-bottom: 12px;
     flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
 .note-actions button {
@@ -404,33 +392,49 @@ button {
 }
 
 
-.hide{
+.hide {
     display: none !important;
 }
 
+.sidebar-panel {
+    display: flex;
+    flex-direction: column;
+    height: stretch;
+    z-index: 101;
+    width: min(512px, 100vw);
+    background: var(--surface-container);
+}
+
+.sidebar-panel-container {
+    flex-shrink: 0;
+    flex-grow: 0;
+    overflow: hidden;
+    width: min(512px, 100vw);
+    transition: width 0.5s cubic-bezier(0.3, 0, 0.35, 0.98), opacity 0.5s cubic-bezier(0.3, 0, 1, 0.42);
+}
+
 @media (max-width: 768px) {
-    .whole-sidebar {
-        width: 100%;
-        position: fixed;
-        left: 0;
-        height: 100vh;
-        transform: translateX(-100%);
-        z-index: 101;
-    }
-    
-    .whole-sidebar.show {
-        transform: translateX(0);
-    }
-
-    .folders-panel{
+    .folders-panel {
         background: var(--background);
-    }
-
-    .menu-button.show {
-        display: block;
     }
 
     .top-bar {
         order: -1;
+    }
+
+    .sidebar-panel-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 0;
+        z-index: 5;
+        opacity: 1 !important;
+    }
+}
+
+@container ndcontainer (max-width: 750px) {
+    #note-detail{
+        border: none;
     }
 }
