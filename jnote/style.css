@@ -150,11 +150,12 @@ body {
 
 #note-detail {
     overflow: auto;
-    border: var(--surface-container-highest) solid 3px;
+    outline: var(--surface-container-highest) solid 3px;
     border-radius: 10px;
     padding: 24px;
+    transition: outline 0.1s ease;
     height: calc(100dvh - 80px);
-    width: min(100%, 780px);
+    width: min(100%, 750px);
 }
 
 .note-detail-content {
@@ -440,10 +441,8 @@ button {
     }
 }
 
-
-
 @container ndcontainer (max-width: 790px) {
     #note-detail{
-        border: none;
+        outline: transparent solid 8px;
     }
 }

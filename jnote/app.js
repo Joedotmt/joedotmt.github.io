@@ -86,7 +86,10 @@ function filterByFolder(folder) {
 async function selectNote(noteId) {
   currentNoteId = noteId;
   updateGUI(); // Reflect active states immediately
-  closeMobileMenu()
+
+  if (window.innerWidth <= 1200) {
+    closeMobileMenu()
+  }
 
   const noteIndex = allNotes.findIndex(n => n.id === noteId);
   const local = allNotes[noteIndex];
