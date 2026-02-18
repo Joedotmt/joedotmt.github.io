@@ -169,10 +169,22 @@ async function saveNote(noteId) {
   }
 }
 
+let noteSaveTimeout = null;
+
 function setCanSave(noteHasChanges) {
   const saveBtn = document.getElementById('btn-save');
   if (!saveBtn) return;
   saveBtn.disabled = !noteHasChanges;
+
+  if (noteHasChanges) {
+    clearTimeout(noteSaveTimeout);
+    noteSaveTimeout = setTimeout(() => {
+      if (currentNoteId) {
+        saveNote(currentNoteId);
+        console.log('Auto-saved note');
+      }
+    }, 500);
+  }
 }
 
 async function createNewNote(folder) {
@@ -280,12 +292,12 @@ function closeFolderModal() {
 // ─── Mobile Menu ──────────────────────────────────────────────────────────────
 
 function openMobileMenu() {
-  document.getElementById('sidebar').classList.add('show');
+  document.getElementById('folders-panel').classList.add('show');
   document.getElementById('overlay').classList.add('show');
 }
 
 function closeMobileMenu() {
-  document.getElementById('sidebar').classList.remove('show');
+  document.getElementById('folders-panel').classList.remove('show');
   document.getElementById('overlay').classList.remove('show');
 }
 
@@ -300,12 +312,6 @@ function escapeHtml(text) {
 
 document.addEventListener('DOMContentLoaded', () => {
   loadNotes();
-
-  setInterval(() => {
-    if (currentNoteId) {
-      saveNote(currentNoteId);
-    }
-  }, 1000);
 
   document.getElementById('menu-button').addEventListener('click', openMobileMenu);
   document.getElementById('overlay').addEventListener('click', closeMobileMenu);

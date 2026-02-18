@@ -7,8 +7,8 @@
     <title>JNote</title>
     <link href="https://cdn.jsdelivr.net/npm/beercss@3.9.7/dist/cdn/beer.min.css" rel="stylesheet">
     <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.9.7/dist/cdn/beer.min.js"></script>
-    <script type="module"
-        src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
+
+
     <link rel="stylesheet" href="style.css">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,7 +16,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap" rel="stylesheet">
 </head>
 
-<body>
+<body class="greencolor">
     <div class="overlay" id="overlay"></div>
 
     <div class="modal" id="folder-modal">
@@ -42,18 +42,18 @@
                 <line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
         </button>
-        <button class="btn-primary" id="btn-create-note" style="margin-left: auto;">+ New Note</button>
+        <button class="btn-primary ripple" id="btn-create-note" style="margin-left: auto; padding: 5px 30px; border-radius: 0;">New Note</button>
     </div>
 
     <div class="app-container">
-        <div class="sidebar" id="sidebar">
+        <div class="sidebar" id="folders-panel">
             <div class="sidebar-header">Folders</div>
             <ul class="folder-list">
                 <div style="display: contents;" id="folder-list"></div>
             </ul>
         </div>
 
-        <div class="sidebar" id="notes-list-panel">
+        <div class="sidebar" id="notes-panel">
             <div class="sidebar-header">Notes</div>
             <ul class="folder-list" id="notes-list">
                 <li class="empty-state">Select a folder</li>
