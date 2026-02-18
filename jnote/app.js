@@ -26,7 +26,7 @@ function updateGUI() {
   // 2. Rebuild notes list
   renderNoteList();
 
-  
+
   document.getElementById('current-folder-title').textContent = currentFolder;
 
   // 3. Update note detail pane
@@ -122,24 +122,25 @@ function renderNoteDetail(note) {
       <button class="btn-secondary" id="btn-move">Move</button>
       <button class="btn-secondary" id="btn-delete">Delete</button>
     </div>
-    <textarea placeholder="Title" class="note-title" id="edit-title">${escapeHtml(note.title)}</textarea>
-    <textarea placeholder="Take a note..." class="note-detail-content editable" id="edit-content">${escapeHtml(note.content)}</textarea>
+    <div contenteditable="true" placeholder="Title" class="note-title" id="edit-title">${escapeHtml(note.title)}</div>
+    <div contenteditable="true" placeholder="Take a note..." class="note-detail-content editable" id="edit-content">${escapeHtml(note.content)}</div>
   `;
 
   const titleEl = document.getElementById('edit-title');
   const contentEl = document.getElementById('edit-content');
 
-
-  const autoGrow = el => { el.style.height = '1em'; el.style.height = el.scrollHeight + 'px'; };
-
   const saveBtn = document.getElementById('btn-save');
 
   [titleEl, contentEl].forEach(el => {
     el.addEventListener('input', () => {
-      autoGrow(el);
       setCanSave(true);
     });
-    autoGrow(el);
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && el === titleEl) {
+        e.preventDefault();
+        contentEl.focus();
+      }
+    });
   });
 
   saveBtn.addEventListener('click', () => saveNote(note.id));
@@ -150,8 +151,8 @@ function renderNoteDetail(note) {
 // ─── CRUD Operations ──────────────────────────────────────────────────────────
 
 async function saveNote(noteId) {
-  const title = document.getElementById('edit-title').value.trim();
-  const content = document.getElementById('edit-content').value.trim();
+  const title = (document.getElementById('edit-title')?.textContent || '').trim();
+  const content = (document.getElementById('edit-content')?.textContent || '').trim();
 
   try {
     const updated = await pb.collection('jnote').update(noteId, { title, content });

@@ -364,11 +364,12 @@ button {
     font-family: inherit;
     display: block;
     width: 100%;
-    resize: none;
     overflow: hidden;
     transition: border-color 0.2s;
     line-height: 1.8;
     margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 
 .note-title {
@@ -377,13 +378,19 @@ button {
     margin: 0 0 8px 0;
     line-height: 1.2;
     word-break: break-word;
-    min-height: 0px;
-    height: 1em;
+    min-height: auto;
+    height: auto;
 }
 
 .note-detail-content.editable {
     font-size: 1em;
     min-height: 300px;
+}
+
+[contenteditable="true"]:empty:before {
+    content: attr(placeholder);
+    color: var(--outline);
+    cursor: text;
 }
 
 #btn-save:disabled {
@@ -433,9 +440,11 @@ button {
     }
 }
 
+
+
 @container ndcontainer (max-width: 750px) {
     #note-detail{
         border: none;
-        background-color: red;
+        background-color: green;
     }
 }
