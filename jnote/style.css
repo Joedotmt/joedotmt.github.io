@@ -436,5 +436,6 @@ button {
 @container ndcontainer (max-width: 750px) {
     #note-detail{
         border: none;
+        background-color: red;
     }
 }
