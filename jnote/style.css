@@ -154,7 +154,7 @@ body {
     border-radius: 10px;
     padding: 24px;
     height: calc(100dvh - 80px);
-    width: min(100%, 700px);
+    width: min(100%, 780px);
 }
 
 .note-detail-content {
@@ -442,7 +442,7 @@ button {
 
 
 
-@container ndcontainer (max-width: 750px) {
+@container ndcontainer (max-width: 790px) {
     #note-detail{
         border: none;
     }
