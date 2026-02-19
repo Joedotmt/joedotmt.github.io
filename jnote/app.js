@@ -26,13 +26,14 @@ function updateGUI() {
   // 2. Rebuild notes list
   renderNoteList();
 
-
   document.getElementById('current-folder-title').textContent = currentFolder;
 
   // 3. Update note detail pane
   if (!currentNoteId) {
-    openMobileMenu(); // Ensure menu is open on mobile when no note is selected
     document.getElementById('note-detail').innerHTML = '<p class="empty">Select a note to view</p>';
+    if (window.innerWidth <= 768) {
+      closeDetailView();
+    }
   }
 }
 
@@ -79,16 +80,18 @@ async function loadNotes() {
 
 function filterByFolder(folder) {
   currentFolder = folder;
-  currentNoteId = null;
+  currentNoteId = null;  
   updateGUI();
+  closeFoldersDrawer();
 }
 
 async function selectNote(noteId) {
   currentNoteId = noteId;
   updateGUI(); // Reflect active states immediately
 
-  if (window.innerWidth <= 1200) {
-    closeMobileMenu()
+  if (window.innerWidth <= 768) {
+    closeFoldersDrawer();
+    openDetailView();
   }
 
   const noteIndex = allNotes.findIndex(n => n.id === noteId);
@@ -299,26 +302,41 @@ function closeFolderModal() {
 
 // ─── Mobile Menu ──────────────────────────────────────────────────────────────
 
-let menuOpen = false;
-function openMobileMenu() {
-  document.getElementById('menu-button').firstElementChild.style.rotate = '0deg';
-
-  document.getElementById('sidebar-panel-container').style.width = document.getElementById('sidebar-panel').getBoundingClientRect().width + 'px';
-  document.getElementById('sidebar-panel-container').style.opacity = '1';
-  menuOpen = true;
+function openFoldersDrawer() {
+  const foldersContainer = document.getElementById('folders-container');
+  const overlay = document.getElementById('mobile-overlay');
+  foldersContainer.classList.add('open');
+  overlay.classList.add('show');
 }
 
-function closeMobileMenu() {
-  document.getElementById('menu-button').firstElementChild.style.rotate = '180deg';
+function closeFoldersDrawer() {
+  const foldersContainer = document.getElementById('folders-container');
+  const overlay = document.getElementById('mobile-overlay');
+  foldersContainer.classList.remove('open');
+  overlay.classList.remove('show');
+}
 
-  document.getElementById('sidebar-panel-container').style.width = '0px';
-  document.getElementById('sidebar-panel-container').style.opacity = '0';
-  menuOpen = false;
+function openDetailView() {
+  const detailContainer = document.getElementById('detail-container');
+  const overlay = document.getElementById('mobile-overlay');
+  detailContainer.classList.add('open');
+  overlay.classList.add('show');
+}
+
+function closeDetailView() {
+  const detailContainer = document.getElementById('detail-container');
+  const overlay = document.getElementById('mobile-overlay');
+  detailContainer.classList.remove('open');
+  overlay.classList.remove('show');
 }
 
 function toggleMenu() {
-  if (menuOpen) closeMobileMenu();
-  else openMobileMenu();
+  const foldersContainer = document.getElementById('folders-container');
+  if (foldersContainer.classList.contains('open')) {
+    closeFoldersDrawer();
+  } else {
+    openFoldersDrawer();
+  }
 }
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
@@ -331,12 +349,26 @@ function escapeHtml(text) {
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
-  openMobileMenu(); // Open menu on mobile by default
 
   loadNotes();
 
-  document.getElementById('overlay').addEventListener('click', closeMobileMenu);
   document.getElementById('btn-create-note').addEventListener('click', () => createNewNote(currentFolder));
   document.getElementById('folder-modal-confirm').addEventListener('click', () => folderModalCallback?.());
   document.getElementById('folder-modal-cancel').addEventListener('click', closeFolderModal);
+
+  // Mobile navigation handlers
+  document.getElementById('hamburger-btn').addEventListener('click', toggleMenu);
+  document.getElementById('close-detail-btn').addEventListener('click', closeDetailView);
+  document.getElementById('mobile-overlay').addEventListener('click', () => {
+    closeDetailView();
+    closeFoldersDrawer();
+  });
+
+  // Handle window resize to close drawers on desktop
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 768) {
+      closeFoldersDrawer();
+      closeDetailView();
+    }
+  });
 });
