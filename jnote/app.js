@@ -80,7 +80,7 @@ async function loadNotes() {
 
 function filterByFolder(folder) {
   currentFolder = folder;
-  currentNoteId = null;  
+  currentNoteId = null;
   updateGUI();
   closeFoldersDrawer();
 }
@@ -102,11 +102,24 @@ async function selectNote(noteId) {
   if (!local?.hasContent) {
     container.innerHTML = '<p class="empty">Loading note...</p>';
     try {
-      const full = await pb.collection('jnote').getOne(noteId);
-      full.hasContent = true;
-      if (full.folder == "") full.folder = 'Notes';
-      allNotes[noteIndex] = full;
-      renderNoteDetail(full);
+      const note = allNotes[noteIndex];
+
+      const query = await pb.collection('jnote_content').getList(1, 1, {
+        filter: `note = "${noteId}"`,
+        sort: '-created',
+      });
+      const latest = query.items[0];
+      if (!latest) {
+        return;
+      }
+      console.log(latest)
+
+      note.content = latest.content;
+      note.versionId = latest.id;
+      note.hasContent = true;
+
+      renderNoteDetail(note);
+
     } catch (err) {
       console.error('Error fetching note:', err);
       container.innerHTML = '<p class="error">Failed to load note</p>';
