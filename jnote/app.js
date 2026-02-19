@@ -174,64 +174,84 @@ async function saveNote(noteId) {
   const content = (document.getElementById('edit-content')?.textContent || '').trim();
 
   try {
-    const updated = await pb.collection('jnote').update(noteId, { title, content });
-    updated.hasContent = true;
+    // 1. Update the main note record (Title and Timestamp)
+    const updatedNote = await pb.collection('jnote').update(noteId, { title });
 
+    // 2. Create a new version in the content collection
+    const newVersion = await pb.collection('jnote_content').create({
+      note: noteId,
+      content: content
+    });
+
+    // 3. Update local state
     const idx = allNotes.findIndex(n => n.id === noteId);
-    if (idx !== -1) allNotes[idx] = updated;
+    if (idx !== -1) {
+      allNotes[idx].title = updatedNote.title;
+      allNotes[idx].content = content;
+      allNotes[idx].versionId = newVersion.id; // Keep track of the latest version ID
+      allNotes[idx].hasContent = true;
+    }
 
-    currentNoteState = { title: updated.title, content: updated.content };
-
-
-
+    currentNoteState = { title: updatedNote.title, content: content };
     setCanSave(false);
-
     renderNoteList();
+    
   } catch (err) {
     console.error('Error saving note:', err);
     alert('Failed to save note');
   }
 }
 
-let noteSaveTimeout = null;
+// let noteSaveTimeout = null;
 
 function setCanSave(noteHasChanges) {
   const saveBtn = document.getElementById('btn-save');
   if (!saveBtn) return;
   saveBtn.disabled = !noteHasChanges;
 
-  if (noteHasChanges) {
-    clearTimeout(noteSaveTimeout);
-    noteSaveTimeout = setTimeout(() => {
-      if (currentNoteId) {
-        saveNote(currentNoteId);
-        console.log('Auto-saved note');
-      }
-    }, 500);
-  }
+  // if (noteHasChanges) {
+  //   clearTimeout(noteSaveTimeout);
+  //   noteSaveTimeout = setTimeout(() => {
+  //     if (currentNoteId) {
+  //       saveNote(currentNoteId);
+  //       console.log('Auto-saved note');
+  //     }
+  //   }, 500);
+  // }
 }
 
 async function createNewNote(folder) {
   try {
-    const newNote = await pb.collection('jnote').create({
+    // 1. Create the base note
+    const newNoteRecord = await pb.collection('jnote').create({
       title: '',
-      content: '',
       folder: folder || 'Notes'
     });
 
-    allNotes.push({
-      id: newNote.id,
-      title: newNote.title,
-      folder: newNote.folder || 'Notes',
-      updated: newNote.updated,
-      hasContent: true,
-      content: newNote.content
+    // 2. Create the initial empty content version
+    const initialContent = await pb.collection('jnote_content').create({
+      note: newNoteRecord.id,
+      content: ''
     });
 
+    const noteData = {
+      id: newNoteRecord.id,
+      title: newNoteRecord.title,
+      folder: newNoteRecord.folder || 'Notes',
+      updated: newNoteRecord.updated,
+      hasContent: true,
+      content: initialContent.content,
+      versionId: initialContent.id
+    };
+
+    allNotes.push(noteData);
+
     currentFolder = folder || 'Notes';
-    currentNoteId = newNote.id;
+    currentNoteId = newNoteRecord.id;
+    
     updateGUI();
-    renderNoteDetail(newNote);
+    renderNoteDetail(noteData);
+    
   } catch (err) {
     console.error('Error creating note:', err);
     alert('Failed to create note');
@@ -255,10 +275,12 @@ async function deleteNote(noteId) {
 async function moveNoteToFolder(noteId, folder) {
   try {
     const updated = await pb.collection('jnote').update(noteId, { folder: folder || 'Notes' });
-    updated.hasContent = true;
-
+    
     const idx = allNotes.findIndex(n => n.id === noteId);
-    if (idx !== -1) allNotes[idx] = updated;
+    if (idx !== -1) {
+      // Merge updates without losing the content we already loaded
+      allNotes[idx] = { ...allNotes[idx], ...updated };
+    }
 
     updateGUI();
   } catch (err) {
