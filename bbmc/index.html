@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Status</title>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #0a0c0f;
+            --panel: #0f1318;
+            --border: #1e2530;
+            --green: #00ff88;
+            --red: #ff3355;
+            --dim: #3a4455;
+            --text: #c8d8e8;
+            --mono: monospace;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', monospace;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* Scanline overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0, 0, 0, 0.08) 2px,
+                    rgba(0, 0, 0, 0.08) 4px);
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            width: min(420px, 92vw);
+            padding: 36px 32px 32px;
+            position: relative;
+        }
+
+        .label {
+            font-size: 10px;
+            letter-spacing: 0.2em;
+            color: var(--dim);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .address {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            color: var(--text);
+            opacity: 0.7;
+            margin-bottom: 32px;
+            word-break: break-all;
+        }
+
+        /* Big status indicator */
+        .status-wrap {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+
+        .dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--dim);
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .dot.online {
+            background: var(--green);
+            box-shadow: 0 0 14px var(--green);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .dot.offline {
+            background: var(--red);
+            box-shadow: 0 0 10px var(--red);
+        }
+
+        .status-text {
+            font-family: 'Teko', sans-serif;
+            font-size: 52px;
+            font-weight: 600;
+            line-height: 1;
+            letter-spacing: 0.04em;
+        }
+
+        .status-text.online {
+            color: var(--green);
+        }
+
+        .status-text.offline {
+            color: var(--red);
+        }
+
+        .status-text.loading {
+            color: var(--dim);
+        }
+
+        /* Details grid */
+        .details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+            opacity: 1;
+        }
+
+        .details.visible {
+            opacity: 1;
+        }
+
+        .detail-cell {
+            background: var(--panel);
+            padding: 12px 14px;
+        }
+
+        .detail-cell .label {
+            margin-bottom: 3px;
+        }
+
+        .detail-cell .value {
+            font-size: 15px;
+            color: #e8f0f8;
+        }
+
+        /* Refresh */
+        .footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .last-checked {
+            font-size: 11px;
+            color: var(--dim);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="card">
+        <div class="label">Monitoring</div>
+        <div class="address" id="addr">46.11.171.44</div>
+
+        <div class="status-wrap">
+            <div class="dot" id="dot"></div>
+            <div class="status-text loading" id="status-text">CHECKING</div>
+        </div>
+
+        <div class="details" id="details">
+            <div class="detail-cell">
+                <div class="label">Players</div>
+                <div class="value" id="players">—</div>
+            </div>
+            <div class="detail-cell">
+                <div class="label">Max</div>
+                <div class="value" id="max-players">—</div>
+            </div>
+            <div class="detail-cell" style="grid-column:1/-1">
+                <div class="label">Version</div>
+                <div class="value" id="version">—</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="last-checked" id="last-checked">—</div>
+        </div>
+    </div>
+
+    <script>
+        const IP = '46.11.171.44';
+
+        async function check() {
+            const dot = document.getElementById('dot');
+            const statusText = document.getElementById('status-text');
+            const details = document.getElementById('details');
+            const players = document.getElementById('players');
+            const maxPlayers = document.getElementById('max-players');
+            const version = document.getElementById('version');
+            const lastChecked = document.getElementById('last-checked');
+
+
+            // Loading state
+            dot.className = 'dot';
+            statusText.className = 'status-text loading';
+            statusText.textContent = 'CHECKING';
+            details.classList.remove('visible');
+
+            setTimeout(async () => {
+                try {
+                    const res = await fetch(`https://api.mcsrvstat.us/3/${IP}`);
+                    const data = await res.json();
+
+                    if (data.online) {
+                        dot.className = 'dot online';
+                        statusText.className = 'status-text online';
+                        statusText.textContent = 'ONLINE';
+                        players.textContent = data.players?.online ?? '—';
+                        maxPlayers.textContent = data.players?.max ?? '—';
+                        version.textContent = data.version ?? '—';
+                    } else {
+                        dot.className = 'dot offline';
+                        statusText.className = 'status-text offline';
+                        statusText.textContent = 'OFFLINE';
+                        players.textContent = maxPlayers.textContent = version.textContent = '—';
+                    }
+                } catch (e) {
+                    dot.className = 'dot offline';
+                    statusText.className = 'status-text offline';
+                    statusText.textContent = 'ERROR';
+                }
+
+                lastChecked.textContent = 'Last checked ' + new Date().toLocaleTimeString();
+            }, 200)
+
+        }
+
+        check();
+    </script>
+</body>
+
+</html>
