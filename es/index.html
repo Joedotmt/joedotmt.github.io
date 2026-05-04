@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joe's Embedded Systems Blog</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Relief:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #ede8dc;
+            min-height: 100vh;
+            padding: 48px 32px 80px;
+            max-width: 760px;
+            margin: 0 auto;
+        }
+
+        /* title: top-right corner cut steep (more horizontal than 45), bottom-left cut shallow (more vertical) */
+        .title-box {
+            background: #00000046;
+            clip-path: polygon(
+                0% 2px,
+                8px 0%,
+                calc(100% - 48px) 0%,
+                100% 18px,
+                100% calc(100% - 4px),
+                calc(100% - 6px) 100%,
+                14px 100%,
+                0% calc(100% - 36px)
+            );
+            padding: 32px 44px 38px 30px;
+            margin-bottom: 22px;
+        }
+
+        h1 {
+            font-family: 'Comic Relief', cursive;
+            font-size: clamp(2rem, 6vw, 3.2rem);
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.08;
+            text-shadow: 4px 4px 0 #00000094;
+        }
+
+        h1 em {
+            color: #ffd84d;
+            font-style: normal;
+        }
+
+        /* intro: top-left barely clipped, bottom-right deeply cut but at a weird angle */
+        .intro-box {
+            background: #fff;
+            clip-path: polygon(
+                4px 0%,
+                100% 0%,
+                100% calc(100% - 40px),
+                calc(100% - 18px) 100%,
+                6px 100%,
+                0% calc(100% - 8px),
+                0% 10px
+            );
+            padding: 20px 32px 28px 22px;
+            margin-bottom: 28px;
+        }
+
+        .intro-box p {
+            font-family: 'Caveat', cursive;
+            font-size: 1.35rem;
+            color: #111;
+            line-height: 1.55;
+        }
+
+        /* posts label: lopsided, the left cut goes way down, right cut barely there */
+        .posts-label {
+            background: #222;
+            clip-path: polygon(
+                5px 0%,
+                100% 0%,
+                100% calc(100% - 6px),
+                calc(100% - 10px) 100%,
+                0% 100%,
+                0% 22px
+            );
+            display: inline-block;
+            padding: 8px 24px 8px 16px;
+            margin-bottom: 16px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: #ffd84d;
+        }
+
+        .post-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* card 1: top-right cut is steep narrow slash, bottom-left is a wide shallow one */
+        .post-item:nth-child(1) .post-card {
+            clip-path: polygon(
+                0% 0%,
+                calc(100% - 20px) 0%,
+                100% 38px,
+                100% 100%,
+                30px 100%,
+                0% calc(100% - 16px)
+            );
+        }
+
+        /* card 2: opposite — top-left is big wide cut, bottom-right tiny */
+        .post-item:nth-child(2) .post-card {
+            clip-path: polygon(
+                36px 0%,
+                100% 0%,
+                100% calc(100% - 10px),
+                calc(100% - 24px) 100%,
+                0% 100%,
+                0% 14px
+            );
+        }
+
+        .post-card {
+            background: #fff;
+            transition: background 0.12s, transform 0.12s;
+        }
+
+        .post-item:hover .post-card {
+            background: #fffbea;
+            transform: translate(4px, -3px);
+        }
+
+        .post-link {
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px 24px;
+        }
+
+        .post-num {
+            font-family: 'Courier Prime', monospace;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #ffd84d;
+            line-height: 1;
+            min-width: 44px;
+        }
+
+        .post-body { flex: 1; }
+
+        .post-title {
+            font-family: 'Comic Relief', cursive;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #111;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .post-sub {
+            font-family: 'Caveat', cursive;
+            font-size: 1.1rem;
+            color: #555;
+        }
+
+        .post-arrow {
+            font-family: 'Courier Prime', monospace;
+            font-size: 1.4rem;
+            color: #ffd84d;
+            font-weight: 700;
+        }
+
+        /* footer: two cuts, neither is 45deg */
+        .footer { margin-top: 44px; }
+
+        .footer-box {
+            background: #333;
+            clip-path: polygon(
+                16px 0%,
+                100% 0%,
+                100% calc(100% - 10px),
+                calc(100% - 20px) 100%,
+                0% 100%,
+                0% 8px
+            );
+            display: inline-block;
+            padding: 10px 24px 10px 18px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.72rem;
+            color: #999;
+            letter-spacing: 0.08em;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="title-box">
+        <h1>Joe's <em>Embedded</em><br>Systems Blog</h1>
+    </div>
+
+    <div class="intro-box">
+        <p>Haiii. LAuRENT. here is my blog. most blog posts are videos as that is the format im most comfortable with</p>
+    </div>
+
+    <div class="posts-label">posts</div>
+
+    <ul class="post-list">
+        <li class="post-item">
+            <div class="post-card">
+                <a class="post-link" href="blog1.html">
+                    <span class="post-num">01</span>
+                    <div class="post-body">
+                        <span class="post-title">Blog Post 1</span>
+                        <span class="post-sub">Component Experimentation</span>
+                    </div>
+                    <span class="post-arrow">&#8594;</span>
+                </a>
+            </div>
+        </li>
+        <li class="post-item">
+            <div class="post-card">
+                <a class="post-link" href="blog2.html">
+                    <span class="post-num">02</span>
+                    <div class="post-body">
+                        <span class="post-title">Blog Post 2</span>
+                        <span class="post-sub">Software Dev</span>
+                    </div>
+                    <span class="post-arrow">&#8594;</span>
+                </a>
+            </div>
+        </li>
+    </ul>
+
+    <div class="footer">
+        <div class="footer-box">made by joe</div>
+    </div>
+
+</body>
+</html>
