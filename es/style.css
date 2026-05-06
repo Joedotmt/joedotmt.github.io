@@ -22,7 +22,7 @@ a {
 
 /* Shared title box */
 .title-box {
-    background: #00000046;
+    background: #00001e2b;
     clip-path: polygon(
         0% 2px,
         8px 0%,
@@ -52,29 +52,20 @@ h1 em {
 }
 
 /* Headings and label text */
-.post-label,
 .posts-label,
 .section-label,
 .footer-box,
 .back-link,
 .post-num,
 .post-arrow {
-    font-family: 'Courier Prime', monospace;
+    font-size: 2rem;
 }
-
-.post-label,
 .posts-label,
 .section-label {
-    font-size: 0.75rem;
+    font-size: 1rem;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: #ffd84d;
-}
-
-.post-label {
-    font-size: 0.72rem;
-    margin-bottom: 10px;
-    display: block;
 }
 
 .posts-label {
@@ -146,7 +137,7 @@ h1 em {
 }
 
 .back-link .arrow {
-    font-size: 1rem;
+    font-size: 2rem;
 }
 
 /* Intro / transcript panels */
@@ -319,6 +310,15 @@ h1 em {
     background: #fffbea;
     transform: translate(4px, -3px);
 }
+
+.post-item{
+    filter: drop-shadow(0px 0px -1px #00000022);
+    transition: 0.12s filter;
+}
+.post-item:hover{
+    filter: drop-shadow(-4px 4px 0px #00000022);
+}
+
 
 .post-link {
     text-decoration: none;
