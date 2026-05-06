@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Post 2 Joe's Embedded Systems Blog</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <nav class="back-nav">
+        <a class="back-link" href="index.html">
+            <span class="arrow">&#8592;</span> back to index
+        </a>
+    </nav>
+
+    <div class="title-box">
+        <span class="post-label">02 / Frontend</span>
+        <h1>Blog Post 2<br><em>Frontend</em></h1>
+    </div>
+
+    <div class="button-row">
+        <a class="youtube-button" href="https://www.youtube.com/watch?v=aAnBvORhWV0" target="_blank"
+            rel="noopener noreferrer">
+            Watch in YouTube <span class="material-icons external-icon" aria-hidden="true">open_in_new</span>
+        </a>
+    </div>
+
+    <div class="video-box">
+        <div class="video-wrapper">
+            <iframe src="https://www.youtube-nocookie.com/embed/aAnBvORhWV0?si=WXBB7NAJqzMkg__H"
+                title="YouTube video player" frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+    </div>
+
+
+    <div class="section-label">transcript</div>
+
+    <div class="transcript-box">
+        <div class="transcript-entry">
+            <span class="ts-time">0:00</span>
+            <span class="ts-text">Hello and welcome to the second entry of the embedded systems blog where we're making
+                a theremin. Today we're going to be designing and programming the front end user interface the live
+                coding interface. Anything to do with Strudel, which is the code-to-music framework, we will handle
+                today. So let's get started.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">0:20</span>
+            <span class="ts-text">So here, a few months ago I made a prototype for injecting variables from JavaScript
+                into the music. Here we have an HTML slider and the variable should be successfully injected into this
+                code to change the volume of the resulting audio. So let's play it.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">0:46</span>
+            <span class="ts-text">And now I'm going to drag it up. And as you can hear, it's a bit louder. And now I'm
+                going to turn it all the way down and it's much quieter. So the value of gain is being injected into the
+                Strudel code. And this also works with pitch.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">1:26</span>
+            <span class="ts-text">So now I'm going to turn this test into a proper looking GUI.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">1:48</span>
+            <span class="ts-text">Okay, it's not ready, but I started with the GUI. So over here in this section, it
+                represents all of the data that you are receiving from the Raspberry Pi. Then you can oh that doesn't
+                work yet you can add variables. This is an example of what would be added. Then you can link the
+                variables to the variables of the Raspberry Pi. You click on the cyclone then it highlights and you can
+                click here and it has linked. Obviously I need to show that connection. I'll make it look nicer and
+                stuff. And then I'll add an option where you can drag in variables and copy the code reference. So like
+                this is the reference you can just press copy and it gives you this.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">2:42</span>
+            <span class="ts-text">Okay. So I've been working on it basically all night. Basically the way it works is
+                here you have your variables and these are the inputs from the Pi, and they are just dummy values for
+                now. I'll play it and obviously we can change the pitch as usual using the variable reference.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">3:07</span>
+            <span class="ts-text">But now we can link the value of one ultrasonic sensor into the variable and it
+                changes on the value of the ultrasonic sensor. I think it works very well.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">3:29</span>
+            <span class="ts-text">Let's try changing the speed with the ultrasonic. This is the speed value. I'm just
+                going to add another variable. Copy the reference to it. I need to write signal so that it updates.
+                Good. It should be linked. And in fact it does get faster and slower.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">3:50</span>
+            <span class="ts-text">So now let's link ultrasonic one from the Pi to the first variable which we set as the
+                pitch, and ultrasonic two to the speed. And as you can see, the speed changes based on the value of the
+                ultrasonic sensor.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">4:16</span>
+            <span class="ts-text">Thank you for watching this blog entry. And yeah, I think this is great. I like the
+                interface. I like how everything looks. And in the next blog entry, I will be setting up the Flask
+                server and linking the ultrasonic values to the Raspberry Pi.</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="footer-box">made by joe</div>
+    </div>
+
+</body>
+
+</html>
