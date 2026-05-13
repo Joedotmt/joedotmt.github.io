@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Blog Post 1 Joe's Embedded Systems Blog</title>
+    <link rel="stylesheet" href="../style.css?nocache=1">
+</head>
+
+<body>
+
+    <nav class="back-nav">
+        <a class="back-link" href="../">
+            <span class="arrow">↵</span> back to index
+        </a>
+    </nav>
+
+    <div class="title-box">
+        <h1>Blog Post 1<br><em>Hardware</em></h1>
+    </div>
+
+    <div class="button-row">
+        <a class="youtube-button" href="https://www.youtube.com/watch?v=Ie2BlaB7OOk" target="_blank"
+            rel="noopener noreferrer">
+            Watch in YouTube <span class="material-icons external-icon" aria-hidden="true">open_in_new</span>
+        </a>
+    </div>
+
+    <div class="video-box">
+        <div class="video-wrapper">
+            <iframe width="840" height="472" src="https://www.youtube.com/embed/Ie2BlaB7OOk?si=2wX01i5ThUCSNqsj" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <div class="section-label">transcript</div>
+
+    <div class="transcript-box">
+        <div class="transcript-entry">
+            <span class="ts-time">0:01</span>
+            <span class="ts-text">Hello and welcome to my first episode of my embedded systems blog where we're making a theremin with the Raspberry Pi. For the first episode, I'm going to be joined by my friend Dejan who is doing the advanced diploma on robotics. We are going to be wiring the components and testing them with Python and making the basic scripts to read and write data to them.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">0:21</span>
+            <span class="ts-text">I think I wired everything correctly and it's time to plug it in. What the hell is this? So, it's been 3 hours and I'm still trying to wire the LED. Nothing worked. I came home. I'm back from Dejan and I guess I'll just spend the night trying to fix this issue and try to get it all to work.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">1:00</span>
+            <span class="ts-text">So, I've wired it and I'm about to run the code for the first time. And I must say, I am quite afraid because this has taken me so long. Let's go. Oh, the ground. I forgot the ground. Oh, yes. As you can see, it did exactly what I told it to do. Then let's run it. Hey, what the hell? There's just one issue is that these wires mixed up on the way here. So, I just have to rearrange them a bit.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">1:37</span>
+            <span class="ts-text">I wrote some testing code so that I can debug. And there you go. As you can see, it's working perfectly. If you're wondering why the last two never turn on, it's because this IC only has support for eight outputs. So, I would need to have another IC daisy chained. But I think this is fine. And actually what I can do is by connecting two more resistors and connecting these two and these two together, we can have a compromise where two light in chunks.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">2:11</span>
+            <span class="ts-text">Well, I am very happy that this all worked out. I don't think it was a smart idea to go to my friend's house and try work on it because I got almost no work done. And I'm going to go to bed because I am very tired. And I will see you tomorrow.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">2:25</span>
+            <span class="ts-text">In a matter of minutes, I have the I2C display working. All I had to do was read what it's labeled on the bottom, like VCC, SCL, SDA, and just link it to here where it says SDA, SCL, and really, really simple code using this library.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">2:39</span>
+            <span class="ts-text">So, I wired up the ultrasonic sensor, which was very easy because all I had to do was make echo and trig to two separate GPIO pins. Then I wrote some code to read the values of the ultrasonic sensor. If I move my hand closer and further away, it updates the values. Okay, I wired the second ultrasonic sensor. And with a slight tweak of the code, we have readings for both of them and even on the display. So I've done this, this, this, and this. And I'll do these two tomorrow.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">3:12</span>
+            <span class="ts-text">I'm going to take a note of how everything is wired so that tomorrow I can solder it onto the Vero board. Yeah, I'm exhausted. Good night.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">3:29</span>
+            <span class="ts-text">I think I'm a genius because instead of soldering everything to this, which is very, very hard work, all I need to do is solder this part, which controls the LEDs. But then the rest I plugged directly here. And I guess I can hot glue them.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">3:47</span>
+            <span class="ts-text">Okay, so I ran out of pins because I'm trying to add a motion sensor now. Yeah, I decided to do it today, not tomorrow. Well, today is tomorrow. So I made this abomination. It's one wire going to two wires. Oh my god, it's daytime. Okay, it's 6:33 and as you can see, motion sensor is hooked up and working. The only things that use the breadboard is the LED. I can barely speak. I'm so tired. I feel like a genius.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">4:24</span>
+            <span class="ts-text">I think it's fine. Everything is working with this hot glue madness. I should be able to throw this across the room and have all of the connections still in place. Good morning. I guess I'm just lining them up to sort of be like the breadboard. And I guess I'm just going to like transfer the wires on and solder them.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">5:02</span>
+            <span class="ts-text">I did this. I'm sweating. I'm so hot. What the hell? Get rid of your hoodie idea. I know it's just because I'm like concentrating. I overheat.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">5:15</span>
+            <span class="ts-text">We accidentally wired it the wrong way around. So now we have to desolder it again and wire it again because we already accidentally put the wires from this side. So here we're connecting all of the resistors to ground.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">5:41</span>
+            <span class="ts-text">Okay. So, we have everything connected and soldered and stuff. Let us plug in the Raspberry Pi. We're going to test the LED bar graph first.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">6:18</span>
+            <span class="ts-text">So, it's not the GPIO. It's probably that we just wired this the wrong way around, even though we triple checked. So, we're going to use this power supply to check if we wired the LEDs the wrong way around. Oh, okay. And now we're going to reverse it. Oh, okay. So, yeah, it is the wrong way around. So, we're going to have to desolder it, rotate it 180°, and solder it back in place.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">6:57</span>
+            <span class="ts-text">It's so annoying because once you desoldered, everything gets burnt and the solder is just sticking in the wrong places. I was meant to go home about 3 hours ago, but we are just going to pull an all-nighter.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">7:15</span>
+            <span class="ts-text">I guess we'll use another Vero board. One that isn't burnt to oblivion. Yeah, I think we should just use female to female wires instead of this soldering. Okay, so it's 2:00 a.m. and this is how we're doing it now without a Vero board. The resistors are connected interestingly like this. It's time to try it out.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">7:55</span>
+            <span class="ts-text">It's 5:00 a.m. Still haven't gotten anything working. It is 6:00 a.m. I'm trying to recover as much as I can. Putting stuff back on a breadboard and stuff. He has been sleeping since 3:00 a.m. and I am feeling very defeated.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">8:24</span>
+            <span class="ts-text">Okay, so I got everything to work. I just switched back to a breadboard and as you can see I cut it. So now it's time to do a sin and hot glue everything to the breadboard. Well, if I need to change something, too bad.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">8:44</span>
+            <span class="ts-text">Well, thank you for watching the first blog entry of my embedded systems project. Sorry for it being such a long one, but we had a lot of trouble. Next entry, we'll be focusing on the front end live coding interface. Bye.</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="footer-box">made by joe</div>
+    </div>
+
+</body>
+
+</html>
