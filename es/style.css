@@ -371,6 +371,32 @@ h1 em {
     );
 }
 
+/* Third and fourth post shapes */
+.post-item:nth-child(3) .post-card {
+    clip-path: polygon(
+        12px 0%,
+        calc(100% - 12px) 0%,
+        100% 12px,
+        100% calc(100% - 30px),
+        calc(100% - 24px) 100%,
+        6px 100%,
+        0% calc(100% - 8px)
+    );
+}
+
+.post-item:nth-child(4) .post-card {
+    clip-path: polygon(
+        0% 16px,
+        18px 0%,
+        calc(100% - 18px) 0%,
+        100% 16px,
+        100% calc(100% - 12px),
+        calc(100% - 8px) 100%,
+        20px 100%,
+        0% calc(100% - 28px)
+    );
+}
+
 /* Footer spacing */
 .footer {
     margin-top: 44px;
