@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Blog Post 3 Joe's Embedded Systems Blog</title>
+    <link rel="stylesheet" href="../style.css?nocache=1">
+</head>
+
+<body>
+
+    <nav class="back-nav">
+        <a class="back-link" href="../">
+            <span class="arrow">↵</span> back to index
+        </a>
+    </nav>
+
+    <div class="title-box">
+        <h1>Blog Post 3<br><em>Backend</em></h1>
+    </div>
+
+    <div class="button-row">
+        <a class="youtube-button" href="https://www.youtube.com/watch?v=yK4l1hSzbqk" target="_blank"
+            rel="noopener noreferrer">
+            Watch in YouTube <span class="material-icons external-icon" aria-hidden="true">open_in_new</span>
+        </a>
+    </div>
+
+    <div class="video-box">
+        <div class="video-wrapper">
+            <iframe width="560" height="315" src="https://www.youtube.com/embed/shBpe13qh74?si=d03IdRCDqJIC6eeM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <div class="section-label">transcript</div>
+
+    <div class="transcript-box">
+        <div class="transcript-entry">
+            <span class="ts-time">0:02</span>
+            <span class="ts-text">Today we're going to be linking the sensor data of the Raspberry Pi to the live coding interface that we made using Flask. Time to begin programming.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">0:14</span>
+            <span class="ts-text">I have the specification of the code here. This is my proposal. This code was made in blog post one. It's just simple code to read the data of the sensors and output data.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">0:33</span>
+            <span class="ts-text">Oh. Oh. Oh. Look at that. It's doing it. It's doing it. It's doing it. Oh my god. Okay. So, I loaded up some proper music and it should be changing the speed it plays at. Here we go.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">0:51</span>
+            <span class="ts-text">I'm controlling the music with an ultrasonic sensor.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">0:56</span>
+            <span class="ts-text">I still need to add the gyro. I'll do that quickly. Okay, so I added the motion sensor. Yeah, there you go. If I tilt it, moves up and down.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">1:12</span>
+            <span class="ts-text">Wow. Okay. I love programming. Everything is nice and abstract. No connections to worry about. No desoldering, no flimsy connections.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">1:44</span>
+            <span class="ts-text">Okay. Well, uh even though that was not the most uh musically pleasant uh music, um it's just a test. Uh tomorrow I I'll try making some good testing music.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">1:59</span>
+            <span class="ts-text">Oh, I forgot to mention we also uh added the email code. And I didn't include the password in the file. It's in a secret file. It does actually work. Oh my goodness.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">2:18</span>
+            <span class="ts-text">That's not good. Maybe it works a bit too well. Uh, anyways, I'm exhausted. I haven't slept in two days and I'm going to go to bed.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">2:22</span>
+            <span class="ts-text">Good morning. It occurs to me I never really explained the code and I beg your pardon, I'm not very good at explaining code. I'm good at writing it, but I'll try my best.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">2:30</span>
+            <span class="ts-text">Okay, so this is the main code file at the top. It imports all of the other module files. I built the code to be highly modular. This file handles the flask server and it pulls the sensors and stuff every 60 Hz.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">2:48</span>
+            <span class="ts-text">Here we're calling the hardware to initialize. First it checks that the library is imported. Then it sets up the I2C connection and adds some startup text.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">3:03</span>
+            <span class="ts-text">Here it sets up the LEDs and the bit shift register. Here we are passing two functions into the start function of sensor reader. We're linking the on error event of the sensor reader file to the function on sensor error in our main file. And same with the recovery.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">3:20</span>
+            <span class="ts-text">Here we just uh tell the logger file to start logging. And here we're starting the stream of data to the client. Here we're using a library called atexit to execute the shutdown function when the code is stopped so that we do a safe shutdown.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">3:41</span>
+            <span class="ts-text">And here we're displaying the IP address on the LCD screen so that you can type it in and access the GUI. And this just sends an email to myself saying that it turned on and it's accepting connections. And this starts the server.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">3:56</span>
+            <span class="ts-text">This is the safe shutdown code. And this is defining the roots and what files to serve. This allows everything in the static folder to be served. This is if you want to overwrite the default IP and port from an environment variable. And that's all from the main file.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">4:18</span>
+            <span class="ts-text">Now for the emailer, we're importing a library called SMTP lib which makes it very easy to send emails from Python. And uh these are also required to send the correct type of data.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">4:28</span>
+            <span class="ts-text">In our load config function, it opens these secret file with the password and email inside of it. And I added support for comments. So if you add a hash, it ignores the line. And here we have error handling.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">4:49</span>
+            <span class="ts-text">Now in our main function here, we're setting the variables to be the ones loaded in the config variable and we're just setting the basic variables of an email. And here we send it using SMTP lib.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">5:02</span>
+            <span class="ts-text">Now in logger py we start by defining the first line of the CSV file which is the column names. In the start logging function here we make sure that only one thread is accessing the data at each time by locking it and we initialize the data.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">5:23</span>
+            <span class="ts-text">This is another public function. It receives an object called reading and writes the data to the file, which uses the write row method to write more than one variable at a time. All of this stuff is I'll be honest, the locking was probably excessive, but I really wanted to try make the code as bulletproof as possible.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">5:44</span>
+            <span class="ts-text">This is another public function that stops the logging. It unlocks the data and it prints that logging was stopped. Now we're getting into sensor reader. py. We're importing a library called MPU 6050 which is for the motion sensor called MPU 6050.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">6:02</span>
+            <span class="ts-text">Here I define the GPI opens. And this syntax is equivalent to this but it's just in one line. This is a helper function. You pass in all of this data as arguments and it turns it into an object.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">6:21</span>
+            <span class="ts-text">This initializes the GPI opens. This function receives the GPIO pins of an ultrasonic sensor and returns the distance in centm. Here we have some error handling where it returns minus1 if there's some sort of error.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">6:36</span>
+            <span class="ts-text">And finally, this is the actual important calculation that calculates a distance in centime by using the speed of sound. This clamps the distance and if the distance variables were different not the exact same it would scale the output.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">6:53</span>
+            <span class="ts-text">This function is the loop actually reading the sensors. This checks for a value less than zero which before we made it an error value and if so it sets this variable to be an error and this variable then gets outputed.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">7:12</span>
+            <span class="ts-text">This clamps the ultrasonic readings using the function I explained previously. These define the variables if something goes wrong like the fall back and this actually replaces them with the proper values with error handling as well.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">7:26</span>
+            <span class="ts-text">Here we turn all of these variables into an object in the reading variable in the format like so. And this is error handling where we only send an error if the count is greater than or equal to three. This also handles transitioning between different types of errors.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">7:43</span>
+            <span class="ts-text">And this sleeps before the next loop cuz this is all in a while loop. This just starts the sensor reading thread and it links up the functions like we see in app.py. This is some cleanup when stopping the code. It's called from the shutdown function of the main code.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">8:02</span>
+            <span class="ts-text">This function returns a snapshot of the all of the current sensor data and returns it in a dictionary. Now for the fun part, this is the client GUI. This is the variable list which has no variables in it because we update the DOM from JavaScript.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">8:20</span>
+            <span class="ts-text">We start by creating the strudel editor element and this is not a standard HTML element. It uses a new feature called web components. Here we just add the default code just some testing code doesn't really matter and we append the element we created to the strudel element.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">8:43</span>
+            <span class="ts-text">This container element here we define all of the sensors with a default value of 60. And we also store which one of these it is. This loads the socket IO which is used to communicate with the Raspberry Pi.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">9:05</span>
+            <span class="ts-text">Here we mutate the sensors object that we created previously and we update the values and the linked elements. Here I just added this so that you can access the whole frame from the strudel code.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">9:24</span>
+            <span class="ts-text">Then this function loops through all of the variables that the user created and updates them and updates the guey of them as well. This function is made for the button to create a user variable and I used some reax which I found online to make sure it doesn't cause any problems in the code.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">9:48</span>
+            <span class="ts-text">This is the function to create a user variable. It defines the name as either being the user's custom name or if that is undefined it just makes a blank name with a counter. So like my var 1, my var 2, my var 3.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">10:10</span>
+            <span class="ts-text">This is so that it's accessible from the strudel code and we add it to the variable configs object and by default we don't link any sensor. tote is just a free slider that you can slide. And this section here injects an element to this previously empty element called var list.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">10:30</span>
+            <span class="ts-text">And here we make it so that if the slider changes then it changes the actual value of the variable. Then this is adding an event handler to the cyclone thing where you click on it and link it to the other things. This deletes the variable. It updates the guey and deletes it from the object and from the window.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">10:52</span>
+            <span class="ts-text">This copies the variable reference to the clipboard. It first tries using the new clipboard API, but it doesn't work if it's HTTP. So then we use this old approach that I found online.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">11:08</span>
+            <span class="ts-text">This updates all of the linked variables guey. And this is called from the socket function. So every time it receives new data, it updates everything.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">11:20</span>
+            <span class="ts-text">This is all code for the really cool thing I did where you, for example, you click on this element and you can drag a line to the variable to link them. Just some simple code to draw a line and stuff. Here there's more code for the linking. I didn't have to do this. I just like how it is where you like link it.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">11:42</span>
+            <span class="ts-text">It inspired by Adobe After Effects when where you link an object's property with like a custom variable and I wanted to have the same feeling. This updates the variable once you link a sensor to it.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">11:56</span>
+            <span class="ts-text">And these are my styles. I try to keep it quite minimal, but I think the interface looks very good. And this is just a custom font from Google Fonts.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">12:13</span>
+            <span class="ts-text">If you want to install this project on your Raspberry Pi, uh just run these commands inside of the folder. Uh there's a few requirements of different libraries and it should work out of the box.</span>
+        </div>
+        <div class="transcript-entry">
+            <span class="ts-time">12:27</span>
+            <span class="ts-text">I know that may have been boring, but I hope you enjoyed. I'm excited because next time we'll be 3D modeling and making the actual assembly of the Theramin.</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="footer-box">made by joe</div>
+    </div>
+
+</body>
+
+</html>
