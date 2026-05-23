@@ -33,7 +33,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
         }
 
         .card {
@@ -52,7 +51,6 @@
             margin-bottom: 4px;
         }
 
-        /* Big status indicator */
         .status-wrap {
             display: flex;
             align-items: center;
@@ -75,6 +73,11 @@
             animation: pulse 2s ease-in-out infinite;
         }
 
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
         .dot.offline {
             background: var(--red);
             box-shadow: 0 0 10px var(--red);
@@ -88,19 +91,10 @@
             letter-spacing: 0.04em;
         }
 
-        .status-text.online {
-            color: var(--green);
-        }
+        .status-text.online  { color: var(--green); }
+        .status-text.offline { color: var(--red); }
+        .status-text.loading { color: var(--dim); }
 
-        .status-text.offline {
-            color: var(--red);
-        }
-
-        .status-text.loading {
-            color: var(--dim);
-        }
-
-        /* Details grid */
         .details {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -108,11 +102,6 @@
             background: var(--border);
             border: 1px solid var(--border);
             margin-bottom: 24px;
-            opacity: 1;
-        }
-
-        .details.visible {
-            opacity: 1;
         }
 
         .detail-cell {
@@ -129,7 +118,6 @@
             color: #e8f0f8;
         }
 
-        /* Refresh */
         .footer {
             display: flex;
             align-items: center;
@@ -166,6 +154,10 @@
                 <div class="label">Version</div>
                 <div class="value" id="version">—</div>
             </div>
+            <div class="detail-cell" style="grid-column:1/-1">
+                <div class="label">Players online</div>
+                <div class="value" id="player-list">—</div>
+            </div>
         </div>
 
         <div class="footer">
@@ -177,38 +169,46 @@
         const IP = 'mcast.ddns.net';
 
         async function check() {
-            const dot = document.getElementById('dot');
-            const statusText = document.getElementById('status-text');
-            const details = document.getElementById('details');
-            const players = document.getElementById('players');
-            const maxPlayers = document.getElementById('max-players');
-            const version = document.getElementById('version');
-            const lastChecked = document.getElementById('last-checked');
-
+            const dot          = document.getElementById('dot');
+            const statusText   = document.getElementById('status-text');
+            const players      = document.getElementById('players');
+            const maxPlayers   = document.getElementById('max-players');
+            const version      = document.getElementById('version');
+            const playerList   = document.getElementById('player-list');
+            const lastChecked  = document.getElementById('last-checked');
 
             // Loading state
             dot.className = 'dot';
             statusText.className = 'status-text loading';
             statusText.textContent = 'CHECKING';
-            details.classList.remove('visible');
 
             setTimeout(async () => {
                 try {
-                    const res = await fetch(`https://api.mcsrvstat.us/3/${IP}`);
+                    const res  = await fetch(`https://api.mcstatus.io/v2/status/java/${IP}`);
                     const data = await res.json();
 
                     if (data.online) {
                         dot.className = 'dot online';
                         statusText.className = 'status-text online';
                         statusText.textContent = 'ONLINE';
-                        players.textContent = data.players?.online ?? '—';
-                        maxPlayers.textContent = data.players?.max ?? '—';
-                        version.textContent = data.version ?? '—';
+
+                        players.textContent    = data.players?.online ?? '—';
+                        maxPlayers.textContent = data.players?.max    ?? '—';
+
+                        // version is now an object; use name_clean
+                        version.textContent = data.version?.name_clean ?? '—';
+
+                        // players.list is now an array of { name_clean, name_raw, uuid }
+                        const list = data.players?.list ?? [];
+                        playerList.textContent = list.length > 0
+                            ? list.map(p => p.name_clean).join(', ')
+                            : (data.players?.online ? 'No player names provided' : '—');
                     } else {
                         dot.className = 'dot offline';
                         statusText.className = 'status-text offline';
                         statusText.textContent = 'OFFLINE';
-                        players.textContent = maxPlayers.textContent = version.textContent = '—';
+                        players.textContent = maxPlayers.textContent =
+                            version.textContent = playerList.textContent = '—';
                     }
                 } catch (e) {
                     dot.className = 'dot offline';
@@ -217,8 +217,7 @@
                 }
 
                 lastChecked.textContent = 'Last checked ' + new Date().toLocaleTimeString();
-            }, 200)
-
+            }, 200);
         }
 
         check();
