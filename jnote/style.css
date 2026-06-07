@@ -257,6 +257,25 @@ body {
     transition: background 0.2s;
     border-left: 4px solid transparent;
     text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.note-list-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.unsaved-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary);
+    flex: 0 0 auto;
 }
 
 .folder-item:hover {

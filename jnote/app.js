@@ -5,6 +5,42 @@ let currentNoteId = null;
 let folderModalCallback = null;
 let selectedFolderInModal = '';
 let currentNoteState = { title: '', content: '' };
+const DRAFTS_STORAGE_KEY = 'jnote.unsavedDrafts.v1';
+
+function getDrafts() {
+  try {
+    const drafts = JSON.parse(localStorage.getItem(DRAFTS_STORAGE_KEY) || '{}');
+    return drafts && typeof drafts === 'object' ? drafts : {};
+  } catch (err) {
+    console.warn('Could not read local drafts:', err);
+    return {};
+  }
+}
+
+function getDraft(noteId) {
+  return getDrafts()[noteId] || null;
+}
+
+function hasDraft(noteId) {
+  return Boolean(getDraft(noteId));
+}
+
+function saveDraft(noteId, title, content) {
+  const drafts = getDrafts();
+  drafts[noteId] = {
+    title,
+    content,
+    updatedAt: new Date().toISOString()
+  };
+  localStorage.setItem(DRAFTS_STORAGE_KEY, JSON.stringify(drafts));
+}
+
+function clearDraft(noteId) {
+  const drafts = getDrafts();
+  if (!drafts[noteId]) return;
+  delete drafts[noteId];
+  localStorage.setItem(DRAFTS_STORAGE_KEY, JSON.stringify(drafts));
+}
 
 // ─── Core GUI Update ──────────────────────────────────────────────────────────
 
@@ -47,7 +83,8 @@ function renderNoteList() {
     notesList.innerHTML = notes.map(note => `
       <li class="folder-item ${note.id === currentNoteId ? 'active' : ''}"
           data-note-id="${note.id}">
-        ${escapeHtml(note.title) || '[untitled]'}
+        <span class="note-list-title">${escapeHtml(getDisplayTitle(note)) || '[untitled]'}</span>
+        ${hasDraft(note.id) ? '<span class="unsaved-dot" title="Unsaved local changes"></span>' : ''}
       </li>
     `).join('');
 
@@ -133,26 +170,45 @@ async function selectNote(noteId) {
 
 function renderNoteDetail(note) {
   currentNoteState = { title: note.title, content: note.content };
+  const draft = getDraft(note.id);
+  const displayNote = draft ? { ...note, ...draft } : note;
 
   const container = document.getElementById('note-detail');
   container.innerHTML = `
     <div class="note-actions">
-      <button class="btn-primary" id="btn-save" disabled>Save</button>
+      <button class="btn-secondary ${draft ? '' : 'hide'}" id="btn-revert">Revert Changes</button>
+      <button class="btn-primary" id="btn-save" ${draft ? '' : 'disabled'}>Commit</button>
       <button class="btn-secondary" id="btn-move">Move</button>
       <button class="btn-secondary" id="btn-delete">Delete</button>
     </div>
-    <div contenteditable="true" placeholder="Title" class="note-title" id="edit-title">${escapeHtml(note.title)}</div>
-    <div contenteditable="true" placeholder="Take a note..." class="note-detail-content editable" id="edit-content">${escapeHtml(note.content)}</div>
+    <div contenteditable="true" placeholder="Title" class="note-title" id="edit-title">${escapeHtml(displayNote.title)}</div>
+    <div contenteditable="true" placeholder="Take a note..." class="note-detail-content editable" id="edit-content">${escapeHtml(displayNote.content)}</div>
   `;
 
   const titleEl = document.getElementById('edit-title');
   const contentEl = document.getElementById('edit-content');
 
   const saveBtn = document.getElementById('btn-save');
+  const revertBtn = document.getElementById('btn-revert');
+
+  const persistCurrentDraft = () => {
+    const title = titleEl.textContent.trim();
+    const content = contentEl.textContent.trim();
+
+    if (title === currentNoteState.title && content === currentNoteState.content) {
+      clearDraft(note.id);
+      setCanSave(false);
+    } else {
+      saveDraft(note.id, title, content);
+      setCanSave(true);
+    }
+
+    renderNoteList();
+  };
 
   [titleEl, contentEl].forEach(el => {
     el.addEventListener('input', () => {
-      setCanSave(true);
+      persistCurrentDraft();
     });
     el.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && el === titleEl) {
@@ -163,6 +219,7 @@ function renderNoteDetail(note) {
   });
 
   saveBtn.addEventListener('click', () => saveNote(note.id));
+  revertBtn.addEventListener('click', () => revertNoteDraft(note.id));
   document.getElementById('btn-move').addEventListener('click', () => openFolderModal('move', note));
   document.getElementById('btn-delete').addEventListener('click', () => deleteNote(note.id));
 }
@@ -192,6 +249,7 @@ async function saveNote(noteId) {
       allNotes[idx].hasContent = true;
     }
 
+    clearDraft(noteId);
     currentNoteState = { title: updatedNote.title, content: content };
     setCanSave(false);
     renderNoteList();
@@ -202,12 +260,22 @@ async function saveNote(noteId) {
   }
 }
 
+function revertNoteDraft(noteId) {
+  const note = allNotes.find(n => n.id === noteId);
+  if (!note) return;
+
+  clearDraft(noteId);
+  renderNoteList();
+  renderNoteDetail(note);
+}
+
 // let noteSaveTimeout = null;
 
 function setCanSave(noteHasChanges) {
   const saveBtn = document.getElementById('btn-save');
-  if (!saveBtn) return;
-  saveBtn.disabled = !noteHasChanges;
+  const revertBtn = document.getElementById('btn-revert');
+  if (saveBtn) saveBtn.disabled = !noteHasChanges;
+  if (revertBtn) revertBtn.classList.toggle('hide', !noteHasChanges);
 
   // if (noteHasChanges) {
   //   clearTimeout(noteSaveTimeout);
@@ -263,6 +331,7 @@ async function deleteNote(noteId) {
 
   try {
     await pb.collection('jnote').update(noteId, { deleted: true });
+    clearDraft(noteId);
     allNotes = allNotes.filter(n => n.id !== noteId);
     currentNoteId = null;
     updateGUI();
@@ -379,6 +448,10 @@ function toggleMenu() {
 function escapeHtml(text) {
   const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
   return String(text ?? '').replace(/[&<>"']/g, m => map[m]);
+}
+
+function getDisplayTitle(note) {
+  return getDraft(note.id)?.title ?? note.title;
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
