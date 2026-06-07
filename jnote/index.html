@@ -9,7 +9,7 @@
     <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.9.7/dist/cdn/beer.min.js"></script>
 
 
-    <link rel="stylesheet" href="style.css?v=6">
+    <link rel="stylesheet" href="style.css?v=9">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -79,12 +79,18 @@
 
     </div>
 
+    <div class="sync-app-bar" id="sync-app-bar">
+        <div class="sync-spinner" aria-hidden="true"></div>
+        <i class="sync-check" aria-hidden="true">check</i>
+        <span id="sync-status-text">Pushing to cloud...</span>
+    </div>
+
     <!-- Overlay for Mobile Navigation -->
     <div class="mobile-overlay" id="mobile-overlay"></div>
 
 
     <script src="https://cdn.jsdelivr.net/npm/pocketbase/dist/pocketbase.umd.js"></script>
-    <script src="app.js?v=4"></script>
+    <script src="app.js?v=6"></script>
 </body>
 
 </html>

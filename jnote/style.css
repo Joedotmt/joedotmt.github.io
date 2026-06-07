@@ -1,3 +1,14 @@
+/* Material 3 motion tokens layered over BeerCSS components. */
+:root {
+    --motion-emphasized: cubic-bezier(0.2, 0, 0, 1);
+    --motion-emphasized-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
+    --motion-emphasized-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
+    --motion-standard: cubic-bezier(0.2, 0, 0, 1);
+    --motion-duration-short: 150ms;
+    --motion-duration-medium: 250ms;
+    --motion-duration-long: 350ms;
+}
+
 body.greencolor {
     --primary: #78dc77;
     --on-primary: #00390a;
@@ -18,6 +29,7 @@ body.greencolor {
     --background: #1a1c19;
     --on-background: #e2e3dd;
     --surface: #121411;
+    --surface: #0f0f0f;
     --on-surface: #e2e3dd;
     --surface-variant: #424940;
     --on-surface-variant: #c2c9bd;
@@ -46,6 +58,90 @@ body {
     font-family: 'Google Sans', sans-serif;
     margin: 0;
     padding: 0;
+}
+
+.sync-app-bar {
+    min-height: 44px;
+    padding: 0 18px;
+    border-top: 1px solid var(--outline-variant);
+    background: var(--surface-container);
+    color: var(--on-surface);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.9em;
+    font-weight: 500;
+    flex-shrink: 0;
+    transition:
+        background-color var(--motion-duration-medium) var(--motion-standard),
+        color var(--motion-duration-short) linear,
+        border-color var(--motion-duration-medium) var(--motion-standard);
+}
+
+.sync-app-bar.has-error {
+    color: var(--error);
+}
+
+.sync-app-bar.is-idle {
+    color: var(--on-surface-variant);
+}
+
+.sync-check {
+    display: none;
+    color: var(--outline);
+    font-size: 20px;
+    line-height: 1;
+    flex: 0 0 auto;
+}
+
+.sync-spinner {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--outline-variant);
+    border-top-color: currentColor;
+    animation: sync-spin 0.8s linear infinite;
+    flex: 0 0 auto;
+}
+
+.sync-app-bar.is-idle .sync-spinner {
+    display: none;
+}
+
+.sync-app-bar.is-idle .sync-check {
+    display: inline-flex;
+    animation: sync-check-in var(--motion-duration-medium) var(--motion-emphasized-decelerate);
+}
+
+#sync-status-text {
+    display: inline-block;
+    will-change: opacity, transform;
+}
+
+#sync-status-text.sync-text-out {
+    animation: sync-text-out var(--motion-duration-short) var(--motion-emphasized-accelerate) both;
+}
+
+#sync-status-text.sync-text-in {
+    animation: sync-text-in var(--motion-duration-medium) var(--motion-emphasized-decelerate) both;
+}
+
+@keyframes sync-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes sync-check-in {
+    from {
+        opacity: 0;
+        transform: scale(0.82);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 .app-container {
@@ -126,7 +222,8 @@ body {
         height: 100dvh;
         z-index: 200;
         transform: translateX(-100%);
-        transition: transform 0.3s cubic-bezier(0.3, 0, 0.35, 0.98);
+        transition: transform var(--motion-duration-long) var(--motion-emphasized-decelerate);
+        will-change: transform;
         background: var(--background);
 
         border-bottom-right-radius: 10px;
@@ -135,6 +232,7 @@ body {
 
     .folders-container.open {
         transform: translateX(0);
+        box-shadow: 16px 0 48px rgba(0, 0, 0, 0.32);
     }
 
     .detail-container {
@@ -145,7 +243,8 @@ body {
         height: 100dvh;
         z-index: 150;
         transform: translateX(100%);
-        transition: transform 0.3s cubic-bezier(0.3, 0, 0.35, 0.98);
+        transition: transform var(--motion-duration-long) var(--motion-emphasized-decelerate);
+        will-change: transform;
         background: var(--background);
         display: flex;
         flex-direction: column;
@@ -166,12 +265,13 @@ body {
         background: rgba(0, 0, 0, 0.5);
         display: none;
         opacity: 0;
-        transition: opacity 0.3s;
+        transition: opacity var(--motion-duration-short) linear;
     }
 
     .mobile-overlay.show {
         display: block;
         opacity: 1;
+        animation: overlay-fade-in var(--motion-duration-short) linear;
     }
 
     .hamburger-btn {
@@ -199,7 +299,7 @@ body {
     padding: 0;
     overflow-y: auto;
     flex: 1;
-    transition: transform 0.3s ease;
+    transition: transform var(--motion-duration-medium) var(--motion-standard);
 }
 
 .sidebar.hidden {
@@ -250,17 +350,7 @@ body {
 
 
 
-.folder-item {
-    padding: 12px 16px;
-    cursor: pointer;
-    color: var(--on-surface-variant);
-    transition: background 0.2s;
-    border-left: 4px solid transparent;
-    text-overflow: ellipsis;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
+
 
 .note-list-title {
     flex: 1;
@@ -276,10 +366,29 @@ body {
     border-radius: 50%;
     background: var(--primary);
     flex: 0 0 auto;
+    animation: unsaved-dot-breathe 2.4s var(--motion-standard) infinite;
+}
+
+.folder-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    color: var(--on-surface-variant);
+    transition:
+        background-color var(--motion-duration-short) linear,
+        color var(--motion-duration-short) linear,
+        border-left-color var(--motion-duration-short) linear,
+        transform var(--motion-duration-short) var(--motion-standard);
+    border-left: 4px solid transparent;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
 }
 
 .folder-item:hover {
-    background: var(--surface-variant);
+    background: var(--surface-container-high);
+
 }
 
 .folder-item.active {
@@ -350,6 +459,19 @@ body {
     color: var(--on-surface);
     padding: 0;
     margin: 0;
+    transition:
+        background-color var(--motion-duration-short) linear,
+        transform var(--motion-duration-short) var(--motion-standard);
+}
+
+.hamburger-btn:hover,
+.close-detail-btn:hover {
+    background: var(--surface-container-high);
+}
+
+.hamburger-btn:active,
+.close-detail-btn:active {
+    transform: scale(0.92);
 }
 
 @media (max-width: 768px) {
@@ -371,6 +493,20 @@ body {
     padding: 0;
     white-space: pre-wrap;
     word-break: break-word;
+}
+
+.note-actions,
+.note-title,
+.note-detail-content {
+    animation: content-enter var(--motion-duration-medium) var(--motion-emphasized-decelerate) both;
+}
+
+.note-title {
+    animation-delay: 25ms;
+}
+
+.note-detail-content {
+    animation-delay: 50ms;
 }
 
 .empty,
@@ -402,6 +538,7 @@ body {
 
 .overlay.show {
     display: block;
+    animation: overlay-fade-in var(--motion-duration-short) linear;
 }
 
 .modal {
@@ -413,6 +550,7 @@ body {
 
 .modal.show {
     display: flex;
+    animation: overlay-fade-in var(--motion-duration-short) linear;
 }
 
 .modal-content {
@@ -423,6 +561,11 @@ body {
     width: 90%;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     border: 1px solid var(--outline);
+    transform-origin: center;
+}
+
+.modal.show .modal-content {
+    animation: modal-enter var(--motion-duration-medium) var(--motion-emphasized-decelerate) both;
 }
 
 .modal-header {
@@ -446,13 +589,22 @@ body {
     border-radius: 8px;
     cursor: pointer;
     color: var(--on-surface-variant);
-    transition: all 0.2s;
+    transition:
+        background-color var(--motion-duration-short) linear,
+        border-color var(--motion-duration-short) linear,
+        color var(--motion-duration-short) linear,
+        transform var(--motion-duration-short) var(--motion-standard);
     text-align: left;
 }
 
 .folder-option:hover {
     background: var(--outline);
     color: var(--on-surface);
+    transform: translateY(-1px);
+}
+
+.folder-option:active {
+    transform: scale(0.99);
 }
 
 .folder-option.selected {
@@ -475,13 +627,17 @@ body {
     background: var(--surface-variant);
     color: var(--on-surface);
     font-size: 1em;
-    transition: all 0.2s;
+    transition:
+        background-color var(--motion-duration-short) linear,
+        border-color var(--motion-duration-short) linear,
+        box-shadow var(--motion-duration-short) linear;
 }
 
 .folder-input-wrapper input:focus {
     outline: none;
     border-color: var(--primary);
     background: var(--surface);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
 }
 
 .folder-input-wrapper input::placeholder {
@@ -496,11 +652,16 @@ body {
     border-radius: 8px;
     cursor: pointer;
     font-weight: 500;
-    transition: all 0.2s;
+    transition:
+        opacity var(--motion-duration-short) linear,
+        transform var(--motion-duration-short) var(--motion-standard),
+        box-shadow var(--motion-duration-short) linear;
 }
 
 .folder-input-wrapper button:hover {
     opacity: 0.9;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+    transform: translateY(-1px);
 }
 
 .modal-actions {
@@ -515,7 +676,12 @@ body {
     border-radius: 100px;
     cursor: pointer;
     font-weight: 500;
-    transition: all 0.2s;
+    transition:
+        background-color var(--motion-duration-short) linear,
+        color var(--motion-duration-short) linear,
+        opacity var(--motion-duration-short) linear,
+        transform var(--motion-duration-short) var(--motion-standard),
+        box-shadow var(--motion-duration-short) linear;
 }
 
 .btn-primary {
@@ -525,6 +691,8 @@ body {
 
 .btn-primary:hover {
     opacity: 0.9;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+    transform: translateY(-1px);
 }
 
 .btn-secondary {
@@ -535,12 +703,36 @@ body {
 
 .btn-secondary:hover {
     background: var(--outline);
+    transform: translateY(-1px);
+}
+
+.btn-primary:active,
+.btn-secondary:active,
+.folder-input-wrapper button:active,
+.modal-actions button:active,
+.note-actions button:active {
+    transform: scale(0.98);
 }
 
 button {
     height: 2em;
     margin: 0;
     border-radius: 100px;
+    transition:
+        background-color var(--motion-duration-short) linear,
+        color var(--motion-duration-short) linear,
+        opacity var(--motion-duration-short) linear,
+        transform var(--motion-duration-short) var(--motion-standard),
+        box-shadow var(--motion-duration-short) linear;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+button:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 3px;
 }
 
 .note-actions {
@@ -557,7 +749,12 @@ button {
     cursor: pointer;
     font-weight: 500;
     font-size: 0.9em;
-    transition: all 0.2s;
+    transition:
+        background-color var(--motion-duration-short) linear,
+        color var(--motion-duration-short) linear,
+        opacity var(--motion-duration-short) linear,
+        transform var(--motion-duration-short) var(--motion-standard),
+        box-shadow var(--motion-duration-short) linear;
 }
 
 .note-title,
@@ -571,7 +768,6 @@ button {
     display: block;
     width: 100%;
     overflow: hidden;
-    transition: border-color 0.2s;
     line-height: 1.8;
     margin: 0;
     white-space: pre-wrap;
@@ -602,9 +798,93 @@ button {
 #btn-save:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
 }
 
 
 .hide {
     display: none !important;
+}
+
+@keyframes content-enter {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes modal-enter {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes overlay-fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes sync-text-out {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+}
+
+@keyframes sync-text-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes unsaved-dot-breathe {
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 0%, transparent);
+        transform: scale(1);
+    }
+
+    50% {
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--primary) 14%, transparent);
+        transform: scale(1.08);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.001ms !important;
+    }
 }

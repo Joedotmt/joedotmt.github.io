@@ -6,6 +6,13 @@ let folderModalCallback = null;
 let selectedFolderInModal = '';
 let currentNoteState = { title: '', content: '' };
 const DRAFTS_STORAGE_KEY = 'jnote.unsavedDrafts.v1';
+const PENDING_PUSHES_STORAGE_KEY = 'jnote.pendingPushes.v1';
+const PUSH_RETRY_DELAY = 5000;
+let pendingPushes = getPendingPushes();
+let activePushes = new Set();
+let pushRetryTimers = new Map();
+let hasPushError = false;
+let syncStatusAnimationTimer = null;
 
 function getDrafts() {
   try {
@@ -40,6 +47,148 @@ function clearDraft(noteId) {
   if (!drafts[noteId]) return;
   delete drafts[noteId];
   localStorage.setItem(DRAFTS_STORAGE_KEY, JSON.stringify(drafts));
+}
+
+function getPendingPush(noteId) {
+  return pendingPushes[noteId] || null;
+}
+
+function getPendingPushes() {
+  try {
+    const pushes = JSON.parse(localStorage.getItem(PENDING_PUSHES_STORAGE_KEY) || '{}');
+    return pushes && typeof pushes === 'object' ? pushes : {};
+  } catch (err) {
+    console.warn('Could not read pending pushes:', err);
+    return {};
+  }
+}
+
+function persistPendingPushes() {
+  localStorage.setItem(PENDING_PUSHES_STORAGE_KEY, JSON.stringify(pendingPushes));
+}
+
+function queuePush(noteId, title, content) {
+  pendingPushes[noteId] = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    noteId,
+    title,
+    content,
+    queuedAt: new Date().toISOString()
+  };
+  persistPendingPushes();
+  updateSyncStatus();
+  flushNotePush(noteId);
+}
+
+function hasUnfinishedPushes() {
+  return Object.keys(pendingPushes).length > 0 || activePushes.size > 0;
+}
+
+function schedulePushRetry(noteId) {
+  if (pushRetryTimers.has(noteId)) return;
+  const timer = setTimeout(() => {
+    pushRetryTimers.delete(noteId);
+    flushNotePush(noteId);
+  }, PUSH_RETRY_DELAY);
+  pushRetryTimers.set(noteId, timer);
+}
+
+function updateSyncStatus() {
+  const syncBar = document.getElementById('sync-app-bar');
+  const syncText = document.getElementById('sync-status-text');
+  if (!syncBar || !syncText) return;
+
+  const pendingCount = Object.keys(pendingPushes).length;
+  const isSyncing = activePushes.size > 0;
+  const hasWork = pendingCount > 0 || isSyncing;
+
+  syncBar.classList.toggle('is-idle', !hasWork);
+  syncBar.classList.toggle('has-error', hasPushError && hasWork);
+
+  let nextStatusText;
+  if (!hasWork) {
+    nextStatusText = 'All changes pushed';
+  } else if (hasPushError && !isSyncing) {
+    nextStatusText = 'Push failed. Retrying...';
+  } else {
+    nextStatusText = pendingCount > 1 ? `Pushing ${pendingCount} commits to cloud...` : 'Pushing commit to cloud...';
+  }
+
+  setSyncStatusText(syncText, nextStatusText);
+}
+
+function setSyncStatusText(syncText, nextText) {
+  if (syncText.textContent === nextText && !syncText.classList.contains('sync-text-out')) return;
+
+  clearTimeout(syncStatusAnimationTimer);
+  syncText.classList.remove('sync-text-in');
+  syncText.classList.add('sync-text-out');
+
+  syncStatusAnimationTimer = setTimeout(() => {
+    syncText.textContent = nextText;
+    syncText.classList.remove('sync-text-out');
+    void syncText.offsetWidth;
+    syncText.classList.add('sync-text-in');
+
+    syncStatusAnimationTimer = setTimeout(() => {
+      syncText.classList.remove('sync-text-in');
+      syncStatusAnimationTimer = null;
+    }, 250);
+  }, 150);
+}
+
+async function flushNotePush(noteId) {
+  if (activePushes.has(noteId) || !pendingPushes[noteId]) return;
+
+  activePushes.add(noteId);
+  hasPushError = false;
+  updateSyncStatus();
+
+  try {
+    while (pendingPushes[noteId]) {
+      const push = pendingPushes[noteId];
+      const updatedNote = await pb.collection('jnote').update(noteId, { title: push.title });
+      const newVersion = await pb.collection('jnote_content').create({
+        note: noteId,
+        title: push.title,
+        content: push.content
+      });
+
+      if (pendingPushes[noteId]?.id === push.id) {
+        delete pendingPushes[noteId];
+        persistPendingPushes();
+        applyCloudPushResult(noteId, push, updatedNote, newVersion);
+      }
+    }
+  } catch (err) {
+    console.error('Error pushing note:', err);
+    hasPushError = true;
+    schedulePushRetry(noteId);
+  } finally {
+    activePushes.delete(noteId);
+    updateSyncStatus();
+  }
+}
+
+function flushPendingPushes() {
+  Object.keys(pendingPushes).forEach(noteId => flushNotePush(noteId));
+}
+
+function applyCloudPushResult(noteId, push, updatedNote, newVersion) {
+  const idx = allNotes.findIndex(n => n.id === noteId);
+  if (idx !== -1 && !pendingPushes[noteId]) {
+    allNotes[idx].title = updatedNote.title;
+    allNotes[idx].updated = updatedNote.updated;
+    allNotes[idx].content = push.content;
+    allNotes[idx].versionId = newVersion.id;
+    allNotes[idx].hasContent = true;
+  }
+
+  if (currentNoteId === noteId && !hasDraft(noteId) && !pendingPushes[noteId]) {
+    currentNoteState = { title: updatedNote.title, content: push.content };
+  }
+
+  renderNoteList();
 }
 
 // ─── Core GUI Update ──────────────────────────────────────────────────────────
@@ -149,8 +298,8 @@ async function selectNote(noteId) {
       if (!latest) {
         return;
       }
-      console.log(latest)
 
+      note.title = getVersionTitle(latest, note.title);
       note.content = latest.content;
       note.versionId = latest.id;
       note.hasContent = true;
@@ -169,17 +318,19 @@ async function selectNote(noteId) {
 // ─── Note Detail Rendering ────────────────────────────────────────────────────
 
 function renderNoteDetail(note) {
-  currentNoteState = { title: note.title, content: note.content };
+  const pendingPush = getPendingPush(note.id);
+  const committedNote = pendingPush ? { ...note, title: pendingPush.title, content: pendingPush.content } : note;
   const draft = getDraft(note.id);
-  const displayNote = draft ? { ...note, ...draft } : note;
+  const displayNote = draft ? { ...committedNote, ...draft } : committedNote;
+  currentNoteState = { title: committedNote.title, content: committedNote.content };
 
   const container = document.getElementById('note-detail');
   container.innerHTML = `
     <div class="note-actions">
-      <button class="btn-secondary ${draft ? '' : 'hide'}" id="btn-revert">Revert Changes</button>
-      <button class="btn-primary" id="btn-save" ${draft ? '' : 'disabled'}>Commit</button>
-      <button class="btn-secondary" id="btn-move">Move</button>
-      <button class="btn-secondary" id="btn-delete">Delete</button>
+      <button class="btn-secondary ripple ${draft ? '' : 'hide'}" id="btn-revert">Revert Changes</button>
+      <button class="btn-primary ripple" id="btn-save" ${draft ? '' : 'disabled'}>Commit</button>
+      <button class="btn-secondary ripple" id="btn-move">Move</button>
+      <button class="btn-secondary ripple" id="btn-delete">Delete</button>
     </div>
     <div contenteditable="true" placeholder="Title" class="note-title" id="edit-title">${escapeHtml(displayNote.title)}</div>
     <div contenteditable="true" placeholder="Take a note..." class="note-detail-content editable" id="edit-content">${escapeHtml(displayNote.content)}</div>
@@ -226,38 +377,23 @@ function renderNoteDetail(note) {
 
 // ─── CRUD Operations ──────────────────────────────────────────────────────────
 
-async function saveNote(noteId) {
+function saveNote(noteId) {
   const title = (document.getElementById('edit-title')?.textContent || '').trim();
   const content = (document.getElementById('edit-content')?.textContent || '').trim();
 
-  try {
-    // 1. Update the main note record (Title and Timestamp)
-    const updatedNote = await pb.collection('jnote').update(noteId, { title });
-
-    // 2. Create a new version in the content collection
-    const newVersion = await pb.collection('jnote_content').create({
-      note: noteId,
-      content: content
-    });
-
-    // 3. Update local state
-    const idx = allNotes.findIndex(n => n.id === noteId);
-    if (idx !== -1) {
-      allNotes[idx].title = updatedNote.title;
-      allNotes[idx].content = content;
-      allNotes[idx].versionId = newVersion.id; // Keep track of the latest version ID
-      allNotes[idx].hasContent = true;
-    }
-
-    clearDraft(noteId);
-    currentNoteState = { title: updatedNote.title, content: content };
-    setCanSave(false);
-    renderNoteList();
-    
-  } catch (err) {
-    console.error('Error saving note:', err);
-    alert('Failed to save note');
+  const idx = allNotes.findIndex(n => n.id === noteId);
+  if (idx !== -1) {
+    allNotes[idx].title = title;
+    allNotes[idx].content = content;
+    allNotes[idx].updated = new Date().toISOString();
+    allNotes[idx].hasContent = true;
   }
+
+  clearDraft(noteId);
+  currentNoteState = { title, content };
+  setCanSave(false);
+  renderNoteList();
+  queuePush(noteId, title, content);
 }
 
 function revertNoteDraft(noteId) {
@@ -299,6 +435,7 @@ async function createNewNote(folder) {
     // 2. Create the initial empty content version
     const initialContent = await pb.collection('jnote_content').create({
       note: newNoteRecord.id,
+      title: newNoteRecord.title,
       content: ''
     });
 
@@ -451,7 +588,11 @@ function escapeHtml(text) {
 }
 
 function getDisplayTitle(note) {
-  return getDraft(note.id)?.title ?? note.title;
+  return getDraft(note.id)?.title ?? getPendingPush(note.id)?.title ?? note.title;
+}
+
+function getVersionTitle(version, fallbackTitle = '') {
+  return typeof version?.title === 'string' ? version.title : fallbackTitle;
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
@@ -459,6 +600,8 @@ function getDisplayTitle(note) {
 document.addEventListener('DOMContentLoaded', () => {
 
   loadNotes();
+  updateSyncStatus();
+  flushPendingPushes();
 
   document.getElementById('btn-create-note').addEventListener('click', () => createNewNote(currentFolder));
   document.getElementById('folder-modal-confirm').addEventListener('click', () => folderModalCallback?.());
@@ -478,5 +621,11 @@ document.addEventListener('DOMContentLoaded', () => {
       closeFoldersDrawer();
       closeDetailView();
     }
+  });
+
+  window.addEventListener('beforeunload', (event) => {
+    if (!hasUnfinishedPushes()) return;
+    event.preventDefault();
+    event.returnValue = 'Your latest commit is still pushing to the cloud.';
   });
 });
