@@ -9,7 +9,17 @@
     <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.9.7/dist/cdn/beer.min.js"></script>
 
 
-    <link rel="stylesheet" href="style.css?v=11">
+    <link rel="stylesheet" href="style.css?v=12">
+    <style id="custom-css"></style>
+    <script>
+        (() => {
+            try {
+                document.getElementById('custom-css').textContent = localStorage.getItem('jnote.customCss.v1') || '';
+            } catch (err) {
+                console.warn('Could not apply custom CSS:', err);
+            }
+        })();
+    </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -80,17 +90,53 @@
     </div>
 
     <div class="sync-app-bar" id="sync-app-bar">
-        <div class="sync-spinner" aria-hidden="true"></div>
-        <i class="sync-check" aria-hidden="true">check</i>
-        <span id="sync-status-text">Pushing to cloud...</span>
+        <div class="sync-status-group">
+            <div class="sync-spinner" aria-hidden="true"></div>
+            <i class="sync-check" aria-hidden="true">check</i>
+            <span id="sync-status-text">Pushing to cloud...</span>
+        </div>
+        <button class="app-bar-icon-btn" id="settings-btn" type="button" aria-label="Open settings" title="Settings">
+            <i aria-hidden="true">settings</i>
+        </button>
     </div>
+
+    <dialog class="settings-dialog" id="settings-dialog" aria-labelledby="settings-dialog-title">
+        <form method="dialog" class="settings-dialog-content">
+            <div class="settings-dialog-header">
+                <h2 id="settings-dialog-title">Settings</h2>
+                <button class="icon-dialog-btn" type="submit" aria-label="Close settings" title="Close">
+                    <i aria-hidden="true">close</i>
+                </button>
+            </div>
+            <button class="settings-row-button" id="open-custom-css-dialog" type="button">
+                <i aria-hidden="true">code</i>
+                <span>Custom CSS</span>
+            </button>
+        </form>
+    </dialog>
+
+    <dialog class="settings-dialog custom-css-dialog" id="custom-css-dialog" aria-labelledby="custom-css-dialog-title">
+        <form method="dialog" class="settings-dialog-content">
+            <div class="settings-dialog-header">
+                <h2 id="custom-css-dialog-title">Custom CSS</h2>
+                <button class="icon-dialog-btn" type="submit" aria-label="Close custom CSS" title="Close">
+                    <i aria-hidden="true">close</i>
+                </button>
+            </div>
+            <textarea id="custom-css-input" spellcheck="false" placeholder="body { }"></textarea>
+            <div class="settings-dialog-actions">
+                <button class="btn-secondary" id="clear-custom-css" type="button">Clear</button>
+                <button class="btn-primary" id="save-custom-css" type="button">Save</button>
+            </div>
+        </form>
+    </dialog>
 
     <!-- Overlay for Mobile Navigation -->
     <div class="mobile-overlay" id="mobile-overlay"></div>
 
 
     <script src="https://cdn.jsdelivr.net/npm/pocketbase/dist/pocketbase.umd.js"></script>
-    <script src="app.js?v=15"></script>
+    <script src="app.js?v=16"></script>
 </body>
 
 </html>

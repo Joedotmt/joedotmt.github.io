@@ -8,6 +8,7 @@ let currentNoteState = { title: '', content: '' };
 const DRAFTS_STORAGE_KEY = 'jnote.unsavedDrafts.v1';
 const LOCAL_NOTES_STORAGE_KEY = 'jnote.localNotes.v1';
 const PENDING_PUSHES_STORAGE_KEY = 'jnote.pendingPushes.v1';
+const CUSTOM_CSS_STORAGE_KEY = 'jnote.customCss.v1';
 const PUSH_RETRY_DELAY = 5000;
 let pendingPushes = getPendingPushes();
 let activePushes = new Set();
@@ -15,6 +16,42 @@ let pushRetryTimers = new Map();
 let hasPushError = false;
 let syncStatusAnimationTimer = null;
 let activeNoteContextMenuId = null;
+
+applyCustomCss();
+
+function getCustomCss() {
+  try {
+    return localStorage.getItem(CUSTOM_CSS_STORAGE_KEY) || '';
+  } catch (err) {
+    console.warn('Could not read custom CSS:', err);
+    return '';
+  }
+}
+
+function saveCustomCss(css) {
+  try {
+    if (css) {
+      localStorage.setItem(CUSTOM_CSS_STORAGE_KEY, css);
+    } else {
+      localStorage.removeItem(CUSTOM_CSS_STORAGE_KEY);
+    }
+  } catch (err) {
+    console.warn('Could not save custom CSS:', err);
+  }
+
+  applyCustomCss(css);
+}
+
+function applyCustomCss(css = getCustomCss()) {
+  let customCssEl = document.getElementById('custom-css');
+  if (!customCssEl) {
+    customCssEl = document.createElement('style');
+    customCssEl.id = 'custom-css';
+    document.head.appendChild(customCssEl);
+  }
+
+  customCssEl.textContent = css;
+}
 
 function getDrafts() {
   try {
@@ -952,6 +989,62 @@ function closeNoteContextMenu() {
   });
 }
 
+// ─── Settings ────────────────────────────────────────────────────────────────
+
+function openSettingsDialog() {
+  document.getElementById('settings-dialog')?.showModal();
+}
+
+function openCustomCssDialog() {
+  const settingsDialog = document.getElementById('settings-dialog');
+  const customCssDialog = document.getElementById('custom-css-dialog');
+  const customCssInput = document.getElementById('custom-css-input');
+
+  if (!customCssDialog || !customCssInput) return;
+
+  settingsDialog?.close();
+  customCssInput.value = getCustomCss();
+  customCssDialog.showModal();
+  customCssInput.focus();
+}
+
+function closeDialogOnBackdropClick(event) {
+  const dialog = event.currentTarget;
+  if (!dialog.open) return;
+
+  const rect = dialog.getBoundingClientRect();
+  const clickedInDialog =
+    event.clientX >= rect.left &&
+    event.clientX <= rect.right &&
+    event.clientY >= rect.top &&
+    event.clientY <= rect.bottom;
+
+  if (!clickedInDialog) dialog.close();
+}
+
+function bindSettingsDialogs() {
+  const settingsDialog = document.getElementById('settings-dialog');
+  const customCssDialog = document.getElementById('custom-css-dialog');
+  const customCssInput = document.getElementById('custom-css-input');
+
+  document.getElementById('settings-btn')?.addEventListener('click', openSettingsDialog);
+  document.getElementById('open-custom-css-dialog')?.addEventListener('click', openCustomCssDialog);
+
+  document.getElementById('save-custom-css')?.addEventListener('click', () => {
+    saveCustomCss(customCssInput?.value || '');
+    customCssDialog?.close();
+  });
+
+  document.getElementById('clear-custom-css')?.addEventListener('click', () => {
+    if (customCssInput) customCssInput.value = '';
+    saveCustomCss('');
+  });
+
+  [settingsDialog, customCssDialog].forEach(dialog => {
+    dialog?.addEventListener('click', closeDialogOnBackdropClick);
+  });
+}
+
 function cssEscape(value) {
   if (window.CSS?.escape) return CSS.escape(value);
   return String(value).replace(/["\\]/g, '\\$&');
@@ -990,6 +1083,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadNotes();
   updateSyncStatus();
   flushPendingPushes();
+  bindSettingsDialogs();
 
   document.getElementById('btn-create-note').addEventListener('click', () => createNewNote(currentFolder));
   document.getElementById('folder-modal-confirm').addEventListener('click', () => folderModalCallback?.());
