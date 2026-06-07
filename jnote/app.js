@@ -6,6 +6,7 @@ let folderModalCallback = null;
 let selectedFolderInModal = '';
 let currentNoteState = { title: '', content: '' };
 const DRAFTS_STORAGE_KEY = 'jnote.unsavedDrafts.v1';
+const LOCAL_NOTES_STORAGE_KEY = 'jnote.localNotes.v1';
 const PENDING_PUSHES_STORAGE_KEY = 'jnote.pendingPushes.v1';
 const PUSH_RETRY_DELAY = 5000;
 let pendingPushes = getPendingPushes();
@@ -13,6 +14,7 @@ let activePushes = new Set();
 let pushRetryTimers = new Map();
 let hasPushError = false;
 let syncStatusAnimationTimer = null;
+let activeNoteContextMenuId = null;
 
 function getDrafts() {
   try {
@@ -32,11 +34,12 @@ function hasDraft(noteId) {
   return Boolean(getDraft(noteId));
 }
 
-function saveDraft(noteId, title, content) {
+function saveDraft(noteId, title, content, folder = 'Notes') {
   const drafts = getDrafts();
   drafts[noteId] = {
     title,
     content,
+    folder,
     updatedAt: new Date().toISOString()
   };
   localStorage.setItem(DRAFTS_STORAGE_KEY, JSON.stringify(drafts));
@@ -47,6 +50,50 @@ function clearDraft(noteId) {
   if (!drafts[noteId]) return;
   delete drafts[noteId];
   localStorage.setItem(DRAFTS_STORAGE_KEY, JSON.stringify(drafts));
+}
+
+function moveDraft(fromNoteId, toNoteId) {
+  const drafts = getDrafts();
+  if (!drafts[fromNoteId]) return;
+  drafts[toNoteId] = drafts[fromNoteId];
+  delete drafts[fromNoteId];
+  localStorage.setItem(DRAFTS_STORAGE_KEY, JSON.stringify(drafts));
+}
+
+function getLocalNotes() {
+  try {
+    const localNotes = JSON.parse(localStorage.getItem(LOCAL_NOTES_STORAGE_KEY) || '{}');
+    return localNotes && typeof localNotes === 'object' ? localNotes : {};
+  } catch (err) {
+    console.warn('Could not read local notes:', err);
+    return {};
+  }
+}
+
+function persistLocalNotes(localNotes) {
+  localStorage.setItem(LOCAL_NOTES_STORAGE_KEY, JSON.stringify(localNotes));
+}
+
+function upsertLocalNote(note) {
+  if (!note?.isLocalOnly) return;
+  const localNotes = getLocalNotes();
+  localNotes[note.id] = {
+    id: note.id,
+    title: note.title || '',
+    content: note.content || '',
+    folder: note.folder || 'Notes',
+    updated: note.updated || new Date().toISOString(),
+    hasContent: true,
+    isLocalOnly: true
+  };
+  persistLocalNotes(localNotes);
+}
+
+function removeLocalNote(noteId) {
+  const localNotes = getLocalNotes();
+  if (!localNotes[noteId]) return;
+  delete localNotes[noteId];
+  persistLocalNotes(localNotes);
 }
 
 function getPendingPush(noteId) {
@@ -67,12 +114,37 @@ function persistPendingPushes() {
   localStorage.setItem(PENDING_PUSHES_STORAGE_KEY, JSON.stringify(pendingPushes));
 }
 
+function makeQueueId() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function makeLocalNoteId() {
+  return `local-${makeQueueId()}`;
+}
+
 function queuePush(noteId, title, content) {
+  const note = allNotes.find(n => n.id === noteId);
+  const pending = getPendingPush(noteId);
+
   pendingPushes[noteId] = {
-    id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    id: makeQueueId(),
+    action: note?.isLocalOnly || pending?.action === 'create' ? 'create' : 'update',
     noteId,
     title,
     content,
+    folder: note?.folder || 'Notes',
+    queuedAt: new Date().toISOString()
+  };
+  persistPendingPushes();
+  updateSyncStatus();
+  flushNotePush(noteId);
+}
+
+function queueDelete(noteId) {
+  pendingPushes[noteId] = {
+    id: makeQueueId(),
+    action: 'delete',
+    noteId,
     queuedAt: new Date().toISOString()
   };
   persistPendingPushes();
@@ -147,17 +219,41 @@ async function flushNotePush(noteId) {
   try {
     while (pendingPushes[noteId]) {
       const push = pendingPushes[noteId];
-      const updatedNote = await pb.collection('jnote').update(noteId, { title: push.title });
-      const newVersion = await pb.collection('jnote_content').create({
-        note: noteId,
-        title: push.title,
-        content: push.content
-      });
 
-      if (pendingPushes[noteId]?.id === push.id) {
+      if (push.action === 'delete') {
+        await pb.collection('jnote').update(noteId, { deleted: true });
+        if (pendingPushes[noteId]?.id === push.id) {
+          delete pendingPushes[noteId];
+          persistPendingPushes();
+        }
+      } else if (push.action === 'create') {
+        const newNoteRecord = await pb.collection('jnote').create({
+          title: push.title,
+          folder: push.folder || 'Notes'
+        });
+        const newVersion = await pb.collection('jnote_content').create({
+          note: newNoteRecord.id,
+          title: push.title,
+          content: push.content
+        });
+
+        const latestPending = pendingPushes[noteId];
         delete pendingPushes[noteId];
         persistPendingPushes();
-        applyCloudPushResult(noteId, push, updatedNote, newVersion);
+        applyCreatePushResult(noteId, push, newNoteRecord, newVersion, latestPending);
+      } else {
+        const updatedNote = await pb.collection('jnote').update(noteId, { title: push.title });
+        const newVersion = await pb.collection('jnote_content').create({
+          note: noteId,
+          title: push.title,
+          content: push.content
+        });
+
+        if (pendingPushes[noteId]?.id === push.id) {
+          delete pendingPushes[noteId];
+          persistPendingPushes();
+          applyCloudPushResult(noteId, push, updatedNote, newVersion);
+        }
       }
     }
   } catch (err) {
@@ -186,6 +282,58 @@ function applyCloudPushResult(noteId, push, updatedNote, newVersion) {
 
   if (currentNoteId === noteId && !hasDraft(noteId) && !pendingPushes[noteId]) {
     currentNoteState = { title: updatedNote.title, content: push.content };
+  }
+
+  renderNoteList();
+}
+
+function applyCreatePushResult(localNoteId, push, newNoteRecord, newVersion, latestPending) {
+  const newNoteId = newNoteRecord.id;
+  const idx = allNotes.findIndex(n => n.id === localNoteId);
+  const latestChange = latestPending && latestPending.id !== push.id ? latestPending : null;
+
+  if (idx !== -1) {
+    allNotes[idx] = {
+      ...allNotes[idx],
+      id: newNoteId,
+      title: latestChange?.title ?? newNoteRecord.title,
+      folder: newNoteRecord.folder || push.folder || 'Notes',
+      updated: newNoteRecord.updated,
+      content: latestChange?.content ?? push.content,
+      versionId: newVersion.id,
+      hasContent: true,
+      isLocalOnly: false
+    };
+  } else if (latestChange?.action !== 'delete') {
+    allNotes.push({
+      id: newNoteId,
+      title: latestChange?.title ?? newNoteRecord.title,
+      folder: newNoteRecord.folder || push.folder || 'Notes',
+      updated: newNoteRecord.updated,
+      content: latestChange?.content ?? push.content,
+      versionId: newVersion.id,
+      hasContent: true,
+      isLocalOnly: false
+    });
+  }
+
+  moveDraft(localNoteId, newNoteId);
+  removeLocalNote(localNoteId);
+
+  if (latestChange) {
+    pendingPushes[newNoteId] = {
+      ...latestChange,
+      action: latestChange.action === 'delete' ? 'delete' : 'update',
+      noteId: newNoteId
+    };
+    persistPendingPushes();
+    flushNotePush(newNoteId);
+  }
+
+  if (currentNoteId === localNoteId) {
+    currentNoteId = newNoteId;
+    const note = allNotes.find(n => n.id === newNoteId);
+    if (note && latestChange?.action !== 'delete') renderNoteDetail(note);
   }
 
   renderNoteList();
@@ -226,6 +374,8 @@ function renderNoteList() {
   const notes = allNotes.filter(n => n.folder === currentFolder);
   const notesList = document.getElementById('notes-list');
 
+  closeNoteContextMenu();
+
   if (notes.length === 0) {
     notesList.innerHTML = '<li class="empty-state">No notes</li>';
   } else {
@@ -239,6 +389,7 @@ function renderNoteList() {
 
     notesList.querySelectorAll('[data-note-id]').forEach(item => {
       item.addEventListener('click', () => selectNote(item.dataset.noteId));
+      item.addEventListener('contextmenu', (event) => openNoteContextMenu(event, item.dataset.noteId));
     });
   }
 }
@@ -255,11 +406,76 @@ async function loadNotes() {
       updated: n.updated,
       hasContent: false
     }));
+    mergeLocalNotesIntoNotes();
+    mergePendingPushesIntoNotes();
+    mergeOrphanLocalDraftsIntoNotes();
     updateGUI();
   } catch (err) {
     console.error('Error loading notes:', err);
     document.getElementById('note-detail').innerHTML = '<p class="error">Failed to load notes</p>';
   }
+}
+
+function mergeLocalNotesIntoNotes() {
+  Object.values(getLocalNotes()).forEach(localNote => {
+    const idx = allNotes.findIndex(note => note.id === localNote.id);
+    if (idx !== -1) {
+      allNotes[idx] = { ...allNotes[idx], ...localNote };
+    } else {
+      allNotes.push(localNote);
+    }
+  });
+}
+
+function mergeOrphanLocalDraftsIntoNotes() {
+  Object.entries(getDrafts()).forEach(([noteId, draft]) => {
+    if (!noteId.startsWith('local-') || allNotes.some(note => note.id === noteId) || pendingPushes[noteId]) return;
+
+    const note = {
+      id: noteId,
+      title: draft.title || '',
+      folder: draft.folder || 'Notes',
+      updated: draft.updatedAt || new Date().toISOString(),
+      content: draft.content || '',
+      hasContent: true,
+      isLocalOnly: true
+    };
+
+    allNotes.push(note);
+    upsertLocalNote(note);
+  });
+}
+
+function mergePendingPushesIntoNotes() {
+  Object.values(pendingPushes).forEach(push => {
+    if (push.action === 'delete') {
+      allNotes = allNotes.filter(note => note.id !== push.noteId);
+      return;
+    }
+
+    const idx = allNotes.findIndex(note => note.id === push.noteId);
+    if (idx !== -1) {
+      allNotes[idx] = {
+        ...allNotes[idx],
+        title: push.title,
+        content: push.content,
+        hasContent: true
+      };
+      return;
+    }
+
+    if (push.action === 'create') {
+      allNotes.push({
+        id: push.noteId,
+        title: push.title,
+        folder: push.folder || 'Notes',
+        updated: push.queuedAt,
+        content: push.content,
+        hasContent: true,
+        isLocalOnly: true
+      });
+    }
+  });
 }
 
 // ─── Folder & Note Selection ──────────────────────────────────────────────────
@@ -284,8 +500,12 @@ async function selectNote(noteId) {
   const local = allNotes[noteIndex];
 
   const container = document.getElementById('note-detail');
+  if (!local) {
+    container.innerHTML = '<p class="empty">Select a note to view</p>';
+    return;
+  }
 
-  if (!local?.hasContent) {
+  if (!local?.hasContent && !local?.isLocalOnly) {
     container.innerHTML = '<p class="empty">Loading note...</p>';
     try {
       const note = allNotes[noteIndex];
@@ -322,13 +542,14 @@ function renderNoteDetail(note) {
   const committedNote = pendingPush ? { ...note, title: pendingPush.title, content: pendingPush.content } : note;
   const draft = getDraft(note.id);
   const displayNote = draft ? { ...committedNote, ...draft } : committedNote;
+  const canCommit = Boolean(draft || note.isLocalOnly);
   currentNoteState = { title: committedNote.title, content: committedNote.content };
 
   const container = document.getElementById('note-detail');
   container.innerHTML = `
     <div class="note-actions">
       <button class="btn-secondary ripple ${draft ? '' : 'hide'}" id="btn-revert">Revert Changes</button>
-      <button class="btn-primary ripple" id="btn-save" ${draft ? '' : 'disabled'}>Commit</button>
+      <button class="btn-primary ripple" id="btn-save" ${canCommit ? '' : 'disabled'}>Commit</button>
       <button class="btn-secondary ripple" id="btn-move">Move</button>
       <button class="btn-secondary ripple" id="btn-delete">Delete</button>
     </div>
@@ -345,12 +566,20 @@ function renderNoteDetail(note) {
   const persistCurrentDraft = () => {
     const title = titleEl.textContent.trim();
     const content = contentEl.textContent.trim();
+    const localNote = allNotes.find(n => n.id === note.id);
+
+    if (localNote?.isLocalOnly) {
+      localNote.title = title;
+      localNote.content = content;
+      localNote.updated = new Date().toISOString();
+      upsertLocalNote(localNote);
+    }
 
     if (title === currentNoteState.title && content === currentNoteState.content) {
       clearDraft(note.id);
       setCanSave(false);
     } else {
-      saveDraft(note.id, title, content);
+      saveDraft(note.id, title, content, localNote?.folder || note.folder || 'Notes');
       setCanSave(true);
     }
 
@@ -381,19 +610,59 @@ function saveNote(noteId) {
   const title = (document.getElementById('edit-title')?.textContent || '').trim();
   const content = (document.getElementById('edit-content')?.textContent || '').trim();
 
+  commitNote(noteId, title, content);
+}
+
+function commitNote(noteId, title, content) {
   const idx = allNotes.findIndex(n => n.id === noteId);
   if (idx !== -1) {
     allNotes[idx].title = title;
     allNotes[idx].content = content;
     allNotes[idx].updated = new Date().toISOString();
     allNotes[idx].hasContent = true;
+    upsertLocalNote(allNotes[idx]);
   }
 
   clearDraft(noteId);
-  currentNoteState = { title, content };
-  setCanSave(false);
+  if (currentNoteId === noteId) {
+    currentNoteState = { title, content };
+    setCanSave(false);
+  }
   renderNoteList();
   queuePush(noteId, title, content);
+}
+
+function commitNoteFromMenu(noteId) {
+  const commit = getNoteCommitPayload(noteId);
+  if (!commit) return;
+
+  commitNote(noteId, commit.title, commit.content);
+  if (currentNoteId === noteId) {
+    const note = allNotes.find(n => n.id === noteId);
+    if (note) renderNoteDetail(note);
+  }
+}
+
+function getNoteCommitPayload(noteId) {
+  const note = allNotes.find(n => n.id === noteId);
+  if (!note) return null;
+
+  const draft = getDraft(noteId);
+  if (draft) {
+    return {
+      title: draft.title || '',
+      content: draft.content || ''
+    };
+  }
+
+  if (note.isLocalOnly) {
+    return {
+      title: note.title || '',
+      content: note.content || ''
+    };
+  }
+
+  return null;
 }
 
 function revertNoteDraft(noteId) {
@@ -410,7 +679,8 @@ function revertNoteDraft(noteId) {
 function setCanSave(noteHasChanges) {
   const saveBtn = document.getElementById('btn-save');
   const revertBtn = document.getElementById('btn-revert');
-  if (saveBtn) saveBtn.disabled = !noteHasChanges;
+  const note = allNotes.find(n => n.id === currentNoteId);
+  if (saveBtn) saveBtn.disabled = !(noteHasChanges || note?.isLocalOnly);
   if (revertBtn) revertBtn.classList.toggle('hide', !noteHasChanges);
 
   // if (noteHasChanges) {
@@ -424,61 +694,70 @@ function setCanSave(noteHasChanges) {
   // }
 }
 
-async function createNewNote(folder) {
-  try {
-    // 1. Create the base note
-    const newNoteRecord = await pb.collection('jnote').create({
-      title: '',
-      folder: folder || 'Notes'
-    });
+function commitCurrentNoteFromShortcut() {
+  if (!currentNoteId) return;
 
-    // 2. Create the initial empty content version
-    const initialContent = await pb.collection('jnote_content').create({
-      note: newNoteRecord.id,
-      title: newNoteRecord.title,
-      content: ''
-    });
+  const saveBtn = document.getElementById('btn-save');
+  if (saveBtn?.disabled) return;
 
-    const noteData = {
-      id: newNoteRecord.id,
-      title: newNoteRecord.title,
-      folder: newNoteRecord.folder || 'Notes',
-      updated: newNoteRecord.updated,
-      hasContent: true,
-      content: initialContent.content,
-      versionId: initialContent.id
-    };
-
-    allNotes.push(noteData);
-
-    currentFolder = folder || 'Notes';
-    currentNoteId = newNoteRecord.id;
-    
-    updateGUI();
-    renderNoteDetail(noteData);
-    
-  } catch (err) {
-    console.error('Error creating note:', err);
-    alert('Failed to create note');
-  }
+  saveNote(currentNoteId);
 }
 
-async function deleteNote(noteId) {
+function createNewNote(folder) {
+  const noteData = {
+    id: makeLocalNoteId(),
+    title: '',
+    folder: folder || 'Notes',
+    updated: new Date().toISOString(),
+    hasContent: true,
+    content: '',
+    isLocalOnly: true
+  };
+
+  allNotes.push(noteData);
+  upsertLocalNote(noteData);
+
+  currentFolder = noteData.folder;
+  currentNoteId = noteData.id;
+
+  updateGUI();
+  renderNoteDetail(noteData);
+}
+
+function deleteNote(noteId) {
   if (!confirm('Are you sure you want to delete this note?')) return;
 
-  try {
-    await pb.collection('jnote').update(noteId, { deleted: true });
-    clearDraft(noteId);
-    allNotes = allNotes.filter(n => n.id !== noteId);
-    currentNoteId = null;
-    updateGUI();
-  } catch (err) {
-    console.error('Error deleting note:', err);
-    alert('Failed to delete note');
+  const note = allNotes.find(n => n.id === noteId);
+  clearDraft(noteId);
+  removeLocalNote(noteId);
+  allNotes = allNotes.filter(n => n.id !== noteId);
+  if (currentNoteId === noteId) currentNoteId = null;
+  updateGUI();
+
+  if (note?.isLocalOnly && !activePushes.has(noteId)) {
+    delete pendingPushes[noteId];
+    persistPendingPushes();
+    updateSyncStatus();
+    return;
   }
+
+  queueDelete(noteId);
 }
 
 async function moveNoteToFolder(noteId, folder) {
+  const note = allNotes.find(n => n.id === noteId);
+  if (note?.isLocalOnly) {
+    note.folder = folder || 'Notes';
+    note.updated = new Date().toISOString();
+    upsertLocalNote(note);
+    if (pendingPushes[noteId]?.action === 'create') {
+      pendingPushes[noteId].folder = note.folder;
+      persistPendingPushes();
+    }
+    updateGUI();
+    return;
+  }
+
   try {
     const updated = await pb.collection('jnote').update(noteId, { folder: folder || 'Notes' });
     
@@ -580,6 +859,104 @@ function toggleMenu() {
   }
 }
 
+// ─── Note Context Menu ───────────────────────────────────────────────────────
+
+function openNoteContextMenu(event, noteId) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  const note = allNotes.find(n => n.id === noteId);
+  if (!note) return;
+
+  const menu = getNoteContextMenu();
+  activeNoteContextMenuId = noteId;
+
+  document.querySelectorAll('[data-note-id].context-open').forEach(item => {
+    item.classList.remove('context-open');
+  });
+  document.querySelector(`[data-note-id="${cssEscape(noteId)}"]`)?.classList.add('context-open');
+
+  const canCommit = Boolean(getNoteCommitPayload(noteId));
+  menu.querySelector('[data-action="commit"]').disabled = !canCommit;
+  menu.hidden = false;
+
+  positionNoteContextMenu(menu, event.clientX, event.clientY);
+}
+
+function getNoteContextMenu() {
+  let menu = document.getElementById('note-context-menu');
+  if (menu) return menu;
+
+  menu = document.createElement('div');
+  menu.id = 'note-context-menu';
+  menu.className = 'note-context-menu';
+  menu.setAttribute('role', 'menu');
+  menu.hidden = true;
+  menu.innerHTML = `
+    <button type="button" role="menuitem" data-action="commit">
+      <i aria-hidden="true">cloud_upload</i>
+      <span>Commit</span>
+    </button>
+    <button type="button" role="menuitem" data-action="move">
+      <i aria-hidden="true">drive_file_move</i>
+      <span>Move</span>
+    </button>
+    <button type="button" role="menuitem" data-action="delete" class="danger">
+      <i aria-hidden="true">delete</i>
+      <span>Delete</span>
+    </button>
+  `;
+
+  menu.addEventListener('click', event => {
+    const button = event.target.closest('[data-action]');
+    if (!button || button.disabled || !activeNoteContextMenuId) return;
+
+    const noteId = activeNoteContextMenuId;
+    const action = button.dataset.action;
+    closeNoteContextMenu();
+
+    if (action === 'commit') {
+      commitNoteFromMenu(noteId);
+    } else if (action === 'move') {
+      const note = allNotes.find(n => n.id === noteId);
+      if (note) openFolderModal('move', note);
+    } else if (action === 'delete') {
+      deleteNote(noteId);
+    }
+  });
+
+  document.body.appendChild(menu);
+  return menu;
+}
+
+function positionNoteContextMenu(menu, x, y) {
+  const padding = 8;
+  menu.style.left = '0px';
+  menu.style.top = '0px';
+
+  const rect = menu.getBoundingClientRect();
+  const left = Math.min(x, window.innerWidth - rect.width - padding);
+  const top = Math.min(y, window.innerHeight - rect.height - padding);
+
+  menu.style.left = `${Math.max(padding, left)}px`;
+  menu.style.top = `${Math.max(padding, top)}px`;
+}
+
+function closeNoteContextMenu() {
+  const menu = document.getElementById('note-context-menu');
+  if (menu) menu.hidden = true;
+
+  activeNoteContextMenuId = null;
+  document.querySelectorAll('[data-note-id].context-open').forEach(item => {
+    item.classList.remove('context-open');
+  });
+}
+
+function cssEscape(value) {
+  if (window.CSS?.escape) return CSS.escape(value);
+  return String(value).replace(/["\\]/g, '\\$&');
+}
+
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
 function escapeHtml(text) {
@@ -611,17 +988,33 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('hamburger-btn').addEventListener('click', toggleMenu);
   document.getElementById('close-detail-btn').addEventListener('click', closeDetailView);
   document.getElementById('mobile-overlay').addEventListener('click', () => {
+    closeNoteContextMenu();
     closeDetailView();
     closeFoldersDrawer();
   });
 
   // Handle window resize to close drawers on desktop
   window.addEventListener('resize', () => {
+    closeNoteContextMenu();
     if (window.innerWidth > 768) {
       closeFoldersDrawer();
       closeDetailView();
     }
   });
+
+  window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeNoteContextMenu();
+      return;
+    }
+
+    if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 's') return;
+    event.preventDefault();
+    commitCurrentNoteFromShortcut();
+  });
+
+  window.addEventListener('click', closeNoteContextMenu);
+  window.addEventListener('scroll', closeNoteContextMenu, true);
 
   window.addEventListener('beforeunload', (event) => {
     if (!hasUnfinishedPushes()) return;
