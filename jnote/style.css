@@ -9,10 +9,6 @@
     --motion-duration-long: 350ms;
 }
 
-* {
-    box-sizing: border-box !important;
-}
-
 body.greencolor {
     --primary: #78dc77;
     --on-primary: #00390a;
@@ -993,7 +989,7 @@ button:focus-visible {
     font: inherit;
     font-weight: 500;
     text-align: left;
-    
+    box-sizing: border-box !important;
 }
 
 .settings-row-button:hover,
