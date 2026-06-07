@@ -564,8 +564,8 @@ function renderNoteDetail(note) {
   const revertBtn = document.getElementById('btn-revert');
 
   const persistCurrentDraft = () => {
-    const title = titleEl.textContent.trim();
-    const content = contentEl.textContent.trim();
+    const title = getEditableText(titleEl, { trim: true });
+    const content = getEditableText(contentEl);
     const localNote = allNotes.find(n => n.id === note.id);
 
     if (localNote?.isLocalOnly) {
@@ -607,8 +607,8 @@ function renderNoteDetail(note) {
 // ─── CRUD Operations ──────────────────────────────────────────────────────────
 
 function saveNote(noteId) {
-  const title = (document.getElementById('edit-title')?.textContent || '').trim();
-  const content = (document.getElementById('edit-content')?.textContent || '').trim();
+  const title = getEditableText(document.getElementById('edit-title'), { trim: true });
+  const content = getEditableText(document.getElementById('edit-content'));
 
   commitNote(noteId, title, content);
 }
@@ -962,6 +962,17 @@ function cssEscape(value) {
 function escapeHtml(text) {
   const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
   return String(text ?? '').replace(/[&<>"']/g, m => map[m]);
+}
+
+function getEditableText(element, options = {}) {
+  if (!element) return '';
+
+  const text = (element.innerText ?? element.textContent ?? '')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\r\n?/g, '\n');
+
+  if (options.trim) return text.trim();
+  return text.trim() ? text : '';
 }
 
 function getDisplayTitle(note) {
