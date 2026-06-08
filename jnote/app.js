@@ -1529,10 +1529,10 @@ function setEncryptionModalMode(mode) {
     input.disabled = false;
     input.autocomplete = isSetup ? 'new-password' : 'current-password';
   }
-  if (label) label.textContent = isSetup ? 'New encryption key' : 'Encryption key';
+  if (label) label.textContent = isSetup ? 'New encryption key' : 'Decryption key';
   if (rememberButton) {
     rememberButton.disabled = false;
-    rememberButton.textContent = isSetup ? 'Create and Save to Browser' : 'Unlock and Remember';
+    rememberButton.textContent = isSetup ? 'Create and Save in Browser' : 'Unlock and Remember';
   }
   if (onceButton) {
     onceButton.disabled = false;
