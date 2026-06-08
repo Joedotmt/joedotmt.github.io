@@ -1517,12 +1517,12 @@ function setEncryptionModalMode(mode) {
   if (copy) {
     copy.textContent = isSetup
       ? 'Choose the key that will encrypt your notes. This key is never sent to the server.'
-      : 'Enter your encryption key to decrypt your notes in this browser.';
+      : 'Enter your decryption key to decrypt your notes.';
   }
   if (warning) {
     warning.textContent = isSetup
       ? 'If you forget this key, your notes cannot be recovered.'
-      : 'Use the same key you created for JNote. If you forget it, your notes cannot be recovered.';
+      : `If you forgot it, your notes cannot be recovered.`;
   }
   if (input) {
     input.value = '';
@@ -1532,11 +1532,11 @@ function setEncryptionModalMode(mode) {
   if (label) label.textContent = isSetup ? 'New encryption key' : 'Encryption key';
   if (rememberButton) {
     rememberButton.disabled = false;
-    rememberButton.textContent = isSetup ? 'Create and Remember' : 'Unlock and Remember';
+    rememberButton.textContent = isSetup ? 'Create and Save to Browser' : 'Unlock and Remember';
   }
   if (onceButton) {
     onceButton.disabled = false;
-    onceButton.textContent = isSetup ? 'Create Once' : 'Unlock Once';
+    onceButton.textContent = isSetup ? 'Create and Unlock Once' : 'Unlock Once';
   }
 }
 
