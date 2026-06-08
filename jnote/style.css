@@ -576,7 +576,7 @@ body {
 }
 
 .overlay {
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.5);
 }
 
 .overlay.show {
@@ -592,7 +592,7 @@ body {
     align-items: center;
     justify-content: center;
     padding: 20px;
-    background: rgba(0, 0, 0, 0.72);
+    background: rgba(0, 0, 0, 1);
 }
 
 .encryption-modal.show {
@@ -639,7 +639,13 @@ body {
 }
 
 .encryption-field {
-    margin: 0 0 12px;
+    margin: 0 0 18px;
+}
+
+.encryption-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .encryption-error {
@@ -649,9 +655,13 @@ body {
 .encryption-submit {
     width: 100%;
     min-height: 42px;
+    height: auto;
+    padding: 10px 14px;
     border: 0;
     cursor: pointer;
     font-weight: 600;
+    line-height: 1.2;
+    white-space: normal;
     box-sizing: border-box;
 }
 
@@ -817,13 +827,13 @@ body {
 }
 
 .btn-secondary {
-    background: var(--surface-variant);
+    background: transparent;
     color: var(--on-surface-variant);
     border: 1px solid var(--outline);
 }
 
 .btn-secondary:hover {
-    background: var(--outline);
+    background: var(--surface-container-medium);
     transform: translateY(-1px);
 }
 
@@ -866,7 +876,7 @@ button:focus-visible {
 
 .note-actions button {
     padding: 8px 16px;
-    border: none;
+    border: 2px solid var(--primary);
     cursor: pointer;
     font-weight: 500;
     font-size: 0.9em;
@@ -874,8 +884,16 @@ button:focus-visible {
         background-color var(--motion-duration-short) linear,
         color var(--motion-duration-short) linear,
         opacity var(--motion-duration-short) linear,
-        transform var(--motion-duration-short) var(--motion-standard),
+        transform var(--motion-duration-short) var(--motion-emphasized),
         box-shadow var(--motion-duration-short) linear;
+}
+
+.note-actions button:not(.btn-primary) {
+    border: 2px solid var(--outline);
+}
+.note-actions button:not(.btn-primary):hover {
+    border: 2px solid var(--outline);
+    background: var(--surface-bright);
 }
 
 .note-title,
@@ -1200,6 +1218,7 @@ button:focus-visible {
 }
 
 @keyframes unsaved-dot-breathe {
+
     0%,
     100% {
         box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 0%, transparent);
@@ -1213,6 +1232,7 @@ button:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
     *,
     *::before,
     *::after {

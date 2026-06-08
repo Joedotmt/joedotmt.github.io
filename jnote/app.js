@@ -10,7 +10,7 @@ const LOCAL_NOTES_STORAGE_KEY = 'jnote.localNotes.v1';
 const PENDING_PUSHES_STORAGE_KEY = 'jnote.pendingPushes.v1';
 const CUSTOM_CSS_STORAGE_KEY = 'jnote.customCss.v1';
 const ENCRYPTION_METADATA_STORAGE_KEY = 'jnote.encryptionMetadata.v1';
-const ENCRYPTION_PASSPHRASE_STORAGE_KEY = 'jnote.encryptionPassphrase.v1';
+const REMEMBERED_DEVICE_KEY_STORAGE_KEY = 'jnote.rememberedDeviceKey.v1';
 const PUSH_RETRY_DELAY = 5000;
 const ENCRYPTED_VALUE_VERSION = 1;
 const ENCRYPTION_ALGORITHM = 'AES-GCM';
@@ -20,6 +20,7 @@ const KDF_ITERATIONS = 310000;
 const AES_KEY_LENGTH = 256;
 const ENCRYPTION_SALT_BYTES = 16;
 const ENCRYPTION_IV_BYTES = 12;
+const ACCOUNT_URL = 'https://joe.mt/account';
 let drafts = {};
 let localNotes = {};
 let pendingPushes = {};
@@ -30,6 +31,8 @@ let syncStatusAnimationTimer = null;
 let activeNoteContextMenuId = null;
 let encryptionState = null;
 let encryptedStorePersistVersions = {};
+let currentUser = null;
+let encryptionMode = 'unlock';
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -41,6 +44,44 @@ applyCustomCss();
 function assertWebCryptoAvailable() {
   if (!window.crypto?.subtle || !window.crypto?.getRandomValues) {
     throw new Error('Web Crypto is unavailable. Open this app over HTTPS or localhost.');
+  }
+}
+
+function getCurrentUserId() {
+  return currentUser?.id || pb.authStore.record?.id || '';
+}
+
+function getUserScopedStorageKey(storageKey) {
+  const userId = getCurrentUserId();
+  return userId ? `${storageKey}.${userId}` : storageKey;
+}
+
+function getOwnedNotesFilter(extraFilter = '') {
+  const userId = getCurrentUserId();
+  const filters = [];
+  if (userId) filters.push(`user = "${userId}"`);
+  if (extraFilter) filters.push(extraFilter);
+  return filters.join(' && ');
+}
+
+async function loadCurrentUser() {
+  if (!pb.authStore.isValid || !pb.authStore.record?.id) {
+    throw new Error('JNote requires an authenticated PocketBase user.');
+  }
+
+  currentUser = await pb.collection('users').getOne(pb.authStore.record.id);
+  return currentUser;
+}
+
+async function markJnoteKeySet() {
+  if (!currentUser || currentUser.is_jnote_key_set) return;
+
+  currentUser = await pb.collection('users').update(currentUser.id, {
+    is_jnote_key_set: true
+  });
+
+  if (pb.authStore.token && pb.authStore.record) {
+    pb.authStore.save(pb.authStore.token, { ...pb.authStore.record, ...currentUser });
   }
 }
 
@@ -76,7 +117,7 @@ function normalizeEncryptionMetadata(metadata) {
 
 function getStoredEncryptionMetadata() {
   try {
-    return normalizeEncryptionMetadata(JSON.parse(localStorage.getItem(ENCRYPTION_METADATA_STORAGE_KEY) || 'null'));
+    return normalizeEncryptionMetadata(JSON.parse(localStorage.getItem(getUserScopedStorageKey(ENCRYPTION_METADATA_STORAGE_KEY)) || 'null'));
   } catch (err) {
     console.warn('Could not read encryption metadata:', err);
     return null;
@@ -85,41 +126,16 @@ function getStoredEncryptionMetadata() {
 
 function saveEncryptionMetadata(metadata) {
   try {
-    localStorage.setItem(ENCRYPTION_METADATA_STORAGE_KEY, JSON.stringify(metadata));
+    localStorage.setItem(getUserScopedStorageKey(ENCRYPTION_METADATA_STORAGE_KEY), JSON.stringify(metadata));
   } catch (err) {
     console.warn('Could not save encryption metadata:', err);
-  }
-}
-
-function getStoredEncryptionPassphrase() {
-  try {
-    return localStorage.getItem(ENCRYPTION_PASSPHRASE_STORAGE_KEY) || '';
-  } catch (err) {
-    console.warn('Could not read saved encryption passphrase:', err);
-    return '';
-  }
-}
-
-function saveEncryptionPassphrase(passphrase) {
-  try {
-    localStorage.setItem(ENCRYPTION_PASSPHRASE_STORAGE_KEY, passphrase);
-  } catch (err) {
-    console.warn('Could not save encryption passphrase:', err);
-  }
-}
-
-function clearStoredEncryptionPassphrase() {
-  try {
-    localStorage.removeItem(ENCRYPTION_PASSPHRASE_STORAGE_KEY);
-  } catch (err) {
-    console.warn('Could not clear saved encryption passphrase:', err);
   }
 }
 
 async function getRemoteEncryptionMetadata() {
   const result = await pb.collection('jnote').getList(1, 1, {
     sort: '-updated',
-    filter: 'deleted=false'
+    filter: getOwnedNotesFilter('deleted=false')
   });
   const record = result.items[0];
   if (!record) return null;
@@ -144,18 +160,22 @@ async function resolveEncryptionMetadata() {
   return createEncryptionMetadata();
 }
 
-async function unlockEncryption(passphrase) {
+async function unlockEncryption(passphrase, options = {}) {
   assertWebCryptoAvailable();
 
   const metadata = await resolveEncryptionMetadata();
-  const key = await deriveEncryptionKey(passphrase, metadata);
+  const key = await deriveEncryptionKey(passphrase, metadata, { extractable: Boolean(options.rememberDevice) });
   encryptionState = { key, metadata };
 
   await validateEncryptionKey();
   saveEncryptionMetadata(metadata);
+
+  if (options.rememberDevice) {
+    await rememberCurrentDeviceKey();
+  }
 }
 
-async function deriveEncryptionKey(passphrase, metadata) {
+async function deriveEncryptionKey(passphrase, metadata, options = {}) {
   const baseKey = await window.crypto.subtle.importKey(
     'raw',
     textEncoder.encode(passphrase),
@@ -173,9 +193,74 @@ async function deriveEncryptionKey(passphrase, metadata) {
     },
     baseKey,
     { name: ENCRYPTION_ALGORITHM, length: AES_KEY_LENGTH },
-    false,
+    Boolean(options.extractable),
     ['encrypt', 'decrypt']
   );
+}
+
+function getRememberedDeviceKeyRecord() {
+  try {
+    const record = JSON.parse(localStorage.getItem(getUserScopedStorageKey(REMEMBERED_DEVICE_KEY_STORAGE_KEY)) || 'null');
+    const metadata = normalizeEncryptionMetadata(record?.metadata);
+    if (!record || record.v !== ENCRYPTED_VALUE_VERSION || record.alg !== ENCRYPTION_ALGORITHM) return null;
+    if (typeof record.key !== 'string' || !metadata) return null;
+    return { ...record, metadata };
+  } catch (err) {
+    console.warn('Could not read remembered device key:', err);
+    return null;
+  }
+}
+
+async function unlockRememberedDevice() {
+  assertWebCryptoAvailable();
+
+  const record = getRememberedDeviceKeyRecord();
+  if (!record) return false;
+
+  try {
+    const key = await window.crypto.subtle.importKey(
+      'raw',
+      base64ToBytes(record.key),
+      { name: ENCRYPTION_ALGORITHM, length: AES_KEY_LENGTH },
+      false,
+      ['encrypt', 'decrypt']
+    );
+
+    encryptionState = { key, metadata: record.metadata };
+    await validateEncryptionKey();
+    saveEncryptionMetadata(record.metadata);
+    return true;
+  } catch (err) {
+    encryptionState = null;
+    forgetRememberedDeviceKey();
+    console.warn('Remembered device key could not unlock notes:', err);
+    return false;
+  }
+}
+
+async function rememberCurrentDeviceKey() {
+  if (!encryptionState) return;
+
+  const rawKey = await window.crypto.subtle.exportKey('raw', encryptionState.key);
+  try {
+    localStorage.setItem(getUserScopedStorageKey(REMEMBERED_DEVICE_KEY_STORAGE_KEY), JSON.stringify({
+      v: ENCRYPTED_VALUE_VERSION,
+      alg: ENCRYPTION_ALGORITHM,
+      metadata: encryptionState.metadata,
+      key: bytesToBase64(new Uint8Array(rawKey)),
+      createdAt: new Date().toISOString()
+    }));
+  } catch (err) {
+    console.warn('Could not remember this device:', err);
+  }
+}
+
+function forgetRememberedDeviceKey() {
+  try {
+    localStorage.removeItem(getUserScopedStorageKey(REMEMBERED_DEVICE_KEY_STORAGE_KEY));
+  } catch (err) {
+    console.warn('Could not forget remembered device key:', err);
+  }
 }
 
 async function validateEncryptionKey() {
@@ -184,7 +269,7 @@ async function validateEncryptionKey() {
   try {
     const result = await pb.collection('jnote').getList(1, 1, {
       sort: '-updated',
-      filter: 'deleted=false'
+      filter: getOwnedNotesFilter('deleted=false')
     });
     remoteSample = result.items[0]?.title || result.items[0]?.folder;
   } catch (err) {
@@ -202,7 +287,7 @@ async function validateEncryptionKey() {
 
 function findEncryptedLocalStoreSample() {
   for (const key of [DRAFTS_STORAGE_KEY, LOCAL_NOTES_STORAGE_KEY, PENDING_PUSHES_STORAGE_KEY]) {
-    const value = localStorage.getItem(key);
+    const value = localStorage.getItem(getUserScopedStorageKey(key));
     if (isEncryptedEnvelopeString(value)) return value;
   }
   return null;
@@ -309,11 +394,12 @@ async function loadEncryptedClientStores() {
 }
 
 async function getEncryptedObjectStore(storageKey) {
-  const stored = localStorage.getItem(storageKey);
+  const scopedStorageKey = getUserScopedStorageKey(storageKey);
+  const stored = localStorage.getItem(scopedStorageKey);
   if (!stored) return {};
 
   if (!isEncryptedEnvelopeString(stored)) {
-    localStorage.removeItem(storageKey);
+    localStorage.removeItem(scopedStorageKey);
     return {};
   }
 
@@ -325,19 +411,20 @@ async function getEncryptedObjectStore(storageKey) {
 function persistEncryptedObjectStore(storageKey, value) {
   if (!encryptionState) return;
 
+  const scopedStorageKey = getUserScopedStorageKey(storageKey);
   const snapshot = JSON.parse(JSON.stringify(value || {}));
-  const sequence = (encryptedStorePersistVersions[storageKey] || 0) + 1;
-  encryptedStorePersistVersions[storageKey] = sequence;
+  const sequence = (encryptedStorePersistVersions[scopedStorageKey] || 0) + 1;
+  encryptedStorePersistVersions[scopedStorageKey] = sequence;
 
   if (Object.keys(snapshot).length === 0) {
-    localStorage.removeItem(storageKey);
+    localStorage.removeItem(scopedStorageKey);
     return;
   }
 
   encryptString(JSON.stringify(snapshot))
     .then(encrypted => {
-      if (encryptedStorePersistVersions[storageKey] !== sequence) return;
-      localStorage.setItem(storageKey, encrypted);
+      if (encryptedStorePersistVersions[scopedStorageKey] !== sequence) return;
+      localStorage.setItem(scopedStorageKey, encrypted);
     })
     .catch(err => console.warn('Could not persist encrypted local store:', err));
 }
@@ -345,7 +432,8 @@ function persistEncryptedObjectStore(storageKey, value) {
 async function encryptNoteRecordPayload(title, folder = 'Notes') {
   return {
     title: await encryptString(title),
-    folder: await encryptString(folder || 'Notes')
+    folder: await encryptString(folder || 'Notes'),
+    user: getCurrentUserId()
   };
 }
 
@@ -758,7 +846,7 @@ function renderNoteList() {
 
 async function loadNotes() {
   try {
-    const fetched = await pb.collection('jnote').getFullList({ sort: '-updated', filter: 'deleted=false' });
+    const fetched = await pb.collection('jnote').getFullList({ sort: '-updated', filter: getOwnedNotesFilter('deleted=false') });
     allNotes = await Promise.all(fetched.map(async n => ({
       id: n.id,
       title: await decryptString(n.title),
@@ -1355,6 +1443,11 @@ function bindSettingsDialogs() {
 
   document.getElementById('settings-btn')?.addEventListener('click', openSettingsDialog);
   document.getElementById('open-custom-css-dialog')?.addEventListener('click', openCustomCssDialog);
+  document.getElementById('forget-remembered-device')?.addEventListener('click', () => {
+    forgetRememberedDeviceKey();
+    settingsDialog?.close();
+    alert('This browser will ask for your encryption passphrase next time.');
+  });
 
   document.getElementById('save-custom-css')?.addEventListener('click', () => {
     saveCustomCss(customCssInput?.value || '');
@@ -1408,6 +1501,61 @@ function bindEncryptionModal() {
   input?.addEventListener('input', () => setEncryptionError(''));
 }
 
+function setEncryptionModalMode(mode) {
+  encryptionMode = mode;
+
+  const title = document.getElementById('encryption-title');
+  const copy = document.querySelector('.encryption-copy');
+  const warning = document.querySelector('.encryption-warning');
+  const input = document.getElementById('encryption-passphrase');
+  const label = document.querySelector('label[for="encryption-passphrase"]');
+  const rememberButton = document.querySelector('[data-remember-device="true"]');
+  const onceButton = document.querySelector('[data-remember-device="false"]');
+  const isSetup = mode === 'setup';
+
+  if (title) title.textContent = isSetup ? 'Create encryption key' : 'Unlock encrypted notes';
+  if (copy) {
+    copy.textContent = isSetup
+      ? 'Choose the key that will encrypt your notes. This key is never sent to the server.'
+      : 'Enter your encryption key to decrypt your notes in this browser.';
+  }
+  if (warning) {
+    warning.textContent = isSetup
+      ? 'If you forget this key, your notes cannot be recovered.'
+      : 'Use the same key you created for JNote. If you forget it, your notes cannot be recovered.';
+  }
+  if (input) {
+    input.value = '';
+    input.disabled = false;
+    input.autocomplete = isSetup ? 'new-password' : 'current-password';
+  }
+  if (label) label.textContent = isSetup ? 'New encryption key' : 'Encryption key';
+  if (rememberButton) {
+    rememberButton.disabled = false;
+    rememberButton.textContent = isSetup ? 'Create and Remember' : 'Unlock and Remember';
+  }
+  if (onceButton) {
+    onceButton.disabled = false;
+    onceButton.textContent = isSetup ? 'Create Once' : 'Unlock Once';
+  }
+}
+
+function showAuthRequired() {
+  const title = document.getElementById('encryption-title');
+  const copy = document.querySelector('.encryption-copy');
+  const warning = document.querySelector('.encryption-warning');
+  const input = document.getElementById('encryption-passphrase');
+  const buttons = document.querySelectorAll('#encryption-form button[type="submit"]');
+
+  if (title) title.textContent = 'Sign in required';
+  if (copy) copy.textContent = 'JNote uses the account session from joe.mt/account.';
+  if (warning) warning.textContent = `Sign in at ${ACCOUNT_URL}, then return to JNote.`;
+  if (input) input.disabled = true;
+  buttons.forEach(button => { button.disabled = true; });
+  setEncryptionError('');
+  showEncryptionModal();
+}
+
 function showEncryptionModal() {
   const modal = document.getElementById('encryption-modal');
   const input = document.getElementById('encryption-passphrase');
@@ -1420,47 +1568,14 @@ function hideEncryptionModal() {
   document.getElementById('encryption-modal')?.classList.remove('show');
 }
 
-async function unlockAndStart(passphrase, options = {}) {
-  await unlockEncryption(passphrase);
-  await loadEncryptedClientStores();
-  if (options.rememberPassphrase) saveEncryptionPassphrase(passphrase);
-  hideEncryptionModal();
-  await loadNotes();
-  updateSyncStatus();
-  flushPendingPushes();
-}
-
-async function autoUnlockFromStoredPassphrase() {
-  const storedPassphrase = getStoredEncryptionPassphrase();
-  if (!storedPassphrase) {
-    showEncryptionModal();
-    return;
-  }
-
-  setEncryptionUnlockBusy(true);
-  setEncryptionError('');
-
-  try {
-    await unlockAndStart(storedPassphrase);
-  } catch (err) {
-    encryptionState = null;
-    drafts = {};
-    localNotes = {};
-    pendingPushes = {};
-    clearStoredEncryptionPassphrase();
-    updateSyncStatus();
-    console.error('Saved encryption passphrase could not unlock notes:', err);
-    setEncryptionError('Saved passphrase could not unlock notes. Enter it again.');
-    showEncryptionModal();
-  } finally {
-    setEncryptionUnlockBusy(false);
-  }
-}
-
 async function handleEncryptionSubmit(event) {
   event.preventDefault();
 
+  const form = event.currentTarget;
   const input = document.getElementById('encryption-passphrase');
+  const submitButtons = [...form.querySelectorAll('button[type="submit"]')];
+  const submitButton = event.submitter?.matches?.('button[type="submit"]') ? event.submitter : submitButtons[0];
+  const rememberDevice = submitButton?.dataset.rememberDevice === 'true';
   const passphrase = input?.value || '';
 
   if (!passphrase) {
@@ -1470,17 +1585,22 @@ async function handleEncryptionSubmit(event) {
   }
 
   setEncryptionError('');
-  setEncryptionUnlockBusy(true);
+  const originalSubmitText = submitButton?.textContent || '';
+  submitButtons.forEach(button => { button.disabled = true; });
+  if (submitButton) submitButton.textContent = 'Unlocking...';
 
   try {
-    await unlockAndStart(passphrase, { rememberPassphrase: true });
+    await unlockEncryption(passphrase, { rememberDevice });
+    if (encryptionMode === 'setup') {
+      await markJnoteKeySet();
+    }
     input.value = '';
+    await finishEncryptionUnlock();
   } catch (err) {
     encryptionState = null;
     drafts = {};
     localNotes = {};
     pendingPushes = {};
-    clearStoredEncryptionPassphrase();
     updateSyncStatus();
     console.error('Could not unlock encrypted notes:', err);
     setEncryptionError('Could not unlock notes. Check the passphrase and try again.');
@@ -1488,7 +1608,8 @@ async function handleEncryptionSubmit(event) {
     input?.focus();
     input?.select();
   } finally {
-    setEncryptionUnlockBusy(false);
+    submitButtons.forEach(button => { button.disabled = false; });
+    if (submitButton) submitButton.textContent = originalSubmitText;
   }
 }
 
@@ -1500,12 +1621,30 @@ function setEncryptionError(message) {
   errorEl.hidden = !message;
 }
 
-function setEncryptionUnlockBusy(isBusy) {
-  const submitButton = document.querySelector('#encryption-form button[type="submit"]');
-  if (!submitButton) return;
+async function initializeEncryptionUnlock() {
+  try {
+    await loadCurrentUser();
 
-  submitButton.disabled = isBusy;
-  submitButton.textContent = isBusy ? 'Unlocking...' : 'Unlock';
+    if (currentUser.is_jnote_key_set && await unlockRememberedDevice()) {
+      await finishEncryptionUnlock();
+      return;
+    }
+  } catch (err) {
+    console.warn('Could not initialize encrypted notes:', err);
+    showAuthRequired();
+    return;
+  }
+
+  setEncryptionModalMode(currentUser?.is_jnote_key_set ? 'unlock' : 'setup');
+  showEncryptionModal();
+}
+
+async function finishEncryptionUnlock() {
+  await loadEncryptedClientStores();
+  hideEncryptionModal();
+  await loadNotes();
+  updateSyncStatus();
+  flushPendingPushes();
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
@@ -1558,5 +1697,5 @@ document.addEventListener('DOMContentLoaded', () => {
     event.returnValue = 'Your latest commit is still pushing to the cloud.';
   });
 
-  autoUnlockFromStoredPassphrase();
+  initializeEncryptionUnlock();
 });
