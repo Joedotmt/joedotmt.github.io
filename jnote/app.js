@@ -9,15 +9,352 @@ const DRAFTS_STORAGE_KEY = 'jnote.unsavedDrafts.v1';
 const LOCAL_NOTES_STORAGE_KEY = 'jnote.localNotes.v1';
 const PENDING_PUSHES_STORAGE_KEY = 'jnote.pendingPushes.v1';
 const CUSTOM_CSS_STORAGE_KEY = 'jnote.customCss.v1';
+const ENCRYPTION_METADATA_STORAGE_KEY = 'jnote.encryptionMetadata.v1';
+const ENCRYPTION_PASSPHRASE_STORAGE_KEY = 'jnote.encryptionPassphrase.v1';
 const PUSH_RETRY_DELAY = 5000;
-let pendingPushes = getPendingPushes();
+const ENCRYPTED_VALUE_VERSION = 1;
+const ENCRYPTION_ALGORITHM = 'AES-GCM';
+const KDF_ALGORITHM = 'PBKDF2';
+const KDF_HASH = 'SHA-256';
+const KDF_ITERATIONS = 310000;
+const AES_KEY_LENGTH = 256;
+const ENCRYPTION_SALT_BYTES = 16;
+const ENCRYPTION_IV_BYTES = 12;
+let drafts = {};
+let localNotes = {};
+let pendingPushes = {};
 let activePushes = new Set();
 let pushRetryTimers = new Map();
 let hasPushError = false;
 let syncStatusAnimationTimer = null;
 let activeNoteContextMenuId = null;
+let encryptionState = null;
+let encryptedStorePersistVersions = {};
+
+const textEncoder = new TextEncoder();
+const textDecoder = new TextDecoder();
 
 applyCustomCss();
+
+// ─── Client-Side Encryption ──────────────────────────────────────────────────
+
+function assertWebCryptoAvailable() {
+  if (!window.crypto?.subtle || !window.crypto?.getRandomValues) {
+    throw new Error('Web Crypto is unavailable. Open this app over HTTPS or localhost.');
+  }
+}
+
+function createEncryptionMetadata(salt = randomBase64(ENCRYPTION_SALT_BYTES)) {
+  return {
+    v: ENCRYPTED_VALUE_VERSION,
+    alg: ENCRYPTION_ALGORITHM,
+    kdf: {
+      alg: KDF_ALGORITHM,
+      hash: KDF_HASH,
+      iterations: KDF_ITERATIONS,
+      salt
+    }
+  };
+}
+
+function normalizeEncryptionMetadata(metadata) {
+  if (!metadata || metadata.v !== ENCRYPTED_VALUE_VERSION || metadata.alg !== ENCRYPTION_ALGORITHM) return null;
+  if (metadata.kdf?.alg !== KDF_ALGORITHM || metadata.kdf?.hash !== KDF_HASH) return null;
+  if (!Number.isInteger(metadata.kdf?.iterations) || metadata.kdf.iterations <= 0) return null;
+  if (typeof metadata.kdf?.salt !== 'string' || !metadata.kdf.salt) return null;
+  return {
+    v: metadata.v,
+    alg: metadata.alg,
+    kdf: {
+      alg: metadata.kdf.alg,
+      hash: metadata.kdf.hash,
+      iterations: metadata.kdf.iterations,
+      salt: metadata.kdf.salt
+    }
+  };
+}
+
+function getStoredEncryptionMetadata() {
+  try {
+    return normalizeEncryptionMetadata(JSON.parse(localStorage.getItem(ENCRYPTION_METADATA_STORAGE_KEY) || 'null'));
+  } catch (err) {
+    console.warn('Could not read encryption metadata:', err);
+    return null;
+  }
+}
+
+function saveEncryptionMetadata(metadata) {
+  try {
+    localStorage.setItem(ENCRYPTION_METADATA_STORAGE_KEY, JSON.stringify(metadata));
+  } catch (err) {
+    console.warn('Could not save encryption metadata:', err);
+  }
+}
+
+function getStoredEncryptionPassphrase() {
+  try {
+    return localStorage.getItem(ENCRYPTION_PASSPHRASE_STORAGE_KEY) || '';
+  } catch (err) {
+    console.warn('Could not read saved encryption passphrase:', err);
+    return '';
+  }
+}
+
+function saveEncryptionPassphrase(passphrase) {
+  try {
+    localStorage.setItem(ENCRYPTION_PASSPHRASE_STORAGE_KEY, passphrase);
+  } catch (err) {
+    console.warn('Could not save encryption passphrase:', err);
+  }
+}
+
+function clearStoredEncryptionPassphrase() {
+  try {
+    localStorage.removeItem(ENCRYPTION_PASSPHRASE_STORAGE_KEY);
+  } catch (err) {
+    console.warn('Could not clear saved encryption passphrase:', err);
+  }
+}
+
+async function getRemoteEncryptionMetadata() {
+  const result = await pb.collection('jnote').getList(1, 1, {
+    sort: '-updated',
+    filter: 'deleted=false'
+  });
+  const record = result.items[0];
+  if (!record) return null;
+
+  return extractEncryptionMetadata(record.title) || extractEncryptionMetadata(record.folder);
+}
+
+async function resolveEncryptionMetadata() {
+  const storedMetadata = getStoredEncryptionMetadata();
+  let remoteMetadata = null;
+
+  try {
+    remoteMetadata = await getRemoteEncryptionMetadata();
+  } catch (err) {
+    if (!storedMetadata) console.warn('Could not read remote encryption metadata:', err);
+  }
+
+  if (remoteMetadata) return remoteMetadata;
+
+  if (storedMetadata) return storedMetadata;
+
+  return createEncryptionMetadata();
+}
+
+async function unlockEncryption(passphrase) {
+  assertWebCryptoAvailable();
+
+  const metadata = await resolveEncryptionMetadata();
+  const key = await deriveEncryptionKey(passphrase, metadata);
+  encryptionState = { key, metadata };
+
+  await validateEncryptionKey();
+  saveEncryptionMetadata(metadata);
+}
+
+async function deriveEncryptionKey(passphrase, metadata) {
+  const baseKey = await window.crypto.subtle.importKey(
+    'raw',
+    textEncoder.encode(passphrase),
+    KDF_ALGORITHM,
+    false,
+    ['deriveKey']
+  );
+
+  return window.crypto.subtle.deriveKey(
+    {
+      name: KDF_ALGORITHM,
+      salt: base64ToBytes(metadata.kdf.salt),
+      iterations: metadata.kdf.iterations,
+      hash: metadata.kdf.hash
+    },
+    baseKey,
+    { name: ENCRYPTION_ALGORITHM, length: AES_KEY_LENGTH },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+async function validateEncryptionKey() {
+  let remoteSample = null;
+
+  try {
+    const result = await pb.collection('jnote').getList(1, 1, {
+      sort: '-updated',
+      filter: 'deleted=false'
+    });
+    remoteSample = result.items[0]?.title || result.items[0]?.folder;
+  } catch (err) {
+    console.warn('Could not validate passphrase against remote notes:', err);
+  }
+
+  if (remoteSample) {
+    await decryptString(remoteSample);
+    return;
+  }
+
+  const localSample = findEncryptedLocalStoreSample();
+  if (localSample) await decryptString(localSample);
+}
+
+function findEncryptedLocalStoreSample() {
+  for (const key of [DRAFTS_STORAGE_KEY, LOCAL_NOTES_STORAGE_KEY, PENDING_PUSHES_STORAGE_KEY]) {
+    const value = localStorage.getItem(key);
+    if (isEncryptedEnvelopeString(value)) return value;
+  }
+  return null;
+}
+
+async function encryptString(plaintext) {
+  if (!encryptionState) throw new Error('Notes are locked.');
+
+  const iv = window.crypto.getRandomValues(new Uint8Array(ENCRYPTION_IV_BYTES));
+  const ciphertext = await window.crypto.subtle.encrypt(
+    { name: ENCRYPTION_ALGORITHM, iv },
+    encryptionState.key,
+    textEncoder.encode(String(plaintext ?? ''))
+  );
+
+  return JSON.stringify({
+    ...encryptionState.metadata,
+    iv: bytesToBase64(iv),
+    ct: bytesToBase64(new Uint8Array(ciphertext))
+  });
+}
+
+async function decryptString(encryptedValue) {
+  if (!encryptionState) throw new Error('Notes are locked.');
+
+  const envelope = parseEncryptedEnvelope(encryptedValue);
+  if (envelope.kdf.salt !== encryptionState.metadata.kdf.salt) {
+    throw new Error('Encrypted data was created with a different key salt.');
+  }
+
+  const plaintext = await window.crypto.subtle.decrypt(
+    { name: ENCRYPTION_ALGORITHM, iv: base64ToBytes(envelope.iv) },
+    encryptionState.key,
+    base64ToBytes(envelope.ct)
+  );
+
+  return textDecoder.decode(plaintext);
+}
+
+function parseEncryptedEnvelope(value) {
+  let envelope;
+  try {
+    envelope = JSON.parse(value);
+  } catch (err) {
+    throw new Error('Encrypted value is not a valid encryption envelope.');
+  }
+
+  const metadata = normalizeEncryptionMetadata(envelope);
+  if (!metadata || typeof envelope.iv !== 'string' || typeof envelope.ct !== 'string') {
+    throw new Error('Encrypted value is missing required encryption metadata.');
+  }
+
+  return { ...metadata, iv: envelope.iv, ct: envelope.ct };
+}
+
+function extractEncryptionMetadata(value) {
+  if (!isEncryptedEnvelopeString(value)) return null;
+
+  try {
+    return normalizeEncryptionMetadata(JSON.parse(value));
+  } catch (err) {
+    return null;
+  }
+}
+
+function isEncryptedEnvelopeString(value) {
+  if (typeof value !== 'string' || !value.trim().startsWith('{')) return false;
+
+  try {
+    const parsed = JSON.parse(value);
+    return Boolean(normalizeEncryptionMetadata(parsed) && typeof parsed.iv === 'string' && typeof parsed.ct === 'string');
+  } catch (err) {
+    return false;
+  }
+}
+
+function randomBase64(byteLength) {
+  const bytes = window.crypto.getRandomValues(new Uint8Array(byteLength));
+  return bytesToBase64(bytes);
+}
+
+function bytesToBase64(bytes) {
+  let binary = '';
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
+function base64ToBytes(base64) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+
+async function loadEncryptedClientStores() {
+  drafts = await getEncryptedObjectStore(DRAFTS_STORAGE_KEY);
+  localNotes = await getEncryptedObjectStore(LOCAL_NOTES_STORAGE_KEY);
+  pendingPushes = await getEncryptedObjectStore(PENDING_PUSHES_STORAGE_KEY);
+}
+
+async function getEncryptedObjectStore(storageKey) {
+  const stored = localStorage.getItem(storageKey);
+  if (!stored) return {};
+
+  if (!isEncryptedEnvelopeString(stored)) {
+    localStorage.removeItem(storageKey);
+    return {};
+  }
+
+  const decrypted = await decryptString(stored);
+  const parsed = JSON.parse(decrypted);
+  return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+}
+
+function persistEncryptedObjectStore(storageKey, value) {
+  if (!encryptionState) return;
+
+  const snapshot = JSON.parse(JSON.stringify(value || {}));
+  const sequence = (encryptedStorePersistVersions[storageKey] || 0) + 1;
+  encryptedStorePersistVersions[storageKey] = sequence;
+
+  if (Object.keys(snapshot).length === 0) {
+    localStorage.removeItem(storageKey);
+    return;
+  }
+
+  encryptString(JSON.stringify(snapshot))
+    .then(encrypted => {
+      if (encryptedStorePersistVersions[storageKey] !== sequence) return;
+      localStorage.setItem(storageKey, encrypted);
+    })
+    .catch(err => console.warn('Could not persist encrypted local store:', err));
+}
+
+async function encryptNoteRecordPayload(title, folder = 'Notes') {
+  return {
+    title: await encryptString(title),
+    folder: await encryptString(folder || 'Notes')
+  };
+}
+
+async function encryptNoteContentPayload(title, content) {
+  return {
+    title: await encryptString(title),
+    content: await encryptString(content)
+  };
+}
 
 function getCustomCss() {
   try {
@@ -54,13 +391,7 @@ function applyCustomCss(css = getCustomCss()) {
 }
 
 function getDrafts() {
-  try {
-    const drafts = JSON.parse(localStorage.getItem(DRAFTS_STORAGE_KEY) || '{}');
-    return drafts && typeof drafts === 'object' ? drafts : {};
-  } catch (err) {
-    console.warn('Could not read local drafts:', err);
-    return {};
-  }
+  return drafts;
 }
 
 function getDraft(noteId) {
@@ -72,43 +403,39 @@ function hasDraft(noteId) {
 }
 
 function saveDraft(noteId, title, content, folder = 'Notes') {
-  const drafts = getDrafts();
-  drafts[noteId] = {
+  getDrafts()[noteId] = {
     title,
     content,
     folder,
     updatedAt: new Date().toISOString()
   };
-  localStorage.setItem(DRAFTS_STORAGE_KEY, JSON.stringify(drafts));
+  persistDrafts();
 }
 
 function clearDraft(noteId) {
-  const drafts = getDrafts();
   if (!drafts[noteId]) return;
   delete drafts[noteId];
-  localStorage.setItem(DRAFTS_STORAGE_KEY, JSON.stringify(drafts));
+  persistDrafts();
 }
 
 function moveDraft(fromNoteId, toNoteId) {
-  const drafts = getDrafts();
   if (!drafts[fromNoteId]) return;
   drafts[toNoteId] = drafts[fromNoteId];
   delete drafts[fromNoteId];
-  localStorage.setItem(DRAFTS_STORAGE_KEY, JSON.stringify(drafts));
+  persistDrafts();
+}
+
+function persistDrafts() {
+  persistEncryptedObjectStore(DRAFTS_STORAGE_KEY, drafts);
 }
 
 function getLocalNotes() {
-  try {
-    const localNotes = JSON.parse(localStorage.getItem(LOCAL_NOTES_STORAGE_KEY) || '{}');
-    return localNotes && typeof localNotes === 'object' ? localNotes : {};
-  } catch (err) {
-    console.warn('Could not read local notes:', err);
-    return {};
-  }
+  return localNotes;
 }
 
-function persistLocalNotes(localNotes) {
-  localStorage.setItem(LOCAL_NOTES_STORAGE_KEY, JSON.stringify(localNotes));
+function persistLocalNotes(nextLocalNotes = localNotes) {
+  localNotes = nextLocalNotes;
+  persistEncryptedObjectStore(LOCAL_NOTES_STORAGE_KEY, localNotes);
 }
 
 function upsertLocalNote(note) {
@@ -138,17 +465,11 @@ function getPendingPush(noteId) {
 }
 
 function getPendingPushes() {
-  try {
-    const pushes = JSON.parse(localStorage.getItem(PENDING_PUSHES_STORAGE_KEY) || '{}');
-    return pushes && typeof pushes === 'object' ? pushes : {};
-  } catch (err) {
-    console.warn('Could not read pending pushes:', err);
-    return {};
-  }
+  return pendingPushes;
 }
 
 function persistPendingPushes() {
-  localStorage.setItem(PENDING_PUSHES_STORAGE_KEY, JSON.stringify(pendingPushes));
+  persistEncryptedObjectStore(PENDING_PUSHES_STORAGE_KEY, pendingPushes);
 }
 
 function makeQueueId() {
@@ -264,14 +585,12 @@ async function flushNotePush(noteId) {
           persistPendingPushes();
         }
       } else if (push.action === 'create') {
-        const newNoteRecord = await pb.collection('jnote').create({
-          title: push.title,
-          folder: push.folder || 'Notes'
-        });
+        const newNoteRecord = await pb.collection('jnote').create(
+          await encryptNoteRecordPayload(push.title, push.folder || 'Notes')
+        );
         const newVersion = await pb.collection('jnote_content').create({
           note: newNoteRecord.id,
-          title: push.title,
-          content: push.content
+          ...(await encryptNoteContentPayload(push.title, push.content))
         });
 
         const latestPending = pendingPushes[noteId];
@@ -279,11 +598,12 @@ async function flushNotePush(noteId) {
         persistPendingPushes();
         applyCreatePushResult(noteId, push, newNoteRecord, newVersion, latestPending);
       } else {
-        const updatedNote = await pb.collection('jnote').update(noteId, { title: push.title });
+        const updatedNote = await pb.collection('jnote').update(noteId, {
+          title: await encryptString(push.title)
+        });
         const newVersion = await pb.collection('jnote_content').create({
           note: noteId,
-          title: push.title,
-          content: push.content
+          ...(await encryptNoteContentPayload(push.title, push.content))
         });
 
         if (pendingPushes[noteId]?.id === push.id) {
@@ -310,7 +630,7 @@ function flushPendingPushes() {
 function applyCloudPushResult(noteId, push, updatedNote, newVersion) {
   const idx = allNotes.findIndex(n => n.id === noteId);
   if (idx !== -1 && !pendingPushes[noteId]) {
-    allNotes[idx].title = updatedNote.title;
+    allNotes[idx].title = push.title;
     allNotes[idx].updated = updatedNote.updated;
     allNotes[idx].content = push.content;
     allNotes[idx].versionId = newVersion.id;
@@ -318,7 +638,7 @@ function applyCloudPushResult(noteId, push, updatedNote, newVersion) {
   }
 
   if (currentNoteId === noteId && !hasDraft(noteId) && !pendingPushes[noteId]) {
-    currentNoteState = { title: updatedNote.title, content: push.content };
+    currentNoteState = { title: push.title, content: push.content };
   }
 
   renderNoteList();
@@ -333,8 +653,8 @@ function applyCreatePushResult(localNoteId, push, newNoteRecord, newVersion, lat
     allNotes[idx] = {
       ...allNotes[idx],
       id: newNoteId,
-      title: latestChange?.title ?? newNoteRecord.title,
-      folder: newNoteRecord.folder || push.folder || 'Notes',
+      title: latestChange?.title ?? push.title,
+      folder: latestChange?.folder ?? push.folder ?? 'Notes',
       updated: newNoteRecord.updated,
       content: latestChange?.content ?? push.content,
       versionId: newVersion.id,
@@ -344,8 +664,8 @@ function applyCreatePushResult(localNoteId, push, newNoteRecord, newVersion, lat
   } else if (latestChange?.action !== 'delete') {
     allNotes.push({
       id: newNoteId,
-      title: latestChange?.title ?? newNoteRecord.title,
-      folder: newNoteRecord.folder || push.folder || 'Notes',
+      title: latestChange?.title ?? push.title,
+      folder: latestChange?.folder ?? push.folder ?? 'Notes',
       updated: newNoteRecord.updated,
       content: latestChange?.content ?? push.content,
       versionId: newVersion.id,
@@ -386,12 +706,15 @@ function updateGUI() {
 
   const folderList = document.getElementById('folder-list');
   folderList.innerHTML = folders.map(folder => `
-    <li onclick="filterByFolder('${escapeHtml(folder)}')"
-        class="folder-item ${folder === currentFolder ? 'active' : ''}"
+    <li class="folder-item ${folder === currentFolder ? 'active' : ''}"
         data-folder="${escapeHtml(folder)}">
       ${escapeHtml(folder)}
     </li>
   `).join('');
+
+  folderList.querySelectorAll('[data-folder]').forEach(item => {
+    item.addEventListener('click', () => filterByFolder(item.dataset.folder));
+  });
 
   // 2. Rebuild notes list
   renderNoteList();
@@ -436,20 +759,21 @@ function renderNoteList() {
 async function loadNotes() {
   try {
     const fetched = await pb.collection('jnote').getFullList({ sort: '-updated', filter: 'deleted=false' });
-    allNotes = fetched.map(n => ({
+    allNotes = await Promise.all(fetched.map(async n => ({
       id: n.id,
-      title: n.title,
-      folder: n.folder || 'Notes',
+      title: await decryptString(n.title),
+      folder: await decryptString(n.folder),
       updated: n.updated,
       hasContent: false
-    }));
+    })));
     mergeLocalNotesIntoNotes();
     mergePendingPushesIntoNotes();
     mergeOrphanLocalDraftsIntoNotes();
     updateGUI();
   } catch (err) {
     console.error('Error loading notes:', err);
-    document.getElementById('note-detail').innerHTML = '<p class="error">Failed to load notes</p>';
+    document.getElementById('note-detail').innerHTML = '<p class="error">Failed to load or decrypt notes</p>';
+    throw err;
   }
 }
 
@@ -556,8 +880,8 @@ async function selectNote(noteId) {
         return;
       }
 
-      note.title = getVersionTitle(latest, note.title);
-      note.content = latest.content;
+      note.title = await decryptString(latest.title);
+      note.content = await decryptString(latest.content);
       note.versionId = latest.id;
       note.hasContent = true;
 
@@ -783,8 +1107,9 @@ function deleteNote(noteId) {
 
 async function moveNoteToFolder(noteId, folder) {
   const note = allNotes.find(n => n.id === noteId);
+  const targetFolder = folder || 'Notes';
   if (note?.isLocalOnly) {
-    note.folder = folder || 'Notes';
+    note.folder = targetFolder;
     note.updated = new Date().toISOString();
     upsertLocalNote(note);
     if (pendingPushes[noteId]?.action === 'create') {
@@ -796,12 +1121,13 @@ async function moveNoteToFolder(noteId, folder) {
   }
 
   try {
-    const updated = await pb.collection('jnote').update(noteId, { folder: folder || 'Notes' });
+    const updated = await pb.collection('jnote').update(noteId, {
+      folder: await encryptString(targetFolder)
+    });
     
     const idx = allNotes.findIndex(n => n.id === noteId);
     if (idx !== -1) {
-      // Merge updates without losing the content we already loaded
-      allNotes[idx] = { ...allNotes[idx], ...updated };
+      allNotes[idx] = { ...allNotes[idx], folder: targetFolder, updated: updated.updated };
     }
 
     updateGUI();
@@ -1072,18 +1398,123 @@ function getDisplayTitle(note) {
   return getDraft(note.id)?.title ?? getPendingPush(note.id)?.title ?? note.title;
 }
 
-function getVersionTitle(version, fallbackTitle = '') {
-  return typeof version?.title === 'string' ? version.title : fallbackTitle;
+// ─── Encryption Unlock Modal ─────────────────────────────────────────────────
+
+function bindEncryptionModal() {
+  const form = document.getElementById('encryption-form');
+  const input = document.getElementById('encryption-passphrase');
+
+  form?.addEventListener('submit', handleEncryptionSubmit);
+  input?.addEventListener('input', () => setEncryptionError(''));
+}
+
+function showEncryptionModal() {
+  const modal = document.getElementById('encryption-modal');
+  const input = document.getElementById('encryption-passphrase');
+
+  modal?.classList.add('show');
+  window.setTimeout(() => input?.focus(), 0);
+}
+
+function hideEncryptionModal() {
+  document.getElementById('encryption-modal')?.classList.remove('show');
+}
+
+async function unlockAndStart(passphrase, options = {}) {
+  await unlockEncryption(passphrase);
+  await loadEncryptedClientStores();
+  if (options.rememberPassphrase) saveEncryptionPassphrase(passphrase);
+  hideEncryptionModal();
+  await loadNotes();
+  updateSyncStatus();
+  flushPendingPushes();
+}
+
+async function autoUnlockFromStoredPassphrase() {
+  const storedPassphrase = getStoredEncryptionPassphrase();
+  if (!storedPassphrase) {
+    showEncryptionModal();
+    return;
+  }
+
+  setEncryptionUnlockBusy(true);
+  setEncryptionError('');
+
+  try {
+    await unlockAndStart(storedPassphrase);
+  } catch (err) {
+    encryptionState = null;
+    drafts = {};
+    localNotes = {};
+    pendingPushes = {};
+    clearStoredEncryptionPassphrase();
+    updateSyncStatus();
+    console.error('Saved encryption passphrase could not unlock notes:', err);
+    setEncryptionError('Saved passphrase could not unlock notes. Enter it again.');
+    showEncryptionModal();
+  } finally {
+    setEncryptionUnlockBusy(false);
+  }
+}
+
+async function handleEncryptionSubmit(event) {
+  event.preventDefault();
+
+  const input = document.getElementById('encryption-passphrase');
+  const passphrase = input?.value || '';
+
+  if (!passphrase) {
+    setEncryptionError('Enter a passphrase to unlock your notes.');
+    input?.focus();
+    return;
+  }
+
+  setEncryptionError('');
+  setEncryptionUnlockBusy(true);
+
+  try {
+    await unlockAndStart(passphrase, { rememberPassphrase: true });
+    input.value = '';
+  } catch (err) {
+    encryptionState = null;
+    drafts = {};
+    localNotes = {};
+    pendingPushes = {};
+    clearStoredEncryptionPassphrase();
+    updateSyncStatus();
+    console.error('Could not unlock encrypted notes:', err);
+    setEncryptionError('Could not unlock notes. Check the passphrase and try again.');
+    showEncryptionModal();
+    input?.focus();
+    input?.select();
+  } finally {
+    setEncryptionUnlockBusy(false);
+  }
+}
+
+function setEncryptionError(message) {
+  const errorEl = document.getElementById('encryption-error');
+  if (!errorEl) return;
+
+  errorEl.textContent = message;
+  errorEl.hidden = !message;
+}
+
+function setEncryptionUnlockBusy(isBusy) {
+  const submitButton = document.querySelector('#encryption-form button[type="submit"]');
+  if (!submitButton) return;
+
+  submitButton.disabled = isBusy;
+  submitButton.textContent = isBusy ? 'Unlocking...' : 'Unlock';
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  loadNotes();
   updateSyncStatus();
-  flushPendingPushes();
   bindSettingsDialogs();
+  bindEncryptionModal();
 
   document.getElementById('btn-create-note').addEventListener('click', () => createNewNote(currentFolder));
   document.getElementById('folder-modal-confirm').addEventListener('click', () => folderModalCallback?.());
@@ -1126,4 +1557,6 @@ document.addEventListener('DOMContentLoaded', () => {
     event.preventDefault();
     event.returnValue = 'Your latest commit is still pushing to the cloud.';
   });
+
+  autoUnlockFromStoredPassphrase();
 });

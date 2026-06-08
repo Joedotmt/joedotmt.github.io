@@ -9,7 +9,7 @@
     <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.9.7/dist/cdn/beer.min.js"></script>
 
 
-    <link rel="stylesheet" href="style.css?v=12">
+    <link rel="stylesheet" href="style.css?v=13">
     <style id="custom-css"></style>
     <script>
         (() => {
@@ -30,6 +30,21 @@
 
 <body class="greencolor">
     <div class="overlay" id="overlay"></div>
+
+    <div class="encryption-modal show" id="encryption-modal" role="dialog" aria-modal="true"
+        aria-labelledby="encryption-title">
+        <form class="encryption-modal-content" id="encryption-form" autocomplete="off">
+            <h2 id="encryption-title">Unlock encrypted notes</h2>
+            <p class="encryption-copy">Enter or create the passphrase used to encrypt notes in this browser.</p>
+            <p class="encryption-warning">This passphrase is saved in this browser's localStorage for automatic unlock. If someone can read this browser storage, they can decrypt your notes. If you forget the passphrase, your notes cannot be recovered.</p>
+            <div class="field border label encryption-field">
+                <input type="password" id="encryption-passphrase" autocomplete="current-password" required>
+                <label>Encryption passphrase</label>
+            </div>
+            <p class="encryption-error" id="encryption-error" hidden></p>
+            <button class="btn-primary encryption-submit" type="submit">Unlock</button>
+        </form>
+    </div>
 
     <div class="modal" id="folder-modal">
         <div class="modal-content">
@@ -136,7 +151,7 @@
 
 
     <script src="https://cdn.jsdelivr.net/npm/pocketbase/dist/pocketbase.umd.js"></script>
-    <script src="app.js?v=16"></script>
+    <script src="app.js?v=18"></script>
 </body>
 
 </html>
