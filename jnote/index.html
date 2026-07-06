@@ -43,21 +43,6 @@
             </div>
 
             <p class="encryption-error" id="encryption-error" hidden></p>
-            <button class="btn-secondary key-recovery-toggle" id="show-key-recovery" type="button">Recover failed key change</button>
-            <div class="key-recovery-panel" id="key-recovery-panel" hidden>
-                <p class="encryption-copy">Use this if a key change failed part-way through. This restores note metadata to the old key.</p>
-                <div class="field border label encryption-field">
-                    <input type="password" id="recovery-old-key" autocomplete="current-password">
-                    <label for="recovery-old-key">Old key</label>
-                </div>
-                <div class="field border label encryption-field">
-                    <input type="password" id="recovery-new-key" autocomplete="new-password">
-                    <label for="recovery-new-key">Attempted new key</label>
-                </div>
-                <p class="encryption-copy" id="key-recovery-status" hidden></p>
-                <p class="encryption-error" id="key-recovery-error" hidden></p>
-                <button class="btn-primary encryption-submit" id="key-recovery-submit" type="button">Restore old key</button>
-            </div>
             <div class="encryption-actions">
                 <button class="btn-primary encryption-submit" type="submit" data-remember-device="true">Unlock and Remember</button>
                 <button class="btn-secondary encryption-submit" type="submit" data-remember-device="false">Unlock Once</button>
@@ -214,7 +199,7 @@
 
 
     <script src="https://cdn.jsdelivr.net/npm/pocketbase/dist/pocketbase.umd.js"></script>
-    <script src="app.js?v=25"></script>
+    <script src="app.js?v=24"></script>
 </body>
 
 </html>
