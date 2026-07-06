@@ -21,6 +21,7 @@ const AES_KEY_LENGTH = 256;
 const ENCRYPTION_SALT_BYTES = 16;
 const ENCRYPTION_IV_BYTES = 12;
 const ACCOUNT_URL = 'https://joe.mt/account';
+const KEYBOARD_VIEWPORT_THRESHOLD = 120;
 let drafts = {};
 let localNotes = {};
 let pendingPushes = {};
@@ -33,11 +34,78 @@ let encryptionState = null;
 let encryptedStorePersistVersions = {};
 let currentUser = null;
 let encryptionMode = 'unlock';
+let stableAppViewport = { width: window.innerWidth, height: window.innerHeight };
+let lastEditableFocusAt = 0;
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
+syncAppViewportSize({ force: true });
 applyCustomCss();
+
+function isEditableElement(element) {
+  if (!element || element === document.body) return false;
+
+  return element.matches?.('input, textarea, select, [contenteditable]:not([contenteditable="false"])')
+    || Boolean(element.closest?.('[contenteditable]:not([contenteditable="false"])'));
+}
+
+function syncAppViewportSize(options = {}) {
+  const force = options.force === true;
+  const visualViewport = window.visualViewport;
+  const width = Math.round(window.innerWidth);
+  const height = Math.round(window.innerHeight);
+  const visualHeight = Math.round(visualViewport?.height || height);
+  const visualOffsetTop = Math.round(visualViewport?.offsetTop || 0);
+  const widthChanged = Math.abs(width - stableAppViewport.width) > 40;
+  const recentEditableFocus = Date.now() - lastEditableFocusAt < 800;
+  const keyboardShrink = Math.max(stableAppViewport.height - visualHeight, stableAppViewport.height - height);
+  const keyboardLikely = !widthChanged
+    && keyboardShrink > KEYBOARD_VIEWPORT_THRESHOLD
+    && (isEditableElement(document.activeElement) || recentEditableFocus);
+
+  if (force || !keyboardLikely) {
+    stableAppViewport = { width, height };
+    document.documentElement.style.setProperty('--app-height', `${height}px`);
+  }
+
+  const keyboardInset = keyboardLikely
+    ? Math.max(0, Math.round(stableAppViewport.height - visualHeight - visualOffsetTop))
+    : 0;
+
+  document.documentElement.style.setProperty('--keyboard-inset', `${keyboardInset}px`);
+}
+
+function hasKeyboardSizedViewport() {
+  const visualHeight = Math.round(window.visualViewport?.height || window.innerHeight);
+  const shrink = Math.max(stableAppViewport.height - visualHeight, stableAppViewport.height - window.innerHeight);
+
+  return shrink > KEYBOARD_VIEWPORT_THRESHOLD;
+}
+
+function bindAppViewportSize() {
+  window.addEventListener('resize', () => syncAppViewportSize());
+  window.addEventListener('orientationchange', () => {
+    window.setTimeout(() => syncAppViewportSize({ force: true }), 300);
+  });
+
+  window.visualViewport?.addEventListener('resize', () => syncAppViewportSize());
+  window.visualViewport?.addEventListener('scroll', () => syncAppViewportSize());
+
+  window.addEventListener('focusin', (event) => {
+    if (isEditableElement(event.target)) lastEditableFocusAt = Date.now();
+    syncAppViewportSize();
+  }, true);
+
+  window.addEventListener('focusout', () => {
+    lastEditableFocusAt = Date.now();
+    window.setTimeout(() => {
+      syncAppViewportSize({
+        force: !isEditableElement(document.activeElement) && !hasKeyboardSizedViewport()
+      });
+    }, 500);
+  }, true);
+}
 
 // ─── Client-Side Encryption ──────────────────────────────────────────────────
 
@@ -1651,6 +1719,7 @@ async function finishEncryptionUnlock() {
 
 document.addEventListener('DOMContentLoaded', () => {
 
+  bindAppViewportSize();
   updateSyncStatus();
   bindSettingsDialogs();
   bindEncryptionModal();
