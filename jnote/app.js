@@ -1899,6 +1899,179 @@ async function changeDecryptionKey(currentPassphrase, newPassphrase, onStatus = 
   flushPendingPushes();
 }
 
+function getEncryptedEnvelopeSalt(value) {
+  return extractEncryptionMetadata(value)?.kdf?.salt || '';
+}
+
+function addUniqueMetadataCandidate(metadataBySalt, metadata) {
+  const normalized = normalizeEncryptionMetadata(metadata);
+  const salt = normalized?.kdf?.salt;
+  if (!salt || metadataBySalt.has(salt)) return;
+  metadataBySalt.set(salt, normalized);
+}
+
+function addRecoverySample(samples, metadataBySalt, value, source) {
+  if (!isEncryptedEnvelopeString(value)) return;
+
+  const metadata = extractEncryptionMetadata(value);
+  const salt = metadata?.kdf?.salt;
+  if (!metadata || !salt) return;
+
+  addUniqueMetadataCandidate(metadataBySalt, metadata);
+  samples.push({ value, source, salt });
+}
+
+async function collectRecoveryKeyMaterial(noteRecords) {
+  const samples = [];
+  const metadataBySalt = new Map();
+
+  addUniqueMetadataCandidate(metadataBySalt, getStoredEncryptionMetadata());
+
+  getEncryptedObjectStoreKeys().forEach(storageKey => {
+    addRecoverySample(
+      samples,
+      metadataBySalt,
+      localStorage.getItem(getUserScopedStorageKey(storageKey)),
+      'local_store'
+    );
+  });
+
+  for (const note of noteRecords) {
+    addRecoverySample(samples, metadataBySalt, note.title, 'jnote');
+    addRecoverySample(samples, metadataBySalt, note.folder, 'jnote');
+
+    const versions = await fetchNoteContentRecords(note.id);
+    versions.forEach(version => {
+      addRecoverySample(samples, metadataBySalt, version.title, 'jnote_content');
+      addRecoverySample(samples, metadataBySalt, version.content, 'jnote_content');
+    });
+  }
+
+  return {
+    samples,
+    metadataCandidates: [...metadataBySalt.values()]
+  };
+}
+
+async function getMatchedRecoveryStates(passphrases, metadataCandidates, samples) {
+  const states = [];
+
+  for (const passphrase of passphrases) {
+    for (const metadata of metadataCandidates) {
+      const matchingSamples = samples.filter(sample => sample.salt === metadata.kdf.salt);
+      if (matchingSamples.length === 0) continue;
+
+      const state = {
+        key: await deriveEncryptionKey(passphrase.value, metadata),
+        metadata,
+        recoveryLabel: passphrase.label,
+        matchedSources: new Set()
+      };
+
+      for (const sample of matchingSamples) {
+        try {
+          await decryptStringWithState(sample.value, state);
+          state.matchedSources.add(sample.source);
+        } catch (err) {
+          // This passphrase does not match this salt.
+        }
+      }
+
+      if (state.matchedSources.size > 0) states.push(state);
+    }
+  }
+
+  return states;
+}
+
+function selectOldRecoveryState(states) {
+  const oldStates = states.filter(state => state.recoveryLabel === 'old');
+  return oldStates.find(state => (
+    state.matchedSources.has('jnote_content') ||
+    state.matchedSources.has('local_store')
+  )) || oldStates[0] || null;
+}
+
+async function decryptWithRecoveryStates(value, states) {
+  if (!isEncryptedEnvelopeString(value)) return String(value ?? '');
+
+  const salt = getEncryptedEnvelopeSalt(value);
+  const matchingStates = states.filter(state => state.metadata.kdf.salt === salt);
+
+  for (const state of matchingStates) {
+    try {
+      return await decryptStringWithState(value, state);
+    } catch (err) {
+      // Try the next state with this salt.
+    }
+  }
+
+  throw new Error('Could not decrypt mixed-key note metadata with the provided keys.');
+}
+
+async function recoverFailedKeyChange(oldPassphrase, newPassphrase, onStatus = () => {}) {
+  assertWebCryptoAvailable();
+  if (activePushes.size > 0) throw new Error('Wait for the current cloud push to finish, then try recovery again.');
+
+  isKeyMigrationRunning = true;
+  updateSyncStatus();
+
+  try {
+    await loadCurrentUser();
+
+    onStatus('Reading encrypted records...');
+    const noteRecords = await fetchOwnedRemoteNoteRecords();
+    const { samples, metadataCandidates } = await collectRecoveryKeyMaterial(noteRecords);
+
+    if (metadataCandidates.length === 0) {
+      throw new Error('No encrypted note data was found to recover.');
+    }
+
+    onStatus('Checking recovery keys...');
+    const states = await getMatchedRecoveryStates([
+      { label: 'old', value: oldPassphrase },
+      { label: 'new', value: newPassphrase }
+    ], metadataCandidates, samples);
+    const oldState = selectOldRecoveryState(states);
+
+    if (!oldState) {
+      throw new Error('The old key did not decrypt any existing note history or local data.');
+    }
+
+    const noteUpdates = [];
+    for (const note of noteRecords) {
+      const title = await decryptWithRecoveryStates(note.title, states);
+      const folder = await decryptWithRecoveryStates(note.folder, states);
+
+      noteUpdates.push({
+        id: note.id,
+        payload: {
+          title: await encryptStringWithState(title, oldState),
+          folder: await encryptStringWithState(folder, oldState)
+        }
+      });
+    }
+
+    for (let i = 0; i < noteUpdates.length; i += 1) {
+      const update = noteUpdates[i];
+      await pb.collection('jnote').update(update.id, update.payload);
+      onStatus(`Restoring note metadata... ${i + 1}/${noteUpdates.length}`);
+    }
+
+    encryptionState = oldState;
+    saveEncryptionMetadata(oldState.metadata);
+    await loadEncryptedClientStores();
+    hideEncryptionModal();
+    await loadNotes();
+    updateSyncStatus();
+  } finally {
+    isKeyMigrationRunning = false;
+    updateSyncStatus();
+  }
+
+  flushPendingPushes();
+}
+
 // ─── Settings ────────────────────────────────────────────────────────────────
 
 function openSettingsDialog() {
@@ -2143,6 +2316,10 @@ function bindEncryptionModal() {
 
   form?.addEventListener('submit', handleEncryptionSubmit);
   input?.addEventListener('input', () => setEncryptionError(''));
+  document.getElementById('show-key-recovery')?.addEventListener('click', () => setKeyRecoveryVisible(true));
+  document.getElementById('key-recovery-submit')?.addEventListener('click', handleKeyRecoverySubmit);
+  document.getElementById('recovery-old-key')?.addEventListener('input', () => setKeyRecoveryError(''));
+  document.getElementById('recovery-new-key')?.addEventListener('input', () => setKeyRecoveryError(''));
 }
 
 function setEncryptionModalMode(mode) {
@@ -2155,8 +2332,12 @@ function setEncryptionModalMode(mode) {
   const label = document.querySelector('label[for="encryption-passphrase"]');
   const rememberButton = document.querySelector('[data-remember-device="true"]');
   const onceButton = document.querySelector('[data-remember-device="false"]');
+  const recoveryToggle = document.getElementById('show-key-recovery');
   const isSetup = mode === 'setup';
 
+  setKeyRecoveryVisible(false);
+  setKeyRecoveryError('');
+  setKeyRecoveryStatus('');
   if (title) title.textContent = isSetup ? 'Create encryption key' : 'Unlock encrypted notes';
   if (copy) {
     copy.textContent = isSetup
@@ -2174,6 +2355,7 @@ function setEncryptionModalMode(mode) {
     input.autocomplete = isSetup ? 'new-password' : 'current-password';
   }
   if (label) label.textContent = isSetup ? 'New encryption key' : 'Decryption key';
+  if (recoveryToggle) recoveryToggle.hidden = isSetup;
   if (rememberButton) {
     rememberButton.disabled = false;
     rememberButton.textContent = isSetup ? 'Create and Save in Browser' : 'Unlock and Remember';
@@ -2190,11 +2372,14 @@ function showAuthRequired() {
   const warning = document.querySelector('.encryption-warning');
   const input = document.getElementById('encryption-passphrase');
   const buttons = document.querySelectorAll('#encryption-form button[type="submit"]');
+  const recoveryToggle = document.getElementById('show-key-recovery');
 
   if (title) title.textContent = 'Sign in required';
   if (copy) copy.textContent = 'JNote uses the account session from joe.mt/account.';
   if (warning) warning.textContent = `Sign in at ${ACCOUNT_URL}, then return to JNote.`;
   if (input) input.disabled = true;
+  setKeyRecoveryVisible(false);
+  if (recoveryToggle) recoveryToggle.hidden = true;
   buttons.forEach(button => { button.disabled = true; });
   setEncryptionError('');
   showEncryptionModal();
@@ -2210,6 +2395,77 @@ function showEncryptionModal() {
 
 function hideEncryptionModal() {
   document.getElementById('encryption-modal')?.classList.remove('show');
+}
+
+function setKeyRecoveryVisible(isVisible) {
+  const panel = document.getElementById('key-recovery-panel');
+  const toggle = document.getElementById('show-key-recovery');
+
+  if (panel) panel.hidden = !isVisible;
+  if (toggle) toggle.hidden = isVisible || encryptionMode === 'setup';
+  if (isVisible) window.setTimeout(() => document.getElementById('recovery-old-key')?.focus(), 0);
+}
+
+function setKeyRecoveryStatus(message) {
+  const statusEl = document.getElementById('key-recovery-status');
+  if (!statusEl) return;
+
+  statusEl.textContent = message;
+  statusEl.hidden = !message;
+}
+
+function setKeyRecoveryError(message) {
+  const errorEl = document.getElementById('key-recovery-error');
+  if (!errorEl) return;
+
+  errorEl.textContent = message;
+  errorEl.hidden = !message;
+}
+
+function setKeyRecoveryBusy(isBusy) {
+  const fields = ['recovery-old-key', 'recovery-new-key'];
+  const submitButton = document.getElementById('key-recovery-submit');
+
+  fields.forEach(id => {
+    const input = document.getElementById(id);
+    if (input) input.disabled = isBusy;
+  });
+
+  if (submitButton) {
+    submitButton.disabled = isBusy;
+    submitButton.textContent = isBusy ? 'Restoring...' : 'Restore old key';
+  }
+}
+
+async function handleKeyRecoverySubmit() {
+  const oldKeyInput = document.getElementById('recovery-old-key');
+  const newKeyInput = document.getElementById('recovery-new-key');
+  const oldKey = oldKeyInput?.value || '';
+  const newKey = newKeyInput?.value || '';
+
+  setKeyRecoveryError('');
+  setKeyRecoveryStatus('');
+
+  if (!oldKey || !newKey) {
+    setKeyRecoveryError('Enter the old key and the attempted new key.');
+    (!oldKey ? oldKeyInput : newKeyInput)?.focus();
+    return;
+  }
+
+  setKeyRecoveryBusy(true);
+
+  try {
+    await recoverFailedKeyChange(oldKey, newKey, setKeyRecoveryStatus);
+    oldKeyInput.value = '';
+    newKeyInput.value = '';
+    setEncryptionError('');
+    alert('Recovered note metadata to the old key. You can unlock with the old key now.');
+  } catch (err) {
+    console.error('Could not recover failed key change:', err);
+    setKeyRecoveryError(err?.message || 'Could not recover the failed key change.');
+  } finally {
+    setKeyRecoveryBusy(false);
+  }
 }
 
 async function handleEncryptionSubmit(event) {
@@ -2247,7 +2503,7 @@ async function handleEncryptionSubmit(event) {
     pendingPushes = {};
     updateSyncStatus();
     console.error('Could not unlock encrypted notes:', err);
-    setEncryptionError('Could not unlock notes. Check the passphrase and try again.');
+    setEncryptionError('Could not unlock notes. Check the passphrase, or use recovery if this happened after a failed key change.');
     showEncryptionModal();
     input?.focus();
     input?.select();
