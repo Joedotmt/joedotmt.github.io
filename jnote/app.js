@@ -22,6 +22,7 @@ const ENCRYPTION_SALT_BYTES = 16;
 const ENCRYPTION_IV_BYTES = 12;
 const ACCOUNT_URL = 'https://joe.mt/account';
 const KEYBOARD_VIEWPORT_THRESHOLD = 120;
+const EXPORT_FORMAT_VERSION = 1;
 let drafts = {};
 let localNotes = {};
 let pendingPushes = {};
@@ -36,6 +37,7 @@ let currentUser = null;
 let encryptionMode = 'unlock';
 let stableAppViewport = { width: window.innerWidth, height: window.innerHeight };
 let lastEditableFocusAt = 0;
+let isKeyMigrationRunning = false;
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -331,7 +333,7 @@ function forgetRememberedDeviceKey() {
   }
 }
 
-async function validateEncryptionKey() {
+async function validateEncryptionKey(state = encryptionState) {
   let remoteSample = null;
 
   try {
@@ -345,12 +347,12 @@ async function validateEncryptionKey() {
   }
 
   if (remoteSample) {
-    await decryptString(remoteSample);
+    await decryptStringWithState(remoteSample, state);
     return;
   }
 
   const localSample = findEncryptedLocalStoreSample();
-  if (localSample) await decryptString(localSample);
+  if (localSample) await decryptStringWithState(localSample, state);
 }
 
 function findEncryptedLocalStoreSample() {
@@ -362,33 +364,41 @@ function findEncryptedLocalStoreSample() {
 }
 
 async function encryptString(plaintext) {
-  if (!encryptionState) throw new Error('Notes are locked.');
+  return encryptStringWithState(plaintext, encryptionState);
+}
+
+async function encryptStringWithState(plaintext, state = encryptionState) {
+  if (!state) throw new Error('Notes are locked.');
 
   const iv = window.crypto.getRandomValues(new Uint8Array(ENCRYPTION_IV_BYTES));
   const ciphertext = await window.crypto.subtle.encrypt(
     { name: ENCRYPTION_ALGORITHM, iv },
-    encryptionState.key,
+    state.key,
     textEncoder.encode(String(plaintext ?? ''))
   );
 
   return JSON.stringify({
-    ...encryptionState.metadata,
+    ...state.metadata,
     iv: bytesToBase64(iv),
     ct: bytesToBase64(new Uint8Array(ciphertext))
   });
 }
 
 async function decryptString(encryptedValue) {
-  if (!encryptionState) throw new Error('Notes are locked.');
+  return decryptStringWithState(encryptedValue, encryptionState);
+}
+
+async function decryptStringWithState(encryptedValue, state = encryptionState) {
+  if (!state) throw new Error('Notes are locked.');
 
   const envelope = parseEncryptedEnvelope(encryptedValue);
-  if (envelope.kdf.salt !== encryptionState.metadata.kdf.salt) {
+  if (envelope.kdf.salt !== state.metadata.kdf.salt) {
     throw new Error('Encrypted data was created with a different key salt.');
   }
 
   const plaintext = await window.crypto.subtle.decrypt(
     { name: ENCRYPTION_ALGORITHM, iv: base64ToBytes(envelope.iv) },
-    encryptionState.key,
+    state.key,
     base64ToBytes(envelope.ct)
   );
 
@@ -461,7 +471,7 @@ async function loadEncryptedClientStores() {
   pendingPushes = await getEncryptedObjectStore(PENDING_PUSHES_STORAGE_KEY);
 }
 
-async function getEncryptedObjectStore(storageKey) {
+async function getEncryptedObjectStore(storageKey, state = encryptionState) {
   const scopedStorageKey = getUserScopedStorageKey(storageKey);
   const stored = localStorage.getItem(scopedStorageKey);
   if (!stored) return {};
@@ -471,9 +481,34 @@ async function getEncryptedObjectStore(storageKey) {
     return {};
   }
 
-  const decrypted = await decryptString(stored);
+  const decrypted = await decryptStringWithState(stored, state);
   const parsed = JSON.parse(decrypted);
   return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+}
+
+function getEncryptedObjectStoreKeys() {
+  return [DRAFTS_STORAGE_KEY, LOCAL_NOTES_STORAGE_KEY, PENDING_PUSHES_STORAGE_KEY];
+}
+
+function invalidateEncryptedObjectStorePersists() {
+  getEncryptedObjectStoreKeys().forEach(storageKey => {
+    const scopedStorageKey = getUserScopedStorageKey(storageKey);
+    encryptedStorePersistVersions[scopedStorageKey] = (encryptedStorePersistVersions[scopedStorageKey] || 0) + 1;
+  });
+}
+
+async function saveEncryptedObjectStoreNow(storageKey, value, state = encryptionState) {
+  if (!state) throw new Error('Notes are locked.');
+
+  const scopedStorageKey = getUserScopedStorageKey(storageKey);
+  const snapshot = JSON.parse(JSON.stringify(value || {}));
+
+  if (Object.keys(snapshot).length === 0) {
+    localStorage.removeItem(scopedStorageKey);
+    return;
+  }
+
+  localStorage.setItem(scopedStorageKey, await encryptStringWithState(JSON.stringify(snapshot), state));
 }
 
 function persistEncryptedObjectStore(storageKey, value) {
@@ -684,6 +719,12 @@ function updateSyncStatus() {
   const syncText = document.getElementById('sync-status-text');
   if (!syncBar || !syncText) return;
 
+  if (isKeyMigrationRunning) {
+    syncBar.classList.remove('is-idle', 'has-error');
+    setSyncStatusText(syncText, 'Changing encryption key...');
+    return;
+  }
+
   const pendingCount = Object.keys(pendingPushes).length;
   const isSyncing = activePushes.size > 0;
   const hasWork = pendingCount > 0 || isSyncing;
@@ -724,6 +765,7 @@ function setSyncStatusText(syncText, nextText) {
 }
 
 async function flushNotePush(noteId) {
+  if (isKeyMigrationRunning) return;
   if (activePushes.has(noteId) || !pendingPushes[noteId]) return;
 
   activePushes.add(noteId);
@@ -1471,6 +1513,373 @@ function closeNoteContextMenu() {
   });
 }
 
+// ─── Plaintext Export ────────────────────────────────────────────────────────
+
+function escapePocketBaseFilterValue(value) {
+  return String(value ?? '').replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
+async function fetchOwnedRemoteNoteRecords() {
+  return pb.collection('jnote').getFullList({
+    sort: '-updated',
+    filter: getOwnedNotesFilter()
+  });
+}
+
+async function fetchNoteContentRecords(noteId) {
+  return pb.collection('jnote_content').getFullList({
+    sort: 'created',
+    filter: `note = "${escapePocketBaseFilterValue(noteId)}"`
+  });
+}
+
+async function decryptStoredField(value, state = encryptionState) {
+  if (isEncryptedEnvelopeString(value)) return decryptStringWithState(value, state);
+  return String(value ?? '');
+}
+
+async function buildPlaintextExport() {
+  if (!encryptionState) throw new Error('Notes are locked.');
+
+  const remoteNotes = await fetchOwnedRemoteNoteRecords();
+  const remoteNoteIds = new Set(remoteNotes.map(note => note.id));
+  const notes = [];
+
+  for (const note of remoteNotes) {
+    const versions = await fetchNoteContentRecords(note.id);
+    notes.push({
+      id: note.id,
+      source: 'cloud',
+      title: await decryptStoredField(note.title),
+      folder: await decryptStoredField(note.folder),
+      deleted: Boolean(note.deleted),
+      created: note.created || null,
+      updated: note.updated || null,
+      versions: await Promise.all(versions.map(async version => ({
+        id: version.id,
+        created: version.created || null,
+        updated: version.updated || null,
+        title: await decryptStoredField(version.title),
+        content: await decryptStoredField(version.content)
+      })))
+    });
+  }
+
+  Object.values(getLocalNotes())
+    .filter(note => !remoteNoteIds.has(note.id))
+    .forEach(note => {
+      notes.push({
+        id: note.id,
+        source: 'local',
+        title: note.title || '',
+        folder: note.folder || 'Notes',
+        deleted: false,
+        created: null,
+        updated: note.updated || null,
+        versions: [{
+          id: `${note.id}-local-current`,
+          created: null,
+          updated: note.updated || null,
+          title: note.title || '',
+          content: note.content || ''
+        }]
+      });
+    });
+
+  return {
+    format: 'jnote.plaintext-export',
+    formatVersion: EXPORT_FORMAT_VERSION,
+    exportedAt: new Date().toISOString(),
+    notes,
+    localChanges: {
+      drafts: Object.entries(getDrafts()).map(([noteId, draft]) => ({
+        noteId,
+        title: draft.title || '',
+        content: draft.content || '',
+        folder: draft.folder || 'Notes',
+        updatedAt: draft.updatedAt || null
+      })),
+      pendingPushes: Object.values(getPendingPushes()).map(push => ({
+        action: push.action,
+        noteId: push.noteId,
+        title: push.title || '',
+        content: push.content || '',
+        folder: push.folder || 'Notes',
+        queuedAt: push.queuedAt || null
+      }))
+    },
+    settings: {
+      customCss: getCustomCss()
+    }
+  };
+}
+
+function downloadJsonFile(data, filename) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+
+  link.href = url;
+  link.download = filename;
+  link.rel = 'noopener';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function makeExportFilename() {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  return `jnote-plaintext-export-${timestamp}.json`;
+}
+
+async function downloadAllDataNotes() {
+  const button = document.getElementById('download-all-data');
+  const originalText = button?.querySelector('span')?.textContent || '';
+
+  if (!encryptionState) {
+    alert('Unlock notes before exporting.');
+    return;
+  }
+
+  if (button) button.disabled = true;
+  if (button?.querySelector('span')) button.querySelector('span').textContent = 'Preparing download...';
+
+  try {
+    const data = await buildPlaintextExport();
+    downloadJsonFile(data, makeExportFilename());
+    document.getElementById('settings-dialog')?.close();
+  } catch (err) {
+    console.error('Could not export notes:', err);
+    alert('Could not export notes. Check your connection and try again.');
+  } finally {
+    if (button) button.disabled = false;
+    if (button?.querySelector('span')) button.querySelector('span').textContent = originalText;
+  }
+}
+
+// ─── Decryption Key Migration ────────────────────────────────────────────────
+
+async function verifyStateMatchesUnlockedKey(candidateState) {
+  const challenge = `${Date.now()}-${randomBase64(32)}`;
+  const encryptedChallenge = await encryptStringWithState(challenge, encryptionState);
+  const decryptedChallenge = await decryptStringWithState(encryptedChallenge, candidateState);
+
+  if (decryptedChallenge !== challenge) {
+    throw new Error('Current key could not be verified.');
+  }
+}
+
+async function getVerifiedCurrentKeyState(passphrase) {
+  if (!encryptionState?.metadata) throw new Error('Notes are locked.');
+
+  const metadata = encryptionState.metadata;
+  const key = await deriveEncryptionKey(passphrase, metadata);
+  const candidateState = { key, metadata };
+
+  await validateEncryptionKey(candidateState);
+  await verifyStateMatchesUnlockedKey(candidateState);
+
+  return candidateState;
+}
+
+async function buildKeyMigrationPlan(oldState, newState) {
+  const noteRecords = await fetchOwnedRemoteNoteRecords();
+  const noteUpdates = [];
+  const contentUpdates = [];
+
+  for (const note of noteRecords) {
+    const title = await decryptStoredField(note.title, oldState);
+    const folder = await decryptStoredField(note.folder, oldState);
+
+    noteUpdates.push({
+      id: note.id,
+      oldPayload: {
+        title: note.title,
+        folder: note.folder
+      },
+      newPayload: {
+        title: await encryptStringWithState(title, newState),
+        folder: await encryptStringWithState(folder, newState)
+      }
+    });
+
+    const versions = await fetchNoteContentRecords(note.id);
+    for (const version of versions) {
+      const versionTitle = await decryptStoredField(version.title, oldState);
+      const versionContent = await decryptStoredField(version.content, oldState);
+
+      contentUpdates.push({
+        id: version.id,
+        oldPayload: {
+          title: version.title,
+          content: version.content
+        },
+        newPayload: {
+          title: await encryptStringWithState(versionTitle, newState),
+          content: await encryptStringWithState(versionContent, newState)
+        }
+      });
+    }
+  }
+
+  return { noteUpdates, contentUpdates };
+}
+
+async function restoreKeyMigrationPlan(plan) {
+  const failures = [];
+
+  for (const update of plan.noteUpdates) {
+    try {
+      await pb.collection('jnote').update(update.id, update.oldPayload);
+    } catch (err) {
+      failures.push({ collection: 'jnote', id: update.id, error: err });
+    }
+  }
+
+  for (const update of plan.contentUpdates) {
+    try {
+      await pb.collection('jnote_content').update(update.id, update.oldPayload);
+    } catch (err) {
+      failures.push({ collection: 'jnote_content', id: update.id, error: err });
+    }
+  }
+
+  return failures;
+}
+
+async function applyKeyMigrationPlan(plan, onStatus = () => {}) {
+  const total = plan.noteUpdates.length + plan.contentUpdates.length;
+  let completed = 0;
+
+  try {
+    for (const update of plan.noteUpdates) {
+      await pb.collection('jnote').update(update.id, update.newPayload);
+      completed += 1;
+      onStatus(`Re-encrypting cloud data... ${completed}/${total}`);
+    }
+
+    for (const update of plan.contentUpdates) {
+      await pb.collection('jnote_content').update(update.id, update.newPayload);
+      completed += 1;
+      onStatus(`Re-encrypting cloud data... ${completed}/${total}`);
+    }
+  } catch (err) {
+    onStatus('Migration failed. Restoring previous encryption...');
+    const rollbackFailures = await restoreKeyMigrationPlan(plan);
+
+    if (rollbackFailures.length > 0) {
+      const rollbackError = new Error('Key change failed and automatic rollback could not finish. Keep this app open and try again.');
+      rollbackError.cause = err;
+      rollbackError.rollbackFailures = rollbackFailures;
+      throw rollbackError;
+    }
+
+    const restoredError = new Error('Key change failed. Notes were restored to the previous key.');
+    restoredError.cause = err;
+    throw restoredError;
+  }
+}
+
+async function saveLocalStoresWithState(state) {
+  invalidateEncryptedObjectStorePersists();
+  await saveEncryptedObjectStoreNow(DRAFTS_STORAGE_KEY, drafts, state);
+  await saveEncryptedObjectStoreNow(LOCAL_NOTES_STORAGE_KEY, localNotes, state);
+  await saveEncryptedObjectStoreNow(PENDING_PUSHES_STORAGE_KEY, pendingPushes, state);
+}
+
+function getRawEncryptedObjectStoreBackup() {
+  return getEncryptedObjectStoreKeys().map(storageKey => {
+    const scopedStorageKey = getUserScopedStorageKey(storageKey);
+    return {
+      scopedStorageKey,
+      value: localStorage.getItem(scopedStorageKey)
+    };
+  });
+}
+
+function restoreRawEncryptedObjectStoreBackup(backup) {
+  backup.forEach(item => {
+    try {
+      if (item.value === null) {
+        localStorage.removeItem(item.scopedStorageKey);
+      } else {
+        localStorage.setItem(item.scopedStorageKey, item.value);
+      }
+    } catch (err) {
+      console.warn('Could not restore encrypted local store backup:', err);
+    }
+  });
+}
+
+async function changeDecryptionKey(currentPassphrase, newPassphrase, onStatus = () => {}) {
+  if (!encryptionState) throw new Error('Unlock notes before changing the key.');
+  if (activePushes.size > 0) throw new Error('Wait for the current cloud push to finish, then try again.');
+
+  isKeyMigrationRunning = true;
+  updateSyncStatus();
+
+  try {
+    onStatus('Verifying current key...');
+    const oldState = await getVerifiedCurrentKeyState(currentPassphrase);
+    const rememberDevice = Boolean(getRememberedDeviceKeyRecord());
+    const newMetadata = createEncryptionMetadata();
+    const newState = {
+      key: await deriveEncryptionKey(newPassphrase, newMetadata, { extractable: rememberDevice }),
+      metadata: newMetadata
+    };
+
+    onStatus('Preparing encrypted records...');
+    const plan = await buildKeyMigrationPlan(oldState, newState);
+
+    onStatus('Re-encrypting cloud data...');
+    await applyKeyMigrationPlan(plan, onStatus);
+
+    onStatus('Saving encrypted local data...');
+    const localStoreBackup = getRawEncryptedObjectStoreBackup();
+    try {
+      await saveLocalStoresWithState(newState);
+    } catch (err) {
+      restoreRawEncryptedObjectStoreBackup(localStoreBackup);
+      onStatus('Local save failed. Restoring previous encryption...');
+      const rollbackFailures = await restoreKeyMigrationPlan(plan);
+
+      if (rollbackFailures.length > 0) {
+        const rollbackError = new Error('Key change failed and automatic rollback could not finish. Keep this app open and try again.');
+        rollbackError.cause = err;
+        rollbackError.rollbackFailures = rollbackFailures;
+        throw rollbackError;
+      }
+
+      const restoredError = new Error('Key change failed. Notes were restored to the previous key.');
+      restoredError.cause = err;
+      throw restoredError;
+    }
+
+    encryptionState = newState;
+    saveEncryptionMetadata(newMetadata);
+
+    if (rememberDevice) {
+      await rememberCurrentDeviceKey();
+    } else {
+      forgetRememberedDeviceKey();
+    }
+
+    onStatus('Reloading notes...');
+    try {
+      await loadNotes();
+    } catch (err) {
+      console.warn('Key changed, but notes could not be reloaded immediately:', err);
+    }
+  } finally {
+    isKeyMigrationRunning = false;
+    updateSyncStatus();
+  }
+
+  flushPendingPushes();
+}
+
 // ─── Settings ────────────────────────────────────────────────────────────────
 
 function openSettingsDialog() {
@@ -1490,9 +1899,137 @@ function openCustomCssDialog() {
   customCssInput.focus();
 }
 
+function openChangeKeyDialog() {
+  const settingsDialog = document.getElementById('settings-dialog');
+  const changeKeyDialog = document.getElementById('change-key-dialog');
+  const currentKeyInput = document.getElementById('current-decryption-key');
+
+  if (!changeKeyDialog || !currentKeyInput) return;
+
+  settingsDialog?.close();
+  resetChangeKeyDialog();
+  changeKeyDialog.showModal();
+  currentKeyInput.focus();
+}
+
+function closeChangeKeyDialog() {
+  if (isKeyMigrationRunning) return;
+  document.getElementById('change-key-dialog')?.close();
+}
+
+function resetChangeKeyDialog() {
+  document.getElementById('change-key-form')?.reset();
+  setChangeKeyStatus('');
+  setChangeKeyError('');
+  setChangeKeyBusy(false);
+}
+
+function setChangeKeyStatus(message) {
+  const statusEl = document.getElementById('change-key-status');
+  if (!statusEl) return;
+
+  statusEl.textContent = message;
+  statusEl.hidden = !message;
+}
+
+function setChangeKeyError(message) {
+  const errorEl = document.getElementById('change-key-error');
+  if (!errorEl) return;
+
+  errorEl.textContent = message;
+  errorEl.hidden = !message;
+}
+
+function setChangeKeyBusy(isBusy) {
+  const fields = [
+    'current-decryption-key',
+    'new-decryption-key',
+    'confirm-new-decryption-key'
+  ];
+  const submitButton = document.getElementById('submit-change-key');
+  const cancelButton = document.getElementById('cancel-change-key');
+  const closeButton = document.getElementById('close-change-key-dialog');
+
+  fields.forEach(id => {
+    const input = document.getElementById(id);
+    if (input) input.disabled = isBusy;
+  });
+
+  if (submitButton) {
+    submitButton.disabled = isBusy;
+    submitButton.textContent = isBusy ? 'Changing key...' : 'Change key';
+  }
+  if (cancelButton) cancelButton.disabled = isBusy;
+  if (closeButton) closeButton.disabled = isBusy;
+}
+
+function getKeyChangeFailureMessage(err) {
+  if (err?.rollbackFailures?.length) {
+    return 'Key change failed and automatic rollback could not finish. Keep this app open and try again when your connection is stable.';
+  }
+
+  if (err?.message) return err.message;
+
+  return 'Could not change the key. Your notes are still using the previous key.';
+}
+
+async function handleChangeKeySubmit(event) {
+  event.preventDefault();
+
+  const currentKeyInput = document.getElementById('current-decryption-key');
+  const newKeyInput = document.getElementById('new-decryption-key');
+  const confirmKeyInput = document.getElementById('confirm-new-decryption-key');
+  const currentKey = currentKeyInput?.value || '';
+  const newKey = newKeyInput?.value || '';
+  const confirmKey = confirmKeyInput?.value || '';
+
+  setChangeKeyError('');
+  setChangeKeyStatus('');
+
+  if (!currentKey || !newKey || !confirmKey) {
+    setChangeKeyError('Enter the current key, the new key, and the confirmation.');
+    (!currentKey ? currentKeyInput : !newKey ? newKeyInput : confirmKeyInput)?.focus();
+    return;
+  }
+
+  if (newKey !== confirmKey) {
+    setChangeKeyError('The new key and confirmation do not match.');
+    confirmKeyInput?.focus();
+    confirmKeyInput?.select();
+    return;
+  }
+
+  if (newKey === currentKey) {
+    setChangeKeyError('Choose a new key that is different from the current key.');
+    newKeyInput?.focus();
+    newKeyInput?.select();
+    return;
+  }
+
+  setChangeKeyBusy(true);
+
+  try {
+    await changeDecryptionKey(currentKey, newKey, setChangeKeyStatus);
+    currentKeyInput.value = '';
+    newKeyInput.value = '';
+    confirmKeyInput.value = '';
+    setChangeKeyStatus('Decryption key changed.');
+    window.setTimeout(() => {
+      closeChangeKeyDialog();
+      alert('Your decryption key was changed and existing notes were re-encrypted.');
+    }, 250);
+  } catch (err) {
+    console.error('Could not change decryption key:', err);
+    setChangeKeyError(getKeyChangeFailureMessage(err));
+  } finally {
+    setChangeKeyBusy(false);
+  }
+}
+
 function closeDialogOnBackdropClick(event) {
   const dialog = event.currentTarget;
   if (!dialog.open) return;
+  if (dialog.id === 'change-key-dialog' && isKeyMigrationRunning) return;
 
   const rect = dialog.getBoundingClientRect();
   const clickedInDialog =
@@ -1508,9 +2045,15 @@ function bindSettingsDialogs() {
   const settingsDialog = document.getElementById('settings-dialog');
   const customCssDialog = document.getElementById('custom-css-dialog');
   const customCssInput = document.getElementById('custom-css-input');
+  const changeKeyDialog = document.getElementById('change-key-dialog');
 
   document.getElementById('settings-btn')?.addEventListener('click', openSettingsDialog);
   document.getElementById('open-custom-css-dialog')?.addEventListener('click', openCustomCssDialog);
+  document.getElementById('download-all-data')?.addEventListener('click', downloadAllDataNotes);
+  document.getElementById('open-change-key-dialog')?.addEventListener('click', openChangeKeyDialog);
+  document.getElementById('change-key-form')?.addEventListener('submit', handleChangeKeySubmit);
+  document.getElementById('cancel-change-key')?.addEventListener('click', closeChangeKeyDialog);
+  document.getElementById('close-change-key-dialog')?.addEventListener('click', closeChangeKeyDialog);
   document.getElementById('forget-remembered-device')?.addEventListener('click', () => {
     forgetRememberedDeviceKey();
     settingsDialog?.close();
@@ -1527,7 +2070,17 @@ function bindSettingsDialogs() {
     saveCustomCss('');
   });
 
-  [settingsDialog, customCssDialog].forEach(dialog => {
+  [
+    'current-decryption-key',
+    'new-decryption-key',
+    'confirm-new-decryption-key'
+  ].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', () => {
+      setChangeKeyError('');
+    });
+  });
+
+  [settingsDialog, customCssDialog, changeKeyDialog].forEach(dialog => {
     dialog?.addEventListener('click', closeDialogOnBackdropClick);
   });
 }
@@ -1761,6 +2314,12 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('scroll', closeNoteContextMenu, true);
 
   window.addEventListener('beforeunload', (event) => {
+    if (isKeyMigrationRunning) {
+      event.preventDefault();
+      event.returnValue = 'Your notes are being re-encrypted. Do not close the app yet.';
+      return;
+    }
+
     if (!hasUnfinishedPushes()) return;
     event.preventDefault();
     event.returnValue = 'Your latest commit is still pushing to the cloud.';

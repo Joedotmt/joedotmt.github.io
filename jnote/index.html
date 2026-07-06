@@ -9,7 +9,7 @@
     <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.9.7/dist/cdn/beer.min.js"></script>
 
 
-    <link rel="stylesheet" href="style.css?v=21">
+    <link rel="stylesheet" href="style.css?v=22">
     <style id="custom-css"></style>
     <script>
         (() => {
@@ -132,6 +132,14 @@
                 <i aria-hidden="true">code</i>
                 <span>Custom CSS</span>
             </button>
+            <button class="settings-row-button" id="download-all-data" type="button">
+                <i aria-hidden="true">file_download</i>
+                <span>Download all data/notes</span>
+            </button>
+            <button class="settings-row-button" id="open-change-key-dialog" type="button">
+                <i aria-hidden="true">key</i>
+                <span>Change decryption key</span>
+            </button>
             <button class="settings-row-button" id="forget-remembered-device" type="button">
                 <i aria-hidden="true">lock</i>
                 <span>Forget remembered device</span>
@@ -155,12 +163,43 @@
         </form>
     </dialog>
 
+    <dialog class="settings-dialog change-key-dialog" id="change-key-dialog" aria-labelledby="change-key-dialog-title">
+        <form class="settings-dialog-content" id="change-key-form" autocomplete="off">
+            <div class="settings-dialog-header">
+                <h2 id="change-key-dialog-title">Change decryption key</h2>
+                <button class="icon-dialog-btn" id="close-change-key-dialog" type="button" aria-label="Close change key" title="Close">
+                    <i aria-hidden="true">close</i>
+                </button>
+            </div>
+            <p class="settings-dialog-copy">Re-encrypt every note with a new key. Keep this app open until the process finishes.</p>
+            <p class="settings-dialog-warning">Do not close or refresh the app while notes are being re-encrypted.</p>
+            <div class="field border label settings-field">
+                <input type="password" id="current-decryption-key" autocomplete="current-password" required>
+                <label for="current-decryption-key">Current key</label>
+            </div>
+            <div class="field border label settings-field">
+                <input type="password" id="new-decryption-key" autocomplete="new-password" required>
+                <label for="new-decryption-key">New key</label>
+            </div>
+            <div class="field border label settings-field">
+                <input type="password" id="confirm-new-decryption-key" autocomplete="new-password" required>
+                <label for="confirm-new-decryption-key">Confirm new key</label>
+            </div>
+            <p class="settings-dialog-status" id="change-key-status" hidden></p>
+            <p class="settings-dialog-error" id="change-key-error" hidden></p>
+            <div class="settings-dialog-actions">
+                <button class="btn-secondary" id="cancel-change-key" type="button">Cancel</button>
+                <button class="btn-primary" id="submit-change-key" type="submit">Change key</button>
+            </div>
+        </form>
+    </dialog>
+
     <!-- Overlay for Mobile Navigation -->
     <div class="mobile-overlay" id="mobile-overlay"></div>
 
 
     <script src="https://cdn.jsdelivr.net/npm/pocketbase/dist/pocketbase.umd.js"></script>
-    <script src="app.js?v=22"></script>
+    <script src="app.js?v=23"></script>
 </body>
 
 </html>

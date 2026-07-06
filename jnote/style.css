@@ -1118,6 +1118,40 @@ button:focus-visible {
     width: min(720px, calc(100vw - 32px));
 }
 
+.change-key-dialog {
+    width: min(520px, calc(100vw - 32px));
+}
+
+.settings-dialog-copy,
+.settings-dialog-warning,
+.settings-dialog-status,
+.settings-dialog-error {
+    margin: 0;
+    font-size: 0.95em;
+    line-height: 1.45;
+}
+
+.settings-dialog-copy,
+.settings-dialog-status {
+    color: var(--on-surface-variant);
+}
+
+.settings-dialog-warning {
+    padding: 12px;
+    border: 1px solid color-mix(in srgb, var(--error) 55%, var(--outline-variant));
+    border-radius: 8px;
+    color: var(--error);
+    background: color-mix(in srgb, var(--error-container) 35%, transparent);
+}
+
+.settings-dialog-error {
+    color: var(--error);
+}
+
+.settings-field {
+    margin: 0;
+}
+
 #custom-css-input {
     width: 100%;
     min-height: min(420px, 52vh);
