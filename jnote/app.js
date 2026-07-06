@@ -20,7 +20,6 @@ const KDF_ITERATIONS = 310000;
 const AES_KEY_LENGTH = 256;
 const ENCRYPTION_SALT_BYTES = 16;
 const ENCRYPTION_IV_BYTES = 12;
-const ACCOUNT_URL = 'https://joe.mt/account';
 const KEYBOARD_VIEWPORT_THRESHOLD = 120;
 const EXPORT_FORMAT_VERSION = 1;
 let drafts = {};
@@ -2151,6 +2150,7 @@ function setEncryptionModalMode(mode) {
   const title = document.getElementById('encryption-title');
   const copy = document.querySelector('.encryption-copy');
   const warning = document.querySelector('.encryption-warning');
+  const authCopy = document.getElementById('encryption-auth-copy');
   const input = document.getElementById('encryption-passphrase');
   const label = document.querySelector('label[for="encryption-passphrase"]');
   const rememberButton = document.querySelector('[data-remember-device="true"]');
@@ -2168,6 +2168,7 @@ function setEncryptionModalMode(mode) {
       ? 'If you forget this key, your notes cannot be recovered.'
       : `If you forgot it, your notes cannot be recovered.`;
   }
+  if (authCopy) authCopy.hidden = true;
   if (input) {
     input.value = '';
     input.disabled = false;
@@ -2188,12 +2189,14 @@ function showAuthRequired() {
   const title = document.getElementById('encryption-title');
   const copy = document.querySelector('.encryption-copy');
   const warning = document.querySelector('.encryption-warning');
+  const authCopy = document.getElementById('encryption-auth-copy');
   const input = document.getElementById('encryption-passphrase');
   const buttons = document.querySelectorAll('#encryption-form button[type="submit"]');
 
   if (title) title.textContent = 'Sign in required';
-  if (copy) copy.textContent = 'JNote uses the account session from joe.mt/account.';
-  if (warning) warning.textContent = `Sign in at ${ACCOUNT_URL}, then return to JNote.`;
+  if (copy) copy.textContent = 'JNote uses your joe.mt account session.';
+  if (warning) warning.textContent = 'Sign in with the account link below, then return to JNote.';
+  if (authCopy) authCopy.hidden = false;
   if (input) input.disabled = true;
   buttons.forEach(button => { button.disabled = true; });
   setEncryptionError('');

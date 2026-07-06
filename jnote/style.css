@@ -645,6 +645,18 @@ body {
     color: var(--on-surface-variant);
 }
 
+.encryption-auth-copy {
+    margin: 0 0 14px;
+    font-size: 0.95em;
+    line-height: 1.45;
+    color: var(--on-surface-variant);
+}
+
+.encryption-auth-copy a {
+    color: var(--primary);
+    font-weight: 600;
+}
+
 .encryption-warning {
     padding: 12px;
     border: 1px solid color-mix(in srgb, var(--error) 55%, var(--outline-variant));

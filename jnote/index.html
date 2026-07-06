@@ -37,8 +37,11 @@
             <h2 id="encryption-title">Set decryption key</h2>
             <p class="encryption-copy">Enter the key to be used to decrypt your notes.</p>
             <p class="encryption-warning">If you forget this key, your notes cannot be recovered.</p>
+            <p class="encryption-auth-copy" id="encryption-auth-copy" hidden>
+                Sign in at <a href="https://joe.mt/account">joe.mt/account</a>, then return to JNote.
+            </p>
             <div class="field border label encryption-field">
-                <input type="password" id="encryption-passphrase" autocomplete="current-password" required>
+                <input type="password" id="encryption-passphrase" autocomplete="off" required>
                 <label for="encryption-passphrase">Encryption key</label>
             </div>
 
@@ -174,15 +177,15 @@
             <p class="settings-dialog-copy">Re-encrypt every note with a new key. Keep this app open until the process finishes.</p>
             <p class="settings-dialog-warning">Do not close or refresh the app while notes are being re-encrypted.</p>
             <div class="field border label settings-field">
-                <input type="password" id="current-decryption-key" autocomplete="current-password" required>
+                <input type="password" id="current-decryption-key" autocomplete="off" required>
                 <label for="current-decryption-key">Current key</label>
             </div>
             <div class="field border label settings-field">
-                <input type="password" id="new-decryption-key" autocomplete="new-password" required>
+                <input type="password" id="new-decryption-key" autocomplete="off" required>
                 <label for="new-decryption-key">New key</label>
             </div>
             <div class="field border label settings-field">
-                <input type="password" id="confirm-new-decryption-key" autocomplete="new-password" required>
+                <input type="password" id="confirm-new-decryption-key" autocomplete="off" required>
                 <label for="confirm-new-decryption-key">Confirm new key</label>
             </div>
             <p class="settings-dialog-status" id="change-key-status" hidden></p>
