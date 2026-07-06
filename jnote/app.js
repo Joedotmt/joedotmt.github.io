@@ -1749,25 +1749,44 @@ async function restoreKeyMigrationPlan(plan) {
   return failures;
 }
 
+function isJnoteContentUpdatePermissionError(err) {
+  const message = String(err?.message || err?.response?.message || err?.data?.message || '');
+  return err?.status === 403 && message.includes('Only superusers can perform this action');
+}
+
+function createJnoteContentUpdatePermissionError(cause) {
+  const err = new Error('The server is blocking note-version re-encryption. Update permission is required on jnote_content records before the decryption key can be changed.');
+  err.code = 'JNOTE_CONTENT_UPDATE_FORBIDDEN';
+  err.cause = cause;
+  return err;
+}
+
 async function applyKeyMigrationPlan(plan, onStatus = () => {}) {
   const total = plan.noteUpdates.length + plan.contentUpdates.length;
+  const applied = { noteUpdates: [], contentUpdates: [] };
   let completed = 0;
 
   try {
-    for (const update of plan.noteUpdates) {
-      await pb.collection('jnote').update(update.id, update.newPayload);
+    for (const update of plan.contentUpdates) {
+      await pb.collection('jnote_content').update(update.id, update.newPayload);
+      applied.contentUpdates.push(update);
       completed += 1;
       onStatus(`Re-encrypting cloud data... ${completed}/${total}`);
     }
 
-    for (const update of plan.contentUpdates) {
-      await pb.collection('jnote_content').update(update.id, update.newPayload);
+    for (const update of plan.noteUpdates) {
+      await pb.collection('jnote').update(update.id, update.newPayload);
+      applied.noteUpdates.push(update);
       completed += 1;
       onStatus(`Re-encrypting cloud data... ${completed}/${total}`);
     }
   } catch (err) {
+    if (applied.noteUpdates.length === 0 && applied.contentUpdates.length === 0 && isJnoteContentUpdatePermissionError(err)) {
+      throw createJnoteContentUpdatePermissionError(err);
+    }
+
     onStatus('Migration failed. Restoring previous encryption...');
-    const rollbackFailures = await restoreKeyMigrationPlan(plan);
+    const rollbackFailures = await restoreKeyMigrationPlan(applied);
 
     if (rollbackFailures.length > 0) {
       const rollbackError = new Error('Key change failed and automatic rollback could not finish. Keep this app open and try again.');
@@ -1964,6 +1983,10 @@ function setChangeKeyBusy(isBusy) {
 }
 
 function getKeyChangeFailureMessage(err) {
+  if (err?.code === 'JNOTE_CONTENT_UPDATE_FORBIDDEN') {
+    return 'Server permission needed: jnote_content records cannot be updated by this user, so note history cannot be re-encrypted. Add an update rule for owned note versions, then try again.';
+  }
+
   if (err?.rollbackFailures?.length) {
     return 'Key change failed and automatic rollback could not finish. Keep this app open and try again when your connection is stable.';
   }
