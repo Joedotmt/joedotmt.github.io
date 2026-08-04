@@ -1,0 +1,469 @@
+/* === GENERAL & ROOT STYLES === */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-image: url(home/sliema.webp);
+    backdrop-filter: blur(50px);
+    background-repeat: round;
+    background-size: cover;
+    color: white;
+    font-family: "Pangolin", "Comic Sans MS";
+    display: flex;
+    min-height: fit-content;
+    height: 100dvh;
+    align-items: flex-start;
+    justify-content: flex-start;
+    overflow-x: hidden;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+    -webkit-tap-highlight-color: transparent;
+    transform-origin: 50px 50%;
+}
+
+a:active {
+    scale: 0.9;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+::-webkit-scrollbar:hover {
+    opacity: 1;
+}
+
+::-webkit-scrollbar-track {
+    background-color: black;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.268);
+    border-radius: 10px;
+    transition: background-color 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* === LAYOUT === */
+.left-column {
+    display: flex;
+    flex-direction: column;
+    width: 40dvw;
+}
+
+.right-column {
+    display: flex;
+    width: 60dvw;
+}
+
+/* === COMPONENTS === */
+/* Logo */
+.logo-container {
+    width: min(500px, 100%);
+    height: 150px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Arial, sans-serif;
+    clip-path: polygon(0 0, 100% 0, 95% 100%, 0 80%);
+}
+
+.logo {
+    width: 50%;
+    margin: 1em;
+    aspect-ratio: 1.904;
+    transition: 0.2s cubic-bezier(0.075, 0.82, 0.165, 1);
+}
+
+@media (hover: hover) {
+    .logo:hover {
+        scale: 1.1;
+    }
+}
+
+/* Main Menu */
+.menu-container {
+    transform: translateX(0px);
+    margin-left: min(3vw, 50px);
+    overflow: hidden;
+    min-height: 400px;
+    max-width: 500px;
+}
+
+.main-menu {
+    box-sizing: border-box;
+    margin-left: min(3vw, 50px);
+    padding: 20px 0 80px 20px;
+    width: 75%;
+    transition: transform 0.3s ease;
+    background: rgba(0, 0, 0, 0.6);
+    clip-path: polygon(3% 0%, 90% 5%, 100% 80%, 0% 95%);
+    max-width: 500px;
+}
+
+.selection-background {
+    width: 30dvw;
+    position: absolute;
+    z-index: 0;
+    height: 60px;
+    background: rgba(0, 0, 0, 0.8);
+    transition: all 0.25s cubic-bezier(0.075, 0.82, 0.165, 1);
+    clip-path: polygon(2% 15%, 97% 20%, 100% 80%, 0% 85%);
+    max-width: 500px;
+}
+
+.link-list > a {
+    color: white;
+    font-size: 32px;
+    margin: 10px 0;
+    padding: 0 30px;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: left;
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    text-wrap: nowrap;
+    transition: translate 0.5s cubic-bezier(0.075, 0.82, 0.165, 1);
+}
+
+.link-list > a .material-symbols-outlined {
+    opacity: 0.2;
+    margin-left: 5px;
+    transition: opacity 0s ease;
+}
+
+@media (hover: hover) {
+    .link-list > a:hover {
+        translate: 5px;
+        text-decoration: underline;
+    }
+
+    .link-list > a:hover .material-symbols-outlined {
+        opacity: 1;
+    }
+}
+
+/* Banners */
+.banner {
+    background: rgba(0, 0, 0, 0.6);
+    padding: 50px;
+    margin: 1em 1em 1em 0;
+    text-align: center;
+    font-size: 1.2em;
+    clip-path: var(--random-clip-path);
+}
+
+#FaceBanner {
+    background: url(home/face1.jpg) no-repeat center center;
+    background-size: contain;
+    height: 400px;
+    width: 400px;
+}
+
+#IcedJellyBanner {
+    font-size: 2em;
+}
+
+#AchievementsBanner {
+    display: none;
+}
+
+#achievementsIframe {
+    width: 100%;
+    height: 300px;
+    border: none;
+}
+
+#SitemapBanner {
+    font-size: 1em;
+}
+
+/* Footer & Project Sections */
+.footer {
+    overflow: visible;
+    margin-top: 20px;
+    background: url(assets/blueprint.webp) repeat center;
+    background-size: 150%;
+    padding: 30px;
+    display: flex;
+    transition: background-size 2s cubic-bezier(0.075, 0.82, 0.165, 1);
+    justify-content: space-between;
+    align-items: center;
+    container: footer / inline-size;
+    clip-path: var(--random-clip-path);
+}
+
+@media (hover: hover) {
+    .footer:hover {
+        background-size: 100%;
+    }
+}
+
+.icedjelly-logo {
+    width: 200px;
+    margin-left: min(5em, 5vw);
+}
+
+.noscript-message {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    background-color: black;
+    width: 100%;
+    height: 100%;
+    padding: 2em;
+}
+
+#ConstructionBanner {
+    width: 100%;
+    font-size: 2em;
+}
+
+#ConstructionBanner h1 {
+    font-size: 1em;
+}
+
+#ConstructionBanner > p {
+    margin-top: 1em;
+}
+
+.social-links-container {
+    margin-top: 1em;
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.social-link {
+    position: relative;
+    isolation: isolate;
+    padding: 5px;
+    flex: 1;
+    align-content: center;
+}
+
+.social-link::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-color: black;
+    clip-path: var(--random-clip-path);
+}
+
+.social-link:hover {
+    outline: 2px solid rgb(124, 124, 124);
+}
+
+.social-link.discord {
+    color: #b9bfff;
+}
+
+.social-link.email {
+    color: #e1e1e1;
+}
+
+.social-link.youtube {
+    color: #ff2441;
+}
+
+.social-link.more-links {
+    color: #e1e1e1;
+    text-wrap: nowrap;
+}
+
+.youtube-embed {
+    margin-top: 5px;
+    border: 0;
+}
+
+/* Project Showcase Sections (use .footer class) */
+.project-showcase {
+    background-position: center;
+    background-size: cover;
+}
+
+.video-showcase {
+    background-position: center;
+    background-size: cover;
+    flex-direction: column;
+}
+
+.video-showcase a {
+    scale: 1;
+}
+
+.video-showcase img {
+    width: 100%;
+    height: 100%;
+    max-height: 40vh;
+    aspect-ratio: 16 / 9;
+}
+
+#locality-showcase {
+    background-image: url(home/localcouncilbackground.png);
+}
+
+.experiment-label {
+    background-color: black;
+    border-radius: 10px;
+    padding: 5px;
+    font-size: 0.5em;
+}
+
+.project-title {
+    font-size: 1.5em;
+    font-weight: bolder;
+}
+
+.project-button {
+    display: block;
+    flex: 0 0 auto;
+    width: 20dvw;
+    max-width: 100%;
+    padding: 0;
+    border: solid 4.7px white;
+    border-radius: 0.6em;
+    overflow: hidden;
+    line-height: 0;
+    cursor: pointer;
+    transition: 0.5s cubic-bezier(0.075, 0.82, 0.165, 1);
+    transform-origin: center;
+    scale: 0.97
+}
+
+.project-button img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+@media (hover: hover) {
+    .project-button:hover {
+        scale: 1;
+        box-shadow: 0 4px 4px rgba(0, 0, 0, 0.228);
+    }
+}
+
+.project-button:active {
+    scale: 0.95;
+}
+
+#hopdodge-showcase {
+    background-image: url(home/hopdodge.png);
+}
+
+#sassls-showcase {
+    background-image: url(home/SASSLS.png);
+    color: black;
+}
+
+#sassls-showcase a {
+    color: blue;
+}
+
+#mva-showcase {
+    background-image: url(home/vdmt.jpg);
+}
+
+#mva-showcase img {
+    width: 100px;
+}
+
+#rmg-showcase {
+    background-image: url(home/rmg.jpg);
+    background-color: rgba(0, 0, 0, 0.5);
+    background-blend-mode: darken;
+}
+
+.smo {
+    padding: 0.2em;
+    background-color: rgba(0, 0, 0, 0.5);
+    margin: 0;
+    text-decoration: none;
+    color: white;
+}
+
+@media (hover: hover) {
+    .smo:hover {
+        background-color: black;
+    }
+}
+
+/* === RESPONSIVE STYLES === */
+@media (max-width: 1000px) {
+    .footer {
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 800px) {
+    body {
+        flex-direction: column;
+        height: fit-content;
+        min-height: 100dvh;
+    }
+
+    .left-column,
+    .right-column {
+        width: 100%;
+    }
+
+    .selection-background {
+        width: 90dvw;
+    }
+
+    .logo-container {
+        width: 100%;
+    }
+
+    .banner {
+        margin: 0;
+        width: 100dvw;
+        padding: 50px 20px;
+    }
+
+    .link-list > a {
+        padding: 0;
+        overflow-x: auto;
+    }
+
+    p {
+        font-size: 0.7em;
+    }
+
+    .project-button {
+        width: 100%;
+    }
+
+    .main-menu {
+        margin: 1dvw;
+        width: 98dvw;
+    }
+
+    .main-menu > a {
+        padding-left: 0.5em;
+    }
+}

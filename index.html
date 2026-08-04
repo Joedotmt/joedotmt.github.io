@@ -10,434 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Pangolin&display=swap" rel="stylesheet" />
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=arrow_left_alt,arrow_right_alt,open_in_new" />
-    <style>
-        /* === GENERAL & ROOT STYLES === */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            background-image: url(home/sliema.webp);
-            backdrop-filter: blur(50px);
-            background-repeat: round;
-            background-size: cover;
-            color: white;
-            font-family: 'Pangolin', "comic sans ms";
-            display: flex;
-            min-height: fit-content;
-            height: 100dvh;
-            align-items: flex-start;
-            justify-content: flex-start;
-            overflow-x: hidden;
-        }
-
-        a {
-            text-decoration: none;
-            color: inherit;
-            -webkit-tap-highlight-color: transparent;
-            transform-origin: 50px 50%;
-        }
-
-        a:active {
-            scale: 0.9;
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        ::-webkit-scrollbar:hover {
-            opacity: 1;
-        }
-
-        ::-webkit-scrollbar-track {
-            background-color: black;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background-color: rgba(255, 255, 255, 0.268);
-            border-radius: 10px;
-            transition: background-color 0.3s ease;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background-color: rgba(255, 255, 255, 0.2);
-        }
-
-        /* === LAYOUT === */
-        .left-column {
-            display: flex;
-            flex-direction: column;
-            width: 40dvw;
-        }
-
-        .right-column {
-            display: flex;
-            width: 60dvw;
-        }
-
-        /* === COMPONENTS === */
-        /* Logo */
-        .logo-container {
-            width: min(500px, 100%);
-            height: 150px;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: Arial, sans-serif;
-            clip-path: polygon(0 0, 100% 0, 95% 100%, 0 80%);
-        }
-
-        .logo {
-            width: 50%;
-            margin: 1em;
-            aspect-ratio: 1.904;
-            transition: 0.2s cubic-bezier(0.075, 0.82, 0.165, 1);
-        }
-
-        @media (hover: hover) {
-            .logo:hover {
-                scale: 1.1;
-            }
-        }
-
-        /* Main Menu */
-        .menu-container {
-            transform: translateX(0px);
-            margin-left: min(3vw, 50px);
-            overflow: hidden;
-            min-height: 400px;
-            max-width: 500px;
-        }
-
-        .main-menu {
-            box-sizing: border-box;
-            margin-left: min(3vw, 50px);
-            padding: 20px 0px 80px 20px;
-            width: 75%;
-            transition: transform 0.3s ease;
-            background: rgba(0, 0, 0, 0.6);
-            clip-path: polygon(3% 0%, 90% 5%, 100% 80%, 0% 95%);
-            max-width: 500px;
-        }
-
-        .selection-background {
-            width: 30dvw;
-            position: absolute;
-            z-index: 0;
-            height: 60px;
-            background: rgba(0, 0, 0, 0.8);
-            transition: all 0.25s cubic-bezier(0.075, 0.82, 0.165, 1);
-            clip-path: polygon(2% 15%, 97% 20%, 100% 80%, 0% 85%);
-            max-width: 500px;
-        }
-
-        .link-list>a {
-            color: white;
-            font-size: 32px;
-            margin: 10px 0;
-            padding: 0px 30px;
-            cursor: pointer;
-            text-decoration: none;
-            display: block;
-            text-align: left;
-            position: relative;
-            z-index: 2;
-            display: flex;
-            align-items: center;
-            text-wrap: nowrap;
-            transition: translate 0.5s cubic-bezier(0.075, 0.82, 0.165, 1);
-        }
-
-        .link-list>a .material-symbols-outlined {
-            opacity: 0.2;
-            margin-left: 5px;
-            transition: opacity 0s ease;
-        }
-
-        @media (hover: hover) {
-            .link-list>a:hover {
-                translate: 5px;
-                text-decoration: underline;
-            }
-
-            .link-list>a:hover .material-symbols-outlined {
-                opacity: 1;
-            }
-        }
-
-        /* Banners */
-        .banner {
-            background: rgba(0, 0, 0, 0.6);
-            padding: 50px;
-            margin: 1em 1em 1em 0;
-            text-align: center;
-            font-size: 1.2em;
-        }
-
-        #FaceBanner {
-            background: url(home/face1.jpg) no-repeat center center;
-            background-size: contain;
-            height: 400px;
-            width: 400px;
-        }
-
-        #IcedJellyBanner {
-            font-size: 2em;
-        }
-
-        #AchievementsBanner {
-            display: none;
-        }
-
-        #achievementsIframe {
-            width: 100%;
-            height: 300px;
-            border: none;
-        }
-
-        #SitemapBanner {
-            font-size: 1em;
-        }
-
-        /* Footer & Project Sections */
-        .footer {
-            overflow: visible;
-            margin-top: 20px;
-            background: url(assets/blueprint.webp) repeat center;
-            background-size: 150%;
-            padding: 30px;
-            display: flex;
-            transition: background-size 2s cubic-bezier(0.075, 0.82, 0.165, 1);
-            justify-content: space-between;
-            align-items: center;
-            container: footer / inline-size;
-        }
-
-        @media (hover: hover) {
-            .footer:hover {
-                background-size: 100%;
-            }
-        }
-
-        .icedjelly-logo {
-            width: 200px;
-            margin-left: min(5em, 5vw);
-        }
-
-        embed {
-            width: 20dvw;
-            aspect-ratio: 2;
-        }
-
-        /* === MIGRATED FROM INLINE STYLES === */
-        .noscript-message {
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 100;
-            background-color: black;
-            width: 100%;
-            height: 100%;
-            padding: 2em;
-        }
-
-        #ConstructionBanner {
-            width: 100%;
-            font-size: 2em;
-        }
-
-        #ConstructionBanner h1 {
-            font-size: 1em;
-        }
-
-        #ConstructionBanner>p {
-            margin-top: 1em;
-        }
-
-        .social-links-container {
-            margin-top: 1em;
-            display: flex;
-            gap: 5px;
-            flex-wrap: wrap;
-        }
-
-        .social-link {
-            position: relative;
-            isolation: isolate;
-            padding: 5px;
-            flex: 1;
-            align-content: center;
-        }
-
-        .social-link::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            z-index: -1;
-            background-color: black;
-            clip-path: var(--random-clip-path);
-        }
-
-        .social-link:hover {
-            outline: 2px solid rgb(124, 124, 124);
-        }
-
-        .social-link.discord {
-            color: #b9bfff;
-        }
-
-        .social-link.email {
-            color: #e1e1e1;
-        }
-
-        .social-link.youtube {
-            color: #ff2441;
-        }
-
-        .social-link.more-links {
-            color: #e1e1e1;
-            text-wrap: nowrap;
-        }
-
-        .youtube-embed {
-            margin-top: 5px;
-            border: 0;
-        }
-
-        /* Project Showcase Sections (use .footer class) */
-        .project-showcase {
-            background-position: center;
-            background-size: cover;
-        }
-
-        #showreel-showcase {
-            background-position: center;
-            background-size: cover;
-            flex-direction: column;
-        }
-
-        #showreel-showcase a {
-            scale: 1;
-        }
-
-        #showreel-showcase img {
-            width: 100%;
-            height: 100%;
-            max-height: 40vh;
-            aspect-ratio: 16/9;
-        }
-
-        #hopdodge-showcase {
-            background-image: url(home/hopdodge.png);
-        }
-
-        #sassls-showcase {
-            background-image: url(home/SASSLS.png);
-            color: black;
-        }
-
-        #sassls-showcase a {
-            color: blue;
-        }
-
-        #mva-showcase {
-            background-image: url(home/vdmt.jpg);
-        }
-
-        #mva-showcase img {
-            width: 100px;
-        }
-
-        #rmg-showcase {
-            background-image: url(home/rmg.jpg);
-            background-color: rgba(0, 0, 0, 0.2);
-            background-blend-mode: darken;
-        }
-
-        .smo {
-            padding: 0.2em;
-            background-color: rgba(0, 0, 0, 0.5);
-            margin: 0;
-            text-decoration: none;
-            color: white;
-        }
-
-        @media (hover: hover) {
-            .smo:hover {
-                background-color: black;
-            }
-        }
-
-        /* === RESPONSIVE STYLES === */
-        @media (max-width: 1000px) {
-            .footer {
-                display: flex;
-                flex-direction: column;
-            }
-        }
-
-        @media (max-width: 800px) {
-            body {
-                flex-direction: column;
-                height: fit-content;
-                min-height: 100dvh;
-            }
-
-            .left-column,
-            .right-column {
-                width: 100%;
-            }
-
-            .selection-background {
-                width: 90dvw;
-            }
-
-            .logo-container {
-                width: 100%;
-            }
-
-            .banner {
-                margin: 0;
-                width: 100dvw;
-                padding: 50px 20px;
-            }
-
-            .link-list>a {
-                padding: 0;
-                overflow-x: auto;
-            }
-
-            p {
-                font-size: 0.7em;
-            }
-
-            embed {
-                width: auto;
-                height: 20dvh;
-            }
-
-            .main-menu {
-                margin: 1dvw;
-                width: 98dvw;
-            }
-
-            .main-menu>a {
-                padding-left: 0.5em;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="home.css" />
 </head>
 
 <body>
@@ -483,31 +56,42 @@
                 </a>
             </div>
 
-            <div id="showreel-showcase" class="footer">
+            <div class="footer video-showcase">
                 <p>Watch the showreel</p>
                 <a target="_blank"
                     href="https://www.youtube.com/embed/V-432v8IUVE?modestbranding=1&autoplay=1&controls=1&fs=1&loop=0&rel=0&showinfo=0&disablekb=1">
                     <img src="/home/showreel.jpg" alt="Showreel Thumbnail">
                 </a>
             </div>
-            <div id="showreel-showcase" class="footer">
+            <div class="footer video-showcase">
                 <p>Most recent video</p>
-                <iframe class="youtube-embed" width="361" height="500" src="https://www.youtube.com/embed/06TKs2p7jCg"
-                    title="The electoral register privacy DISASTER"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                <iframe width="315" height="560" src="https://www.youtube.com/embed/FxLWUk-8-xM?si=96n31sn3-6TevaXT" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
             </div>
 
-            <div class="footer project-showcase" style="background-image: url('/home/localcouncilbackground.png'); ">
-                <p><span style="background-color: black; border-radius: 10px; padding: 5px; font-size: 0.5em;">[EXPERIMENT]</span><br><span style="font-size:1.5em; font-weight: bolder;">Malta Locality Game</span></p>
-                <embed src="home/localcouncilgame.html" />
+            <div id="locality-showcase" class="footer project-showcase">
+                <p><span class="experiment-label">[EXPERIMENT]</span><br><span class="project-title">Malta Locality
+                        Game</span></p>
+                <a class="project-button" href="/local-council-game/">
+                    <img src="home/localcouncilbutton.png" alt="Play the Malta Locality Game">
+                </a>
+            </div>
+            <div id="rmg-showcase" class="footer project-showcase">
+                <p><strong>Relaxing Mini Golf Demo</strong><br><br>This was my first game ever. It is a 2D puzzle game that combines the fun of mini golf with
+                     puzzle mechanics. I remade it 3 times in 3 different engines, Gamemaker, Unity, and Construct</p>
+                <a class="project-button" href="https://joedotmt.itch.io/mcast-rmg" target="_blank"
+                    rel="noopener noreferrer">
+                    <img src="home/rmgb.png" alt="View Relaxing Mini Golf on itch.io">
+                </a>
             </div>
 
             <p>Here are some of the things I've worked on</p>
             <div id="hopdodge-showcase" class="footer project-showcase">
                 <p>HopDodge is a 3D puzzle platforming game. Create and share levels using the steam workshop. You have
                     all the freedom you need to create your own adventures.</p>
-                <embed src="home/hdb.html" />
+                <a class="project-button" href="https://store.steampowered.com/app/1965680/HopDodge/" target="_blank"
+                    rel="noopener noreferrer">
+                    <img src="home/hdb.png" alt="View HopDodge on Steam">
+                </a>
             </div>
             <div id="sassls-showcase" class="footer project-showcase">
                 <p>SASSLS is a free, open-source Library Management System designed to help Maltese schools manage their
@@ -522,11 +106,6 @@
                     platform to streamline operations and serve as the official information hub for veterans of the
                     Malta Armed Forces.
                 </p>
-            </div>
-            <div id="rmg-showcase" class="footer project-showcase">
-                <p>Relaxing Mini Golf is a work-in-progress 2D puzzle game that combines the fun of mini golf with
-                    engaging puzzle mechanics. Well- if you can even call it golf.</p>
-                <embed src="home/rmgb.html" />
             </div>
         </div>
         <div class="banner" id="FaceBanner"></div>
@@ -565,7 +144,7 @@
             return `${Math.floor(Math.random() * (max - min + 1)) + min}px`;
         }
 
-        function randomClipPath(min = 1, max = 32) {
+        function randomClipPath(min = 1, max = 10) {
             const topLeft = `${randomPixelInset(min, max)} ${randomPixelInset(min, max)}`;
             const topRight = `calc(100% - ${randomPixelInset(min, max)}) ${randomPixelInset(min, max)}`;
             const bottomRight = `calc(100% - ${randomPixelInset(min, max)}) calc(100% - ${randomPixelInset(min, max)})`;
@@ -575,7 +154,7 @@
         }
 
         document.querySelectorAll('.right-column .banner, .right-column .footer')
-            .forEach(element => element.style.clipPath = randomClipPath());
+            .forEach(element => element.style.setProperty('--random-clip-path', randomClipPath()));
 
         document.querySelectorAll('.right-column .social-link')
             .forEach(element => element.style.setProperty('--random-clip-path', randomClipPath(1, 5)));
