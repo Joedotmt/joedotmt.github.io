@@ -3,33 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JOE - Veterans</title>
+    <meta name="theme-color" content="#07184d">
+    <meta name="description" content="Joe Grech Esposito's website and membership management project for the Malta Veterans Association.">
+    <title>MVA Project — Joe Grech Esposito</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Pangolin&family=Secular+One&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Secular+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
 </head>
-<body style="font-family: 'Secular One';">
-    <div style="width: max(90vw, 90vh); background-color: transparent;" class="container">
-        <div class="header">
-            <a href="/"><img style="aspect-ratio: 1.904;" src="/assets/joe-logo.webp" alt="Joe.mt Logo" class="logo"></a>
-            <div style="font-size: 2em;">DISCLAIMER: THIS WEBSITE IS NOT AFFILIATED WITH THE MALTA VETERANS ASSOCIATION</div>
-            <h1 style="font-size: 5em;">Welcome</h1>
-            <div style="    font-size: 2em;
-    text-align: left;">I am Joe Grech Esposito, a web developer. I created this website for the MVA as part of my portfolio.
-                <div style="margin-top: 0.15em;"></div>Visit my personal website where you can see all my projects
-            </div>
-            <div style="text-align: left;"><a style="font-size: 3em;" href="/">PERSONAL WEBSITE 🔗</a></div>
-        </div>
-    </div>
-    <script>
-        document.querySelectorAll('a').forEach(link =>
-            link.addEventListener('pointerup', e =>
-            {
-                document.body.style.opacity = "0";
-                document.body.style.background = "black";
-            })
-        );
-    </script>
+<body>
+    <main class="handoff">
+        <img class="mva-logo" src="full%20logo%20COLOR%20white.svg" alt="Malta Veterans Association">
+
+        <div class="accent" aria-hidden="true"><span></span><span></span></div>
+
+        <h1>Welcome</h1>
+        <p class="intro">I am Joe Grech Esposito, a web developer. I created veterans.mt along with a membership management system for the MVA. Both owned by Maria Gatt</p>
+        <p class="next-step">Visit my personal website to see this and my other projects.</p>
+
+        <a class="primary-action" href="/">
+            <span>Visit Joe.mt</span>
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+                <path d="M5 12h14M13 6l6 6-6 6"/>
+            </svg>
+        </a>
+    </main>
 </body>
 </html>

@@ -1,0 +1,135 @@
+:root {
+    --mva-blue: #0f32b4;
+    --mva-blue-dark: #07184d;
+    --mva-red: #f60202;
+    --white: #ffffff;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    display: grid;
+    min-height: 100vh;
+    padding: clamp(1.5rem, 5vw, 4rem);
+    background:
+        radial-gradient(circle at 85% 10%, rgba(49, 89, 230, 0.45), transparent 28rem),
+        var(--mva-blue-dark);
+    color: var(--white);
+    font-family: "Secular One", Arial, sans-serif;
+    place-items: center;
+    transition: opacity 180ms ease;
+}
+
+body::before {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+    background-size: 72px 72px;
+    content: "";
+    mask-image: linear-gradient(to bottom, #000, transparent 85%);
+}
+
+body.is-leaving {
+    opacity: 0;
+}
+
+.handoff {
+    width: min(100%, 44rem);
+}
+
+.mva-logo {
+    display: block;
+    width: min(100%, 31rem);
+    height: auto;
+}
+
+.accent {
+    display: flex;
+    width: 5.5rem;
+    height: 0.4rem;
+    margin: clamp(2.25rem, 6vh, 4rem) 0 1.5rem;
+}
+
+.accent span {
+    width: 50%;
+    background: var(--mva-red);
+}
+
+.accent span:last-child {
+    background: var(--white);
+}
+
+h1 {
+    font-size: clamp(3.5rem, 10vw, 6.5rem);
+    font-weight: 400;
+    letter-spacing: -0.055em;
+    line-height: 1;
+}
+
+.intro {
+    max-width: 42rem;
+    margin-top: 1.5rem;
+    font-size: clamp(1.15rem, 2.5vw, 1.65rem);
+    line-height: 1.5;
+}
+
+.next-step {
+    margin-top: 0.75rem;
+    color: rgba(255, 255, 255, 0.68);
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.primary-action {
+    display: inline-flex;
+    min-height: 3.8rem;
+    margin-top: 2rem;
+    padding: 0 1.25rem;
+    background: var(--mva-red);
+    align-items: center;
+    gap: 1.5rem;
+    color: var(--white);
+    font-size: 0.9rem;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    text-transform: uppercase;
+}
+
+.primary-action svg {
+    width: 1.5rem;
+    height: 1.5rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+}
+
+.primary-action:hover {
+    background: #d90000;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 520px) {
+    body {
+        place-items: start center;
+    }
+
+    .handoff {
+        padding: 1rem 0 2rem;
+    }
+
+    .mva-logo {
+        width: 100%;
+    }
+
+    .primary-action {
+        justify-content: space-between;
+        width: 100%;
+    }
+}
