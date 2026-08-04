@@ -30,6 +30,8 @@
         <div class="main-menu link-list">
             <a href="#home">Home</a>
 
+            <a href="#CV">Curriculum Vitae</a>
+
             <a href="#sitemap">All Pages</a>
 
             <a href="#achievements">Your Achievements</a>
@@ -48,8 +50,12 @@
                 <a href="mailto:joe@joe.mt" class="social-link email">
                     Email<br>joe@joe.mt
                 </a>
-                <a href="https://www.youtube.com/@icedjelly" target="_blank" class="social-link youtube">
+                <a href="https://www.youtube.com/@JoeGrechEsposito" target="_blank" class="social-link youtube">
                     YouTube
+                </a>
+                <a href="https://www.instagram.com/joedotmt/" target="_blank" rel="noopener noreferrer"
+                    class="social-link instagram">
+                    Instagram
                 </a>
                 <a href="/links" class="social-link more-links">
                     More links
@@ -108,15 +114,33 @@
                 </p>
             </div>
         </div>
-        <div class="banner" id="FaceBanner"></div>
+        <div class="banner" id="FaceBanner" aria-labelledby="selfie-caption">
+            <div class="selfie-gallery">
+                <figure class="selfie-card selfie-card-wide">
+                    <img src="home/jselphie1.webp" alt="Joe posing with a friend in front of a computer"
+                        loading="lazy" decoding="async">
+                </figure>
+                <figure class="selfie-card selfie-card-tall">
+                    <img src="home/jselphie2.webp" alt="Joe sharing food with a friend at a restaurant"
+                        loading="lazy" decoding="async">
+                </figure>
+                <figure class="selfie-card selfie-card-sofa">
+                    <img src="home/joesofa.webp" alt="Joe sitting on a sofa"
+                        loading="lazy" decoding="async">
+                </figure>
+            </div>
+            <p id="selfie-caption" class="selfie-caption">yes i know i look ai generated</p>
+        </div>
         <div class="banner" id="IcedJellyBanner">Go to IcedJelly.com</div>
         <div class="banner" id="AchievementsBanner">
             <iframe src="/achievements.html" id="achievementsIframe"></iframe>
         </div>
+        <div class="banner" id="CVBanner">TBA</div>
         <div class="banner" id="SitemapBanner">
             <h1>List of all pages</h1>
             <div class="link-list">
 
+                <a href="#CV">Curriculum Vitae</a>
                 <a target="_blank" href="/local-council-game">(NEW!) Local Council Game</a>
                 <a target="_blank" href="/number-images">Number images</a>
                 <a target="_blank" href="/deconstuctions">Deconstructions</a>
@@ -187,6 +211,7 @@
                             }, "*")
                 },
                 Achievement: AchievementsBanner,
+                'Curriculum Vitae': CVBanner,
                 'All Pages': SitemapBanner,
                 IcedJelly: IcedJellyBanner
             };
