@@ -184,11 +184,6 @@
             margin: 1em 1em 1em 0;
             text-align: center;
             font-size: 1.2em;
-            clip-path: polygon(1% 5%, 99% 0, 100% 95%, 5% 100%);
-        }
-
-        .longbanner {
-            clip-path: polygon(4px 31px, 99% 0, 100% calc(100% - 23px), 5% 100%);
         }
 
         #FaceBanner {
@@ -228,7 +223,6 @@
             justify-content: space-between;
             align-items: center;
             container: footer / inline-size;
-            clip-path: polygon(1px 5px, calc(100% - 10px) 0, 100% calc(100% - 10px), 5px calc(100% - 10px));
         }
 
         @media (hover: hover) {
@@ -280,10 +274,20 @@
         }
 
         .social-link {
-            background-color: black;
+            position: relative;
+            isolation: isolate;
             padding: 5px;
             flex: 1;
             align-content: center;
+        }
+
+        .social-link::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            background-color: black;
+            clip-path: var(--random-clip-path);
         }
 
         .social-link:hover {
@@ -362,7 +366,6 @@
             background-blend-mode: darken;
         }
 
-        /* Smo stands for "Social Media Outlined" maybe? */
         .smo {
             padding: 0.2em;
             background-color: rgba(0, 0, 0, 0.5);
@@ -409,7 +412,6 @@
                 margin: 0;
                 width: 100dvw;
                 padding: 50px 20px;
-                clip-path: polygon(0% 30px, 100% 0, 100% 100%, 0% 100%);
             }
 
             .link-list>a {
@@ -559,6 +561,25 @@
         </div>
     </div>
     <script>
+        function randomPixelInset(min = 1, max = 32) {
+            return `${Math.floor(Math.random() * (max - min + 1)) + min}px`;
+        }
+
+        function randomClipPath(min = 1, max = 32) {
+            const topLeft = `${randomPixelInset(min, max)} ${randomPixelInset(min, max)}`;
+            const topRight = `calc(100% - ${randomPixelInset(min, max)}) ${randomPixelInset(min, max)}`;
+            const bottomRight = `calc(100% - ${randomPixelInset(min, max)}) calc(100% - ${randomPixelInset(min, max)})`;
+            const bottomLeft = `${randomPixelInset(min, max)} calc(100% - ${randomPixelInset(min, max)})`;
+
+            return `polygon(${topLeft}, ${topRight}, ${bottomRight}, ${bottomLeft})`;
+        }
+
+        document.querySelectorAll('.right-column .banner, .right-column .footer')
+            .forEach(element => element.style.clipPath = randomClipPath());
+
+        document.querySelectorAll('.right-column .social-link')
+            .forEach(element => element.style.setProperty('--random-clip-path', randomClipPath(1, 5)));
+
         const menu = document.querySelector('.main-menu');
         const selectionBg = document.querySelector('.selection-background');
         let activeItem = null;
