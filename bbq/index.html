@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/pocketbase/dist/pocketbase.umd.js"></script>
+    <script src="/account/shared-auth.js"></script>
     <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
 
     <link href="https://cdn.jsdelivr.net/npm/beercss@3.11.11/dist/cdn/beer.min.css" rel="stylesheet" />
@@ -315,7 +316,7 @@
         async function initializePocketBaseClient() {
             updateConnectionStatus('Initializing PocketBase client...', false);
             
-            pb = new PocketBase(POCKETBASE_URL);
+            pb = new PocketBase(POCKETBASE_URL, new JoeSharedAuth.Store());
             pb.autoCancellation(false);
 
             if (pb.authStore.isValid) {
@@ -375,7 +376,7 @@
         }
 
         async function signOut() {
-            if (!pb) pb = new PocketBase(POCKETBASE_URL);
+            if (!pb) pb = new PocketBase(POCKETBASE_URL, new JoeSharedAuth.Store());
             
             if (unsubscribeCallback) {
                 await unsubscribeCallback();

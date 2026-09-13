@@ -12,6 +12,7 @@
         src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
 
     <script src="/account/pb/dist/pocketbase.umd.js"></script>
+    <script src="/account/shared-auth.js"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -388,11 +389,21 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const POCKETBASE_URL = 'https://joemt.fly.dev';
-            const pb = new PocketBase(POCKETBASE_URL);
+            const pb = new PocketBase(POCKETBASE_URL, new JoeSharedAuth.Store());
 
             // --- NEW: read optional redirect param so the auth page can send the user back ---
             const _params = new URLSearchParams(window.location.search);
-            const redirectTo = _params.get('redirect') || null;
+            let redirectTo = null;
+            try {
+                const redirectParam = _params.get('redirect');
+                if (redirectParam) {
+                    const requested = new URL(redirectParam, window.location.origin);
+                    const joeMtHost = requested.hostname === 'joe.mt' || requested.hostname.endsWith('.joe.mt');
+                    if ((requested.protocol === 'https:' && joeMtHost) || requested.origin === window.location.origin) {
+                        redirectTo = requested.href;
+                    }
+                }
+            } catch (_) { /* Ignore invalid redirects. */ }
 
             // --- State ---
             let isNewUserFlow = false;
