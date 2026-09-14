@@ -6,8 +6,8 @@
     <title>BBQ Date Picker</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://cdn.jsdelivr.net/npm/pocketbase/dist/pocketbase.umd.js"></script>
-    <script src="/account/shared-auth.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.28.1/dist/pocketbase.umd.js"></script>
+    <script src="https://accounts.joe.mt/client.js"></script>
     <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
 
     <link href="https://cdn.jsdelivr.net/npm/beercss@3.11.11/dist/cdn/beer.min.css" rel="stylesheet" />
@@ -279,6 +279,7 @@
         let pb = null;
         let unsubscribeCallback = null;
         let flatpickrInstance;
+        let authSyncing = false;
 
         function initializeFlatpickr() {
             flatpickrInstance = flatpickr(datesInput, {
@@ -314,21 +315,55 @@
         }
 
         async function initializePocketBaseClient() {
+            if (authSyncing) return false;
+            authSyncing = true;
             updateConnectionStatus('Initializing PocketBase client...', false);
-            
-            pb = new PocketBase(POCKETBASE_URL, new JoeSharedAuth.Store());
-            pb.autoCancellation(false);
+            try {
+                if (!window.JoeAccounts?.AuthStore) {
+                    updateConnectionStatus('Account service unavailable. Try reloading.', true);
+                    showSignedOutState();
+                    return false;
+                }
+                if (!pb) {
+                    pb = new PocketBase(POCKETBASE_URL, new JoeAccounts.AuthStore());
+                    pb.autoCancellation(false);
+                }
+                const previousUserId = pb.authStore.record?.id || '';
+                let accountUnavailable = false;
+                try {
+                    const session = await JoeAccounts.getSession();
+                    if (session?.token && session.record?.collectionName === 'users') {
+                        pb.authStore.save(session.token, session.record);
+                    } else {
+                        pb.authStore.clear();
+                    }
+                } catch (error) {
+                    console.warn('Could not check the account session:', error);
+                    accountUnavailable = true;
+                }
 
-            if (pb.authStore.isValid) {
-                updateConnectionStatus('Authenticated. Subscribing to updates...', false);
-                showSignedInState();
-                await subscribeToRealtime();
-            } else {
-                updateConnectionStatus('Not signed in. Click "Sign In" to authenticate.', true);
-                showSignedOutState();
+                const accountChanged = previousUserId !== (pb.authStore.record?.id || '');
+                if (accountChanged) flatpickrInstance?.clear();
+
+                if (pb.authStore.isValid) {
+                    updateConnectionStatus('Authenticated. Subscribing to updates...', false);
+                    showSignedInState();
+                    await subscribeToRealtime();
+                } else {
+                    updateConnectionStatus(
+                        accountUnavailable
+                            ? 'Account service unavailable. Try again when connected.'
+                            : 'Not signed in. Click "Sign In" to authenticate.',
+                        true
+                    );
+                    showSignedOutState();
+                }
+
+                await fetchAndDisplayResults();
+                return accountChanged;
+            } finally {
+                authSyncing = false;
             }
-
-            await fetchAndDisplayResults();
         }
 
         async function subscribeToRealtime() {
@@ -354,7 +389,7 @@
         function showSignedInState() {
             signInBtn.classList.add('hidden');
             signOutBtn.classList.remove('hidden');
-            const user = pb?.authStore?.model;
+            const user = pb?.authStore?.record;
             const name = user?.name || user?.username || user?.email || '';
             userDisplay.textContent = name ? `Signed in: ${name}` : 'Signed in';
         }
@@ -372,22 +407,15 @@
 
         function signIn() {
             const returnUrl = window.location.href;
-            window.location.href = `/account/?redirect=${encodeURIComponent(returnUrl)}`;
+            window.location.href = window.JoeAccounts?.loginUrl(returnUrl)
+                || `https://accounts.joe.mt/?redirect=${encodeURIComponent(returnUrl)}`;
         }
 
         async function signOut() {
-            if (!pb) pb = new PocketBase(POCKETBASE_URL, new JoeSharedAuth.Store());
-            
-            if (unsubscribeCallback) {
-                await unsubscribeCallback();
-                unsubscribeCallback = null;
-            }
-            
-            pb.authStore.clear();
-            showMessage('Signed out.', 'success', 2000);
-            showSignedOutState();
-            updateConnectionStatus('Signed out. Click "Sign In" to authenticate.', true);
-            await fetchAndDisplayResults();
+            pb?.authStore.clear();
+            const returnUrl = window.location.href;
+            window.location.href = window.JoeAccounts?.logoutUrl(returnUrl)
+                || `https://accounts.joe.mt/?logout=1&redirect=${encodeURIComponent(returnUrl)}`;
         }
 
         async function fetchAndDisplayResults() {
@@ -514,7 +542,7 @@
             document.getElementById('submitButton').setAttribute('disabled', 'true');
             messageArea.style.display = 'none';
 
-            const user = pb.authStore.model;
+            const user = pb.authStore.record;
             const name = (user?.name || user?.username || user?.email || 'ERROR').toUpperCase();
 
             const selectedDates = flatpickrInstance.selectedDates.map(date => {
@@ -534,7 +562,7 @@
             const dataToSubmit = { 
                 name: name, 
                 available_dates: selectedDates,
-                user: pb.authStore.model.id
+                user: pb.authStore.record.id
             };
 
             try {
@@ -542,7 +570,7 @@
                 let existing = null;
                 try {
                     existing = await pb.collection(COLLECTION_NAME).getFirstListItem(
-                        `user = "${pb.authStore.model.id}"`
+                        `user = "${pb.authStore.record.id}"`
                     );
                 } catch (e) {
                     // No existing record found
@@ -576,12 +604,12 @@
             
             try {
                 const existing = await pb.collection(COLLECTION_NAME).getFirstListItem(
-                    `user = "${pb.authStore.model.id}"`
+                    `user = "${pb.authStore.record.id}"`
                 );
                 
                 if (existing?.available_dates) {
                     flatpickrInstance.setDate(existing.available_dates, true);
-                    const userName = pb.authStore.model.name || pb.authStore.model.username || '';
+                    const userName = pb.authStore.record.name || pb.authStore.record.username || '';
                     showMessage(`Welcome back${userName ? ', ' + userName : ''}! Your previous dates have been loaded.`, 'success', 3000);
                 }
             } catch (err) {
@@ -610,6 +638,17 @@
             updateConnectionStatus('Connection restored. Re-initializing...', false);
             showMessage('You are back online. Reconnecting...', 'success', 3000);
             await initializePocketBaseClient();
+        });
+
+        async function refreshAccountOnReturn() {
+            if (!pb) return;
+            const accountChanged = await initializePocketBaseClient();
+            if (accountChanged && pb.authStore.isValid) await loadUserDates();
+        }
+
+        window.addEventListener('focus', refreshAccountOnReturn);
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) refreshAccountOnReturn();
         });
     </script>
 </body>
