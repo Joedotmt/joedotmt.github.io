@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.28.1/dist/pocketbase.umd.js"></script>
-    <script src="https://accounts.joe.mt/client.js"></script>
     <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
 
     <link href="https://cdn.jsdelivr.net/npm/beercss@3.11.11/dist/cdn/beer.min.css" rel="stylesheet" />
@@ -194,20 +193,18 @@
                 <i>event_available</i>
                 Submit Your Availability
             </button>
-
-            <span id="userDisplay" class="medium-text" style="margin-left:1rem; color:var(--on-surface-variant);"></span>
-            <button id="signInBtn" class="round border ripple" style="margin-left:1rem;" onclick="signIn()">
-                <i>login</i> Sign In
-            </button>
-            <button id="signOutBtn" class="round border ripple hidden" style="margin-left:0.5rem;" onclick="signOut()">
-                <i>logout</i> Sign Out
-            </button>
         </nav>
 
         <dialog id="upload-dates-dialog" class="large bottom">
             <article class="card round large-padding">
                 <h2 class="large-text">Submit Your Availability</h2>
                 <form id="dateForm">
+                    <div class="field large prefix border round">
+                        <i>person</i>
+                        <input type="text" id="name" name="name" required maxlength="100" autocomplete="name">
+                        <label for="name">Name</label>
+                    </div>
+
                     <div class="field large prefix border round">
                         <i>calendar_month</i>
                         <input type="text" id="dates" name="dates" required placeholder="Click to pick dates">
@@ -264,6 +261,7 @@
 
         // --- DOM Elements ---
         const dateForm = document.getElementById('dateForm');
+        const nameInput = document.getElementById('name');
         const datesInput = document.getElementById('dates');
         const submitLoading = document.getElementById('submitLoading');
         const resultsLoading = document.getElementById('resultsLoading');
@@ -272,14 +270,10 @@
         const popularDatesDiv = document.getElementById('popularDates');
         const allSubmissionsUl = document.getElementById('allSubmissions');
         const messageArea = document.getElementById('messageArea');
-        const signInBtn = document.getElementById('signInBtn');
-        const signOutBtn = document.getElementById('signOutBtn');
-        const userDisplay = document.getElementById('userDisplay');
 
         let pb = null;
         let unsubscribeCallback = null;
         let flatpickrInstance;
-        let authSyncing = false;
 
         function initializeFlatpickr() {
             flatpickrInstance = flatpickr(datesInput, {
@@ -314,55 +308,24 @@
             connectionStatus.style.color = isError ? 'var(--error)' : 'var(--primary)';
         }
 
+        function escapeHtml(value) {
+            const div = document.createElement('div');
+            div.textContent = String(value);
+            return div.innerHTML;
+        }
+
         async function initializePocketBaseClient() {
-            if (authSyncing) return false;
-            authSyncing = true;
             updateConnectionStatus('Initializing PocketBase client...', false);
             try {
-                if (!window.JoeAccounts?.AuthStore) {
-                    updateConnectionStatus('Account service unavailable. Try reloading.', true);
-                    showSignedOutState();
-                    return false;
-                }
                 if (!pb) {
-                    pb = new PocketBase(POCKETBASE_URL, new JoeAccounts.AuthStore());
+                    pb = new PocketBase(POCKETBASE_URL);
                     pb.autoCancellation(false);
                 }
-                const previousUserId = pb.authStore.record?.id || '';
-                let accountUnavailable = false;
-                try {
-                    const session = await JoeAccounts.getSession();
-                    if (session?.token && session.record?.collectionName === 'users') {
-                        pb.authStore.save(session.token, session.record);
-                    } else {
-                        pb.authStore.clear();
-                    }
-                } catch (error) {
-                    console.warn('Could not check the account session:', error);
-                    accountUnavailable = true;
-                }
-
-                const accountChanged = previousUserId !== (pb.authStore.record?.id || '');
-                if (accountChanged) flatpickrInstance?.clear();
-
-                if (pb.authStore.isValid) {
-                    updateConnectionStatus('Authenticated. Subscribing to updates...', false);
-                    showSignedInState();
-                    await subscribeToRealtime();
-                } else {
-                    updateConnectionStatus(
-                        accountUnavailable
-                            ? 'Account service unavailable. Try again when connected.'
-                            : 'Not signed in. Click "Sign In" to authenticate.',
-                        true
-                    );
-                    showSignedOutState();
-                }
-
+                await subscribeToRealtime();
                 await fetchAndDisplayResults();
-                return accountChanged;
-            } finally {
-                authSyncing = false;
+            } catch (error) {
+                console.error('PocketBase initialization error:', error);
+                updateConnectionStatus(`Connection failed: ${error.message}`, true);
             }
         }
 
@@ -386,38 +349,6 @@
             }
         }
 
-        function showSignedInState() {
-            signInBtn.classList.add('hidden');
-            signOutBtn.classList.remove('hidden');
-            const user = pb?.authStore?.record;
-            const name = user?.name || user?.username || user?.email || '';
-            userDisplay.textContent = name ? `Signed in: ${name}` : 'Signed in';
-        }
-
-        function showSignedOutState() {
-            signInBtn.classList.remove('hidden');
-            signOutBtn.classList.add('hidden');
-            userDisplay.textContent = '';
-            
-            if (unsubscribeCallback) {
-                unsubscribeCallback().catch(e => console.warn('Error unsubscribing:', e));
-                unsubscribeCallback = null;
-            }
-        }
-
-        function signIn() {
-            const returnUrl = window.location.href;
-            window.location.href = window.JoeAccounts?.loginUrl(returnUrl)
-                || `https://accounts.joe.mt/?redirect=${encodeURIComponent(returnUrl)}`;
-        }
-
-        async function signOut() {
-            pb?.authStore.clear();
-            const returnUrl = window.location.href;
-            window.location.href = window.JoeAccounts?.logoutUrl(returnUrl)
-                || `https://accounts.joe.mt/?logout=1&redirect=${encodeURIComponent(returnUrl)}`;
-        }
-
         async function fetchAndDisplayResults() {
             if (!pb) {
                 resultsLoading.classList.add('hidden');
@@ -431,8 +362,7 @@
 
             try {
                 const records = await pb.collection(COLLECTION_NAME).getFullList({
-                    sort: '-created',
-                    expand: 'user'
+                    sort: '-created'
                 });
 
                 if (records.length === 0) {
@@ -451,8 +381,7 @@
                                 dateCounts[dateStr] = { count: 0, people: [] };
                             }
                             dateCounts[dateStr].count++;
-                            console.log(record)
-                            const personName = record.name || record?.expand?.user?.name || 'UNKNOWN';
+                            const personName = record.name || 'UNKNOWN';
                             dateCounts[dateStr].people.push(personName);
                         });
                     }
@@ -493,7 +422,7 @@
                                 <strong class="medium-text date-value">${displayDate}:</strong>
                                 <span class="availability-count">${item.count} ${item.count === 1 ? 'person' : 'people'} available</span>
                             </div>
-                            <p class="attendees-list small-text">Available: ${item.people}</p>
+                            <p class="attendees-list small-text">Available: ${escapeHtml(item.people)}</p>
                             ${(item.count === maxCount && maxCount > 1) ? '<span class="chip primary extra small-padding round">Top Choice!</span>' : ''}
                         `;
                         popularDatesDiv.appendChild(itemDiv);
@@ -512,9 +441,9 @@
                             return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                         }).join(', ')
                         : 'No dates';
-                    const displayName = record.name || record.expand.user.name || 'Anonymous';
+                    const displayName = record.name || 'Anonymous';
                     const createdDate = new Date(record.created).toLocaleString();
-                    li.innerHTML = `<strong>${displayName}</strong> available on: <span style="color: var(--secondary);">${datesString}</span> <em class="small-text" style="color: var(--on-surface-variant);">(Submitted: ${createdDate})</em>`;
+                    li.innerHTML = `<strong>${escapeHtml(displayName)}</strong> available on: <span style="color: var(--secondary);">${datesString}</span> <em class="small-text" style="color: var(--on-surface-variant);">(Submitted: ${createdDate})</em>`;
                     allSubmissionsUl.appendChild(li);
                 });
 
@@ -533,8 +462,8 @@
         dateForm.addEventListener('submit', async (event) => {
             event.preventDefault();
 
-            if (!pb?.authStore?.isValid) {
-                showMessage('You must sign in before submitting availability.', 'error');
+            if (!pb) {
+                showMessage('The database is not connected yet. Please try again.', 'error');
                 return;
             }
 
@@ -542,8 +471,15 @@
             document.getElementById('submitButton').setAttribute('disabled', 'true');
             messageArea.style.display = 'none';
 
-            const user = pb.authStore.record;
-            const name = (user?.name || user?.username || user?.email || 'ERROR').toUpperCase();
+            const name = nameInput.value.trim().toUpperCase();
+
+            if (!name) {
+                showMessage('Please enter your name.', 'error');
+                submitLoading.classList.add('hidden');
+                document.getElementById('submitButton').removeAttribute('disabled');
+                nameInput.focus();
+                return;
+            }
 
             const selectedDates = flatpickrInstance.selectedDates.map(date => {
                 const year = date.getFullYear();
@@ -561,8 +497,7 @@
 
             const dataToSubmit = { 
                 name: name, 
-                available_dates: selectedDates,
-                user: pb.authStore.record.id
+                available_dates: selectedDates
             };
 
             try {
@@ -570,10 +505,10 @@
                 let existing = null;
                 try {
                     existing = await pb.collection(COLLECTION_NAME).getFirstListItem(
-                        `user = "${pb.authStore.record.id}"`
+                        pb.filter('name = {:name}', { name })
                     );
-                } catch (e) {
-                    // No existing record found
+                } catch (error) {
+                    if (error.status !== 404) throw error;
                 }
 
                 if (existing) {
@@ -584,9 +519,11 @@
                     showMessage('Availability submitted successfully!', 'success');
                 }
                 
+                const submittedName = name;
                 dateForm.reset();
                 flatpickrInstance.clear();
                 if (typeof ui === 'function') ui('#upload-dates-dialog');
+                nameInput.value = submittedName;
                 
             } catch (error) {
                 console.error("Error submitting form:", error);
@@ -598,34 +535,10 @@
             }
         });
 
-        // Load user's existing dates when signed in
-        async function loadUserDates() {
-            if (!pb?.authStore?.isValid) return;
-            
-            try {
-                const existing = await pb.collection(COLLECTION_NAME).getFirstListItem(
-                    `user = "${pb.authStore.record.id}"`
-                );
-                
-                if (existing?.available_dates) {
-                    flatpickrInstance.setDate(existing.available_dates, true);
-                    const userName = pb.authStore.record.name || pb.authStore.record.username || '';
-                    showMessage(`Welcome back${userName ? ', ' + userName : ''}! Your previous dates have been loaded.`, 'success', 3000);
-                }
-            } catch (err) {
-                // No existing submission found
-            }
-        }
-
         // Initialize on DOM load
         document.addEventListener('DOMContentLoaded', async () => {
             initializeFlatpickr();
             await initializePocketBaseClient();
-            
-            // Check if returning from auth
-            if (pb?.authStore?.isValid) {
-                await loadUserDates();
-            }
         });
 
         // Handle offline/online events
@@ -640,16 +553,6 @@
             await initializePocketBaseClient();
         });
 
-        async function refreshAccountOnReturn() {
-            if (!pb) return;
-            const accountChanged = await initializePocketBaseClient();
-            if (accountChanged && pb.authStore.isValid) await loadUserDates();
-        }
-
-        window.addEventListener('focus', refreshAccountOnReturn);
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) refreshAccountOnReturn();
-        });
     </script>
 </body>
 </html>
