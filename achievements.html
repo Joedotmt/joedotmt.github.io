@@ -87,6 +87,10 @@
         })();
     </script>
     <style>
+        .no-js-message {
+            display: none;
+        }
+
         progress[value] {
             /* Reset the default appearance */
             -webkit-appearance: none;
@@ -114,16 +118,40 @@
             border-radius: 5px;
         }
     </style>
+    <noscript>
+        <style>
+            body {
+                margin: 0;
+                background: black !important;
+                color: white;
+            }
+
+            .achievements-content {
+                display: none;
+            }
+
+            .no-js-message {
+                display: flex;
+                min-height: 100vh;
+                margin: 0;
+                align-items: center;
+                justify-content: center;
+            }
+        </style>
+    </noscript>
 </head>
 
 <body style="background: white; font-family: monospace;">
-    <h1>Your Achievements</h1>
-    <p>Explore the website to get achievements</p>
-    <div style="display: flex; align-items: center;"> <span id="progress-text">0%</span>
-        <progress value="0" max="1"></progress>
-    </div>
+    <p class="no-js-message">useless without javascript</p>
+    <div class="achievements-content">
+        <h1>Your Achievements</h1>
+        <p>Explore the website to get achievements</p>
+        <div style="display: flex; align-items: center;"> <span id="progress-text">0%</span>
+            <progress value="0" max="1"></progress>
+        </div>
 
-    <ul id="achievements-list"></ul>
+        <ul id="achievements-list"></ul>
+    </div>
 </body>
 
 </html>

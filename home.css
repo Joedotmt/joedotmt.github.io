@@ -258,10 +258,10 @@ a:active {
     overflow: visible;
     margin-top: 20px;
     background: url(assets/blueprint.webp) repeat center;
-    background-size: 150%;
+    background-size: 120%;
     padding: 30px;
     display: flex;
-    transition: background-size 2s cubic-bezier(0.075, 0.82, 0.165, 1);
+    transition: background-size 1s cubic-bezier(0.1, 0, 0, 1);
     justify-content: space-between;
     align-items: center;
     container: footer / inline-size;
@@ -360,12 +360,10 @@ a:active {
 /* Project Showcase Sections (use .footer class) */
 .project-showcase {
     background-position: center;
-    background-size: cover;
 }
 
 .video-showcase {
     background-position: center;
-    background-size: cover;
     flex-direction: column;
 }
 
