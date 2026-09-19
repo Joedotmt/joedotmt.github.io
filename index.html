@@ -16,8 +16,7 @@
 <body>
     <noscript>
         <div class="noscript-message">
-            Why do you have javascript disabled??????
-            <br />no website for you!
+            Javascript is disabled so site is a bit weird
         </div>
     </noscript>
     <div class="left-column">
@@ -29,11 +28,7 @@
         <div class="selection-background"></div>
         <div class="main-menu link-list">
             <a href="#home">Home</a>
-
-            
-
             <a href="#sitemap">All Pages</a>
-
             <a href="#achievements">Your Achievements</a>
             <a href="#CV">Curriculum Vitae</a>
             <a href="#selfie">Selfie</a>
@@ -186,6 +181,7 @@
 
         const menu = document.querySelector('.main-menu');
         const selectionBg = document.querySelector('.selection-background');
+        selectionBg.style.display = "block"
         let activeItem = null;
 
         function selectItem(item) {

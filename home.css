@@ -66,6 +66,7 @@ a:active {
 
 .right-column {
     display: flex;
+    flex-direction: column;
     width: 60dvw;
 }
 
@@ -128,6 +129,7 @@ a:active {
     transition: all 0.25s cubic-bezier(0.075, 0.82, 0.165, 1);
     clip-path: polygon(2% 15%, 97% 20%, 100% 80%, 0% 85%);
     max-width: 500px;
+    display: none;
 }
 
 .link-list > a {
@@ -288,12 +290,12 @@ a:active {
 .noscript-message {
     position: fixed;
     top: 0;
-    left: 0;
+    right: 0;
     z-index: 100;
     background-color: black;
-    width: 100%;
-    height: 100%;
-    padding: 2em;
+    width: fit-content;
+    font-size: 48px;
+    padding: 0.1em;
 }
 
 #ConstructionBanner {
