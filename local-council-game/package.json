@@ -1,0 +1,9 @@
+{
+  "name": "malta-local-council-guesser",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:pwa": "python3 builder.py",
+    "test": "node --test"
+  }
+}

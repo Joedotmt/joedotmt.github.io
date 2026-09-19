@@ -1,69 +1,76 @@
-import os
+"""Generate the service worker's deterministic precache manifest."""
 
-# 🗂️ Directories to scan for files
-TARGET_DIRS = ['coas', 'app']
+from __future__ import annotations
 
-# 📄 Template and output files
-TEMPLATE_FILE = 'service-worker-template.js'
-OUTPUT_FILE = 'service-worker.js'
+import hashlib
+import json
+from pathlib import Path
 
-# ➕ Extra top-level files to include if they exist
-EXTRA_FILES = ['index.html', 'service-worker.js']
 
-# 📝 Manually include these URLs in the cache list (regardless of whether they exist)
-MANUAL_ENTRIES = [
-]
+PROJECT_ROOT = Path(__file__).resolve().parent
+TARGET_DIRS = ("app", "coas")
+EXTRA_FILES = ("index.html",)
+TEMPLATE_FILE = PROJECT_ROOT / "service-worker-template.js"
+OUTPUT_FILE = PROJECT_ROOT / "service-worker.js"
 
-BASE_PATH = '.'  # adjust if deployed elsewhere
 
-def gather_files(dirs, extra_files, manual_entries):
-    all_files = []
+def gather_files() -> list[Path]:
+    files = [PROJECT_ROOT / relative_path for relative_path in EXTRA_FILES]
 
-    # Add extra files like index.html if they exist
-    for file in extra_files:
-        if os.path.exists(file) and file != OUTPUT_FILE:
-            all_files.append(BASE_PATH+'/' + file.replace("\\", "/"))
+    for directory in TARGET_DIRS:
+        files.extend(
+            path
+            for path in (PROJECT_ROOT / directory).rglob("*")
+            if path.is_file()
+        )
 
-    # Walk through each target directory
-    for dir in dirs:
-        for root, _, files in os.walk(dir):
-            for file in files:
-                full_path = os.path.join(root, file)
-                # Don't include the service worker output file itself
-                if os.path.abspath(full_path) == os.path.abspath(OUTPUT_FILE):
-                    continue
-                all_files.append(BASE_PATH+'/' + full_path.replace("\\", "/"))
+    missing_files = [path for path in files if not path.exists()]
+    if missing_files:
+        missing = ", ".join(str(path) for path in missing_files)
+        raise FileNotFoundError(f"Cannot precache missing files: {missing}")
 
-    # Add manual entries (included even if they don't exist on disk)
-    all_files.extend(manual_entries)
+    return sorted(
+        set(files),
+        key=lambda path: path.relative_to(PROJECT_ROOT).as_posix(),
+    )
 
-    return all_files
 
-def generate_urls_to_cache(file_list):
-    lines = ['const urlsToCache = [']
-    for path in file_list:
-        lines.append(f"  '{path}',")
-    lines.append('];\n')
-    return '\n'.join(lines)
+def relative_url(path: Path) -> str:
+    return f"./{path.relative_to(PROJECT_ROOT).as_posix()}"
 
-def build_service_worker():
-    if not os.path.exists(TEMPLATE_FILE):
-        print(f"❌ Error: {TEMPLATE_FILE} not found.")
-        return
 
-    files = gather_files(TARGET_DIRS, EXTRA_FILES, MANUAL_ENTRIES)
-    cache_block = generate_urls_to_cache(files)
+def calculate_version(files: list[Path]) -> str:
+    digest = hashlib.sha256()
 
-    # Read template content
-    with open(TEMPLATE_FILE, 'r', encoding='utf-8') as template:
-        template_content = template.read()
+    for path in files:
+        digest.update(relative_url(path).encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
 
-    # Write final service worker file
-    with open(OUTPUT_FILE, 'w', encoding='utf-8') as out:
-        out.write(cache_block)
-        out.write(template_content)
+    return digest.hexdigest()[:16]
 
-    print(f"✅ Generated {OUTPUT_FILE} with {len(files)} files cached.")
 
-if __name__ == '__main__':
+def build_service_worker() -> None:
+    template = TEMPLATE_FILE.read_text(encoding="utf-8")
+    files = gather_files()
+    urls = [relative_url(path) for path in files]
+    version = calculate_version(files)
+
+    output = template.replace("__CACHE_VERSION__", version).replace(
+        "__PRECACHE_URLS__",
+        json.dumps(urls, ensure_ascii=False, indent=2),
+    )
+
+    if output == template:
+        raise ValueError("Service worker template placeholders were not found.")
+
+    OUTPUT_FILE.write_text(output, encoding="utf-8")
+    print(
+        f"Generated {OUTPUT_FILE.name} with {len(urls)} files "
+        f"(cache version {version})."
+    )
+
+
+if __name__ == "__main__":
     build_service_worker()

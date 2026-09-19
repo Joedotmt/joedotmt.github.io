@@ -1,13 +1,18 @@
 {
-    "name": "Locality Guessing Game",
-    "short_name": "Locality Game",
-    "start_url": "/local-council-game/index.html",
-    "display": "fullscreen",
-    "icons": [
-        {
-            "src": "icon-512.png",
-            "type": "image/png",
-            "sizes": "512x512"
-        }
-    ]
+  "id": "../",
+  "name": "Malta Local Council Guesser",
+  "short_name": "Council Guesser",
+  "description": "A map-based guessing game for Malta's local councils.",
+  "start_url": "../",
+  "scope": "../",
+  "display": "fullscreen",
+  "background_color": "#00071d",
+  "theme_color": "#00071d",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
 }
