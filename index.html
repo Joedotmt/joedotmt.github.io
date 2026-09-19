@@ -35,7 +35,7 @@
         </div>
     </div>
     <div class="right-column">
-        <div class="banner longbanner" id="ConstructionBanner">
+        <div class="banner longbanner" id="home">
             <h1>I make games, videos, and software</h1>
             <p>This is the website for <strong>Joe Grech Esposito</strong> in Malta.</p>
 
@@ -110,7 +110,7 @@
                 </p>
             </div>
         </div>
-        <div class="banner" id="FaceBanner" aria-labelledby="selfie-caption">
+        <div class="banner" id="selfie" aria-labelledby="selfie-caption">
             <div class="selfie-gallery">
                 <figure class="selfie-card selfie-card-wide">
                     <img src="home/jselphie1.webp" alt="Joe posing with a friend in front of a computer"
@@ -128,11 +128,11 @@
             <p id="selfie-caption" class="selfie-caption">yes i know i look ai generated</p>
         </div>
         <div class="banner" id="IcedJellyBanner">Go to IcedJelly.com</div>
-        <div class="banner" id="AchievementsBanner">
+        <div class="banner" id="achievements">
             <iframe src="/achievements.html" id="achievementsIframe"></iframe>
         </div>
-        <div class="banner" id="CVBanner">TBA</div>
-        <div class="banner" id="SitemapBanner">
+        <div class="banner" id="CV">TBA</div>
+        <div class="banner" id="sitemap">
             <h1>List of all pages</h1>
             <div class="link-list">
 
@@ -159,93 +159,7 @@
             </div>
         </div>
     </div>
-    <script>
-        function randomPixelInset(min = 1, max = 32) {
-            return `${Math.floor(Math.random() * (max - min + 1)) + min}px`;
-        }
-
-        function randomClipPath(min = 1, max = 10) {
-            const topLeft = `${randomPixelInset(min, max)} ${randomPixelInset(min, max)}`;
-            const topRight = `calc(100% - ${randomPixelInset(min, max)}) ${randomPixelInset(min, max)}`;
-            const bottomRight = `calc(100% - ${randomPixelInset(min, max)}) calc(100% - ${randomPixelInset(min, max)})`;
-            const bottomLeft = `${randomPixelInset(min, max)} calc(100% - ${randomPixelInset(min, max)})`;
-
-            return `polygon(${topLeft}, ${topRight}, ${bottomRight}, ${bottomLeft})`;
-        }
-
-        document.querySelectorAll('.right-column .banner, .right-column .footer')
-            .forEach(element => element.style.setProperty('--random-clip-path', randomClipPath()));
-
-        document.querySelectorAll('.right-column .social-link')
-            .forEach(element => element.style.setProperty('--random-clip-path', randomClipPath(1, 5)));
-
-        const menu = document.querySelector('.main-menu');
-        const selectionBg = document.querySelector('.selection-background');
-        selectionBg.style.display = "block"
-        let activeItem = null;
-
-        function selectItem(item) {
-            activeItem = item;
-
-            // Clear selections and hide banners
-            document.querySelectorAll('main-menu > a').forEach(i => i.classList.remove('selected'));
-            item.classList.add('selected');
-            document.querySelectorAll(".banner").forEach(b => b.style.display = "none");
-
-            // Update selection position
-            updateSelectionPosition();
-
-            // Determine which banner to show
-            const text = item.textContent.trim();
-            const banners = {
-                Selfie: {
-                    element: FaceBanner, action: () =>
-                        document.getElementById("AchievementsBanner")
-                            ?.querySelector("iframe")
-                            ?.contentWindow?.postMessage({
-                                type: "registerAchievement",
-                                achievement: "saw_face"
-                            }, "*")
-                },
-                Achievement: AchievementsBanner,
-                'Curriculum Vitae': CVBanner,
-                'All Pages': SitemapBanner,
-                IcedJelly: IcedJellyBanner
-            };
-
-            const match = Object.entries(banners).find(([key]) => text.includes(key));
-
-            if (match) {
-                const [key, config] = match;
-                if (config.action) config.action();
-                (config.element || config).style.display = config.element ? 'flex' : 'block';
-            } else {
-                ConstructionBanner.style.display = 'block';
-            }
-        }
-
-        function updateSelectionPosition() {
-            if (!activeItem) return;
-            selectionBg.style.top = `${activeItem.offsetTop - 10}px`;
-            selectionBg.style.left = `${activeItem.offsetLeft}px`;
-        }
-
-        // Initial setup
-        const initialItem = document.querySelector(`a[href="${location.hash || "#home"}"]`)
-            || document.querySelector(".menu-item");
-        if (initialItem) {
-            selectItem(initialItem);
-        }
-
-
-        // Event listeners
-        window.addEventListener("hashchange", () => {
-            const targetItem = document.querySelector(`a[href="${location.hash || "#home"}"]`);
-            targetItem && selectItem(targetItem);
-        });
-
-        setInterval(updateSelectionPosition, 500);
-    </script>
+    <script src="home.js"></script>
 </body>
 
 </html>
