@@ -1,16 +1,19 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sign in to joe.mt</title>
-</head>
-<body>
-  <p>Sign-in has moved to <a href="https://accounts.joe.mt/">accounts.joe.mt</a>.</p>
-  <script>
-    const accountsUrl = new URL('https://accounts.joe.mt/');
-    accountsUrl.search = window.location.search;
-    window.location.replace(accountsUrl.href);
-  </script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sign in to joe.mt</title>
+  </head>
+  <body>
+    <p>
+      Sign-in has moved to
+      <a href="https://accounts.joe.mt/">accounts.joe.mt</a>.
+    </p>
+    <script>
+      const accountsUrl = new URL("https://accounts.joe.mt/");
+      accountsUrl.search = window.location.search;
+      window.location.replace(accountsUrl.href);
+    </script>
+  </body>
 </html>

@@ -1,9 +1,8 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Malta LC Guessing Game</title>
     <!-- 
     <link rel="manifest" href="app/app.webmanifest"> -->
@@ -15,260 +14,350 @@
     <!-- shp 6.1.0 -->
     <script src="app/shp.js"></script>
 
-    <link rel="prefetch" href="app/pangolin1.woff2">
-    <link rel="prefetch" href="app/pangolin2.woff2">
+    <link rel="prefetch" href="app/pangolin1.woff2" />
+    <link rel="prefetch" href="app/pangolin2.woff2" />
 
     <script>
-        // Unregister all service workers
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(registrations => {
-                for (let registration of registrations) {
-                    registration.unregister();
-                }
-            });
-        }
+      // Unregister all service workers
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          for (let registration of registrations) {
+            registration.unregister();
+          }
+        });
+      }
 
-        // Delete all caches
-        if ('caches' in window) {
-            caches.keys().then(names => {
-                for (let name of names) {
-                    caches.delete(name);
-                }
-            });
-        }
+      // Delete all caches
+      if ("caches" in window) {
+        caches.keys().then((names) => {
+          for (let name of names) {
+            caches.delete(name);
+          }
+        });
+      }
     </script>
 
-
     <style>
-        /* latin-ext */
-        @font-face {
-            font-family: 'Pangolin';
-            font-style: normal;
-            font-weight: 400;
-            font-display: swap;
-            src: url('app/pangolin1.woff2') format('woff2');
-            unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-        }
+      /* latin-ext */
+      @font-face {
+        font-family: "Pangolin";
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: url("app/pangolin1.woff2") format("woff2");
+        unicode-range:
+          U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+          U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+          U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+      }
 
-        /* latin */
-        @font-face {
-            font-family: 'Pangolin';
-            font-style: normal;
-            font-weight: 400;
-            font-display: swap;
-            src: url('app/pangolin2.woff2') format('woff2');
-            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-        }
+      /* latin */
+      @font-face {
+        font-family: "Pangolin";
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: url("app/pangolin2.woff2") format("woff2");
+        unicode-range:
+          U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+          U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+          U+2212, U+2215, U+FEFF, U+FFFD;
+      }
     </style>
 
     <script src="app/tailwind.js"></script>
 
-
-
-
-
     <style>
-        /* Ensure the map and body take up the full screen */
-        html,
-        body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            font-family: 'Pangolin', 'Inter', sans-serif;
+      /* Ensure the map and body take up the full screen */
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        font-family: "Pangolin", "Inter", sans-serif;
+      }
+
+      #map {
+        height: 100%;
+        width: 100%;
+        background-color: #00071d;
+      }
+
+      /* Custom Leaflet popup styling */
+      .leaflet-popup-content-wrapper {
+        border-radius: 8px;
+      }
+
+      .leaflet-popup-content {
+        margin: 15px;
+        font-size: 14px;
+      }
+
+      /* Custom transition for UI elements */
+      .transition-all {
+        transition: all 0.3s ease-in-out;
+      }
+
+      /* Start Overlay Styles */
+      #start-overlay {
+        transition: opacity 1s;
+      }
+
+      #countdown {
+        animation: pulse 0.305s infinite linear;
+      }
+
+      button {
+        display: flex;
+        text-align: left;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+          opacity: 1;
         }
 
-        #map {
-            height: 100%;
-            width: 100%;
-            background-color: #00071d;
+        100% {
+          transform: scale(0.5);
+          opacity: 0;
+        }
+      }
+
+      dialog {
+        z-index: 1001;
+        position: fixed;
+        bottom: 10px;
+        left: 50%;
+        transform: translate(-50%, 0);
+        background: none;
+        transform-origin: 0 500%;
+        opacity: 0.9;
+
+        transition:
+          display 0.2s allow-discrete,
+          overlay 1s allow-discrete;
+
+        animation: close 0.2s cubic-bezier(0.075, 0.82, 0.165, 1);
+
+        &[open] {
+          animation: open 0.6s cubic-bezier(0.075, 0.82, 0.165, 1);
+        }
+      }
+
+      @keyframes open {
+        from {
+          opacity: 0;
+          scale: 0.9;
         }
 
-        /* Custom Leaflet popup styling */
-        .leaflet-popup-content-wrapper {
-            border-radius: 8px;
+        to {
+          opacity: 0.9;
+          scale: 1;
+        }
+      }
+
+      @keyframes close {
+        from {
+          opacity: 0.9;
+          scale: 1;
         }
 
-        .leaflet-popup-content {
-            margin: 15px;
-            font-size: 14px;
+        to {
+          opacity: 0;
+          scale: 0.9;
         }
+      }
 
+      #guess-input {
+        font-size: 2em;
+        width: 90vw;
+        text-align: center;
+        background-color: black;
+        color: white;
+        z-index: 1001;
+      }
 
-        /* Custom transition for UI elements */
-        .transition-all {
-            transition: all 0.3s ease-in-out;
-        }
+      button:hover {
+        color: rgb(132, 158, 255);
+        text-decoration: underline;
+      }
 
-        /* Start Overlay Styles */
-        #start-overlay {
-            transition: opacity 1s;
-        }
+      .fixed-logo {
+        z-index: 5002;
+        width: fit-content;
+        position: fixed;
+        left: 0;
+        top: 0;
+      }
 
-        #countdown {
-            animation: pulse 0.305s infinite linear;
-        }
-
-        button {
-            display: flex;
-            text-align: left;
-        }
-
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-                opacity: 1;
-            }
-
-            100% {
-                transform: scale(0.5);
-                opacity: 0;
-            }
-        }
-
-        dialog {
-            z-index: 1001;
-            position: fixed;
-            bottom: 10px;
-            left: 50%;
-            transform: translate(-50%, 0);
-            background: none;
-            transform-origin: 0 500%;
-            opacity: 0.9;
-
-            transition: display 0.2s allow-discrete, overlay 1s allow-discrete;
-
-            animation: close 0.2s cubic-bezier(0.075, 0.82, 0.165, 1);
-
-            &[open] {
-                animation: open 0.6s cubic-bezier(0.075, 0.82, 0.165, 1);
-            }
-        }
-
-        @keyframes open {
-            from {
-                opacity: 0;
-                scale: 0.9;
-            }
-
-            to {
-                opacity: 0.9;
-                scale: 1;
-            }
-        }
-
-        @keyframes close {
-            from {
-                opacity: 0.9;
-                scale: 1;
-            }
-
-            to {
-                opacity: 0;
-                scale: 0.9;
-            }
-        }
-
-        #guess-input {
-            font-size: 2em;
-            width: 90vw;
-            text-align: center;
-            background-color: black;
-            color: white;
-            z-index: 1001;
-        }
-
-        button:hover {
-            color: rgb(132, 158, 255);
-            text-decoration: underline;
-        }
-
-        .fixed-logo {
-            z-index: 5002;
-            width: fit-content;
-            position: fixed;
-            left: 0;
-            top: 0;
-        }
-
-        .fixed-logo:hover {
-            scale: 1.05;
-        }
+      .fixed-logo:hover {
+        scale: 1.05;
+      }
     </style>
-</head>
+  </head>
 
-<body class="bg-gray-100">
-    <div style="position: fixed; bottom: 0; right: 0; z-index: 1001; color: white;"><img
-            onclick="backgroundMusic.volume = (backgroundMusic.volume == 0) ? 0.2 : 0; musictoggle.src = (backgroundMusic.volume == 0) ? 'app/musicoff.png' : 'app/musicon.png'; "
-            id="musictoggle" src="app/musicon.png" width="32" height="32"></div>
+  <body class="bg-gray-100">
+    <div
+      style="position: fixed; bottom: 0; right: 0; z-index: 1001; color: white"
+    >
+      <img
+        onclick="
+          backgroundMusic.volume = backgroundMusic.volume == 0 ? 0.2 : 0;
+          musictoggle.src =
+            backgroundMusic.volume == 0
+              ? 'app/musicoff.png'
+              : 'app/musicon.png';
+        "
+        id="musictoggle"
+        src="app/musicon.png"
+        width="32"
+        height="32"
+      />
+    </div>
 
-    <iframe style="display: none;" id="achievementsIframe" src="/achievements.html"></iframe>
+    <iframe
+      style="display: none"
+      id="achievementsIframe"
+      src="/achievements.html"
+    ></iframe>
 
-    <a href="/" class="fixed-logo"><img id="logoimg" src="app/joe-logo.webp" width="100" alt="Logo" class="logo" /></a>
-    <p href="/" style="color: white; margin-left: 100px; margin-top: 15px; scale: 1; pointer-events: none;"
-        class="fixed-logo">Malta Local Council Guesser</p>
+    <a href="/" class="fixed-logo"
+      ><img
+        id="logoimg"
+        src="app/joe-logo.webp"
+        width="100"
+        alt="Logo"
+        class="logo"
+    /></a>
+    <p
+      href="/"
+      style="
+        color: white;
+        margin-left: 100px;
+        margin-top: 15px;
+        scale: 1;
+        pointer-events: none;
+      "
+      class="fixed-logo"
+    >
+      Malta Local Council Guesser
+    </p>
 
-    <div id="start-overlay" class="fixed inset-0 bg-black z-[2000] flex items-center justify-center">
-        <a style="position: fixed; right: 0; top: 0; color: white;" href="./coas/">COA Directory</a>
-        <div s class="text-white text-5xl font-bold tracking-wider">
-            <div style="font-size: 120px;" id="countdown" class="hidden">3</div>
-            <div id="noncountdown" style="display: flex; flex-direction: column; gap: 0.2em;">
-                <button style="display: none;" id="continueLastSave">Continue last save</button>
-                <button onclick="handleStartClick(GAMEMODE.normal)">Normal Mode</button>
-                <button onclick="handleStartClick(GAMEMODE.mouseless)">Mouseless
-                    Mode</button>
-                <button onclick="handleStartClick(GAMEMODE.flags)">Guess the Flag Mode</button>
-            </div>
+    <div
+      id="start-overlay"
+      class="fixed inset-0 bg-black z-[2000] flex items-center justify-center"
+    >
+      <a style="position: fixed; right: 0; top: 0; color: white" href="./coas/"
+        >COA Directory</a
+      >
+      <div s class="text-white text-5xl font-bold tracking-wider">
+        <div style="font-size: 120px" id="countdown" class="hidden">3</div>
+        <div
+          id="noncountdown"
+          style="display: flex; flex-direction: column; gap: 0.2em"
+        >
+          <button style="display: none" id="continueLastSave">
+            Continue last save
+          </button>
+          <button onclick="handleStartClick(GAMEMODE.normal)">
+            Normal Mode
+          </button>
+          <button onclick="handleStartClick(GAMEMODE.mouseless)">
+            Mouseless Mode
+          </button>
+          <button onclick="handleStartClick(GAMEMODE.flags)">
+            Guess the Flag Mode
+          </button>
         </div>
+      </div>
     </div>
 
     <div id="map"></div>
 
-
-    <div id="flag-container" style="    border-top-right-radius: 10px; z-index: 1001;
-    border-bottom-right-radius: 10px;
-    overflow: hidden;
-    position: fixed;
-    left: 0;
-    bottom: 70px;" class="hidden my-4 p-2 bg-white/70 backdrop-blur-sm">
-        <img id="flag-image" src="" alt="Local Council Flag" class="h-40">
+    <div
+      id="flag-container"
+      style="
+        border-top-right-radius: 10px;
+        z-index: 1001;
+        border-bottom-right-radius: 10px;
+        overflow: hidden;
+        position: fixed;
+        left: 0;
+        bottom: 70px;
+      "
+      class="hidden my-4 p-2 bg-white/70 backdrop-blur-sm"
+    >
+      <img id="flag-image" src="" alt="Local Council Flag" class="h-40" />
     </div>
 
-    <div style="    width: 50vw; z-index: 1001;
-    border-bottom-left-radius: 10px;
-    border-bottom-right-radius: 10px;
-    overflow: hidden;
-    position: fixed;
-    right: 10px;
-    top: 0;" class="bg-white/70 backdrop-blur-sm shadow-lg max-w-lg w-full text-center transition-all" id="info-box">
-
-        <div id="progress-container" class="mt-4">
-            <p class="text-lg font-semibold text-gray-700">Time: <span style="font-family:monospace;"
-                    class="text-blue-600" id="stopwatch">00:00.00</span><br>Progress: <span id="progress-text"
-                    class="font-bold text-blue-600">0 / 0</span></p>
-            <div class="w-full bg-gray-200 h-2.5 mt-2">
-                <div id="progress-bar" class="bg-blue-600 h-2.5" style="width: 0%"></div>
-            </div>
+    <div
+      style="
+        width: 50vw;
+        z-index: 1001;
+        border-bottom-left-radius: 10px;
+        border-bottom-right-radius: 10px;
+        overflow: hidden;
+        position: fixed;
+        right: 10px;
+        top: 0;
+      "
+      class="bg-white/70 backdrop-blur-sm shadow-lg max-w-lg w-full text-center transition-all"
+      id="info-box"
+    >
+      <div id="progress-container" class="mt-4">
+        <p class="text-lg font-semibold text-gray-700">
+          Time:
+          <span
+            style="font-family: monospace"
+            class="text-blue-600"
+            id="stopwatch"
+            >00:00.00</span
+          ><br />Progress:
+          <span id="progress-text" class="font-bold text-blue-600">0 / 0</span>
+        </p>
+        <div class="w-full bg-gray-200 h-2.5 mt-2">
+          <div
+            id="progress-bar"
+            class="bg-blue-600 h-2.5"
+            style="width: 0%"
+          ></div>
         </div>
+      </div>
     </div>
 
     <dialog id="guess-dialog">
-        <input autocomplete="off" type="text" id="guess-input" style="opacity: 1;"
-            class="w-full px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            placeholder="Enter name...">
+      <input
+        autocomplete="off"
+        type="text"
+        id="guess-input"
+        style="opacity: 1"
+        class="w-full px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        placeholder="Enter name..."
+      />
     </dialog>
 
-
-    <div id="win-modal"
-        class="hidden absolute inset-0 z-[1002] bg-green-500/80 flex items-center justify-center p-4 text-white text-center">
-        <div class="transform transition-all scale-95 opacity-0" id="win-modal-content">
-            <h1 class="text-6xl font-bold mb-4">🎉 You Win! 🎉</h1>
-            <p class="text-2xl mb-6">You've successfully named all the shapes!</p>
-            <p class="text-2xl mb-6">Final Time: <span id="final-time">00:00.00</span></p>
-            <button id="play-again"
-                class="bg-white text-green-600 font-bold py-3 px-8 rounded-full text-lg hover:bg-gray-100 transition-transform hover:scale-105">Play
-                Again</button>
-        </div>
+    <div
+      id="win-modal"
+      class="hidden absolute inset-0 z-[1002] bg-green-500/80 flex items-center justify-center p-4 text-white text-center"
+    >
+      <div
+        class="transform transition-all scale-95 opacity-0"
+        id="win-modal-content"
+      >
+        <h1 class="text-6xl font-bold mb-4">🎉 You Win! 🎉</h1>
+        <p class="text-2xl mb-6">You've successfully named all the shapes!</p>
+        <p class="text-2xl mb-6">
+          Final Time: <span id="final-time">00:00.00</span>
+        </p>
+        <button
+          id="play-again"
+          class="bg-white text-green-600 font-bold py-3 px-8 rounded-full text-lg hover:bg-gray-100 transition-transform hover:scale-105"
+        >
+          Play Again
+        </button>
+      </div>
     </div>
 
     <script src="app/app.js?v=4"></script>
@@ -284,6 +373,5 @@
     });
   }
 </script> -->
-</body>
-
+  </body>
 </html>

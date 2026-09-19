@@ -14,7 +14,6 @@ input[type="file"] {
 	color: black;
 }
 
-/* for scaling checkboxes according to the font size */
 .c3-auto-size-checkbox {
 	font-size: 1em;
 	width: 1em;
@@ -44,7 +43,6 @@ canvas, .c3htmlwrap {
 	pointer-events: auto;
 }
 
-/* HACK - work around elements being selectable only in iOS WKWebView for some reason */
 html[ioswebview] .c3htmlwrap,
 html[ioswebview] canvas {
 	-webkit-user-select: none;
@@ -80,7 +78,6 @@ html[ioswebview] .c3htmlwrap > * {
 	color: #888;
 }
 
-/* bbcode styles */
 .bbCodeH1 {
 	font-size: 2em;
 	font-weight: bold;
@@ -105,16 +102,12 @@ html[ioswebview] .c3htmlwrap > * {
 	content: " • ";
 }
 
-/* For text icons converted to HTML: size the height to the line height
-   preserving the aspect ratio. Also add position: relative as that allows
-   just adding a 'top' style for the iconoffsety style. */
 .c3-text-icon {
 	height: 1em;
 	width: auto;
 	position: relative;
 }
 
-/* screen reader text */
 .c3-screen-reader-text {
 	position: absolute;
 	width: 1px;

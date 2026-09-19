@@ -1,34 +1,54 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>JOE - Bomb</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Pangolin&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/styles.css">
-    <link rel="stylesheet" href="bomb.css">
-</head>
-<body>
-    <div style="width: max(90vw, 90vh);" class="container">
-        <div class="header">
-            <a href="/"><img style="aspect-ratio: 1.904;" src="/assets/joe-logo.webp" alt="Joe.mt Logo" class="logo"></a>
-            <div class="fkeori" style="display: flex; align-items: center; gap: 1em; padding: 2em; justify-content: center;">
-                <h1 style="font-size: 4em;">BEHIND THE SCENES COMING SOON.</h1>
-                <img class="bmb" style="aspect-ratio: 1.1569; width: 400px; border-radius: 1em;" src="bombLuca.jpg">
-            </div>
-
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Pangolin&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="bomb.css" />
+  </head>
+  <body>
+    <div style="width: max(90vw, 90vh)" class="container">
+      <div class="header">
+        <a href="/"
+          ><img
+            style="aspect-ratio: 1.904"
+            src="/assets/joe-logo.webp"
+            alt="Joe.mt Logo"
+            class="logo"
+        /></a>
+        <div
+          class="fkeori"
+          style="
+            display: flex;
+            align-items: center;
+            gap: 1em;
+            padding: 2em;
+            justify-content: center;
+          "
+        >
+          <h1 style="font-size: 4em">BEHIND THE SCENES COMING SOON.</h1>
+          <img
+            class="bmb"
+            style="aspect-ratio: 1.1569; width: 400px; border-radius: 1em"
+            src="bombLuca.jpg"
+          />
         </div>
+      </div>
     </div>
     <script>
-        document.querySelectorAll('a').forEach(link =>
-            link.addEventListener('pointerup', e =>
-            {
-                document.body.style.opacity = "0";
-                document.body.style.background = "black";
-            })
-        );
+      document.querySelectorAll("a").forEach((link) =>
+        link.addEventListener("pointerup", (e) => {
+          document.body.style.opacity = "0";
+          document.body.style.background = "black";
+        }),
+      );
     </script>
-</body>
+  </body>
 </html>
