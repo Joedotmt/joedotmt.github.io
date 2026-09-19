@@ -13,8 +13,9 @@ body {
     color: white;
     font-family: "Pangolin", "Comic Sans MS";
     display: flex;
-    min-height: fit-content;
-    height: 100dvh;
+    min-height: 100vh;
+    min-height: 100dvh;
+    height: auto;
     align-items: flex-start;
     justify-content: flex-start;
     overflow-x: hidden;
@@ -479,8 +480,6 @@ a:active {
 @media (max-width: 1000px) {
     body {
         flex-direction: column;
-        height: fit-content;
-        min-height: 100dvh;
     }
 
     .left-column,
