@@ -40,9 +40,6 @@ body.is-leaving {
     opacity: 0;
 }
 
-.handoff {
-    width: min(100%, 44rem);
-}
 
 .mva-logo {
     display: block;
@@ -50,35 +47,13 @@ body.is-leaving {
     height: auto;
 }
 
-.accent {
-    display: flex;
-    width: 5.5rem;
-    height: 0.4rem;
-    margin: clamp(2.25rem, 6vh, 4rem) 0 1.5rem;
-}
-
-.accent span {
-    width: 50%;
-    background: var(--mva-red);
-}
-
-.accent span:last-child {
-    background: var(--white);
-}
-
 h1 {
     font-size: clamp(3.5rem, 10vw, 6.5rem);
     font-weight: 400;
-    letter-spacing: -0.055em;
     line-height: 1;
+    margin: 10px 0px;
 }
 
-.intro {
-    max-width: 42rem;
-    margin-top: 1.5rem;
-    font-size: clamp(1.15rem, 2.5vw, 1.65rem);
-    line-height: 1.5;
-}
 
 .next-step {
     margin-top: 0.75rem;
