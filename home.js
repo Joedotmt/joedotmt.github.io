@@ -47,8 +47,7 @@ function selectItem(item) {
         },
         Achievement: document.getElementById("achievements"),
         'Curriculum Vitae': document.getElementById("CV"),
-        'All Pages': document.getElementById("sitemap"),
-        IcedJelly: IcedJellyBanner
+        'All Pages': document.getElementById("sitemap")
     };
 
     const match = Object.entries(banners).find(([key]) => text.includes(key));
