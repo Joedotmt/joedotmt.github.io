@@ -66,6 +66,7 @@ a:active {
     display: flex;
     flex-direction: column;
     width: 60dvw;
+    margin-right: 1em;
 }
 
 .logo-container {
