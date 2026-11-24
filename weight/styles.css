@@ -418,10 +418,22 @@ h2 {
 @media (max-width: 841px) {
 	.tracker-layout {
 		grid-template-columns: minmax(0, 1fr);
+		margin-inline: 0;
+	}
+
+	.tracker-chart {
+		position: static;
+		z-index: auto;
+		margin-inline: 1rem;
 	}
 
 	.tracker-plot {
 		height: clamp(16rem, 46svh, 24rem);
+	}
+
+	.record-group {
+		border-inline: 0;
+		border-radius: 0;
 	}
 }
 
