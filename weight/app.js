@@ -381,26 +381,26 @@ function renderRecordList(groups, competition) {
         const height = user.height_cm;
         const bmi = height ? (currentWeight / (height / 100) ** 2).toFixed(1) : "—";
         const entries = records.map((record, index) => `
-          <li style="${index ? "" : "background-color: var(--inverse-primary);"}">
-            <div>${dateFormat.format(weighInDate(record, competition))}</div>
-            ${record.weight}kg
+          <li class="weigh-in-row${index === 0 ? " latest-weigh-in" : ""}">
+            <span>${dateFormat.format(weighInDate(record, competition))}</span>
+            <span>${record.weight}kg</span>
           </li>`).join("");
 
-        return `<article style="padding: 0; border-bottom: .0625rem solid var(--surface-variant); box-shadow: none; border-radius:0;">
+        return `<article class="record-group">
   <progress class="max" value="${progress}" max="100"></progress>
-  <h3 style="margin:0em 0.8rem;"></h3>
-</article>
-<ul class="list border">
-  <li style="display: flex; flex-direction: column; align-items: flex-start; gap:0; min-height: fit-content; padding:1em;">
-    <div>Goal&#160;&#160;&#160;: ${startingWeight} to ${user.goal}kg (Lose ${(startingWeight - user.goal).toFixed(1)}kg)</div>
-    <div>Lost&#160;&#160;&#160;: ${weightLost}kg</div>
-    <div>Left&#160;&#160;&#160;: ${(currentWeight - user.goal).toFixed(1)}kg</div>
-    <div>BMI&#160;&#160;&#160;: ${bmi}kg/m² <a target="_blank" rel="noopener" style="text-decoration: underline;" href="https://www.calculator.net/bmi-calculator.html?cheightmeter=${height}&ckg=${currentWeight}&printit=0&ctype=metric&x=Calculate">More Info</a></div>
-    <div>Height&#160;: ${height}cm</div>
-    <div style="display:flex; gap:0.5em; align-items:center">${progress}%<progress value="${progress}" max="100" class="large"></progress></div>
-  </li>
-  ${entries}
-</ul>`;
+  <h3></h3>
+  <div class="record-summary">
+    <div>Goal: ${startingWeight} to ${user.goal}kg (Lose ${(startingWeight - user.goal).toFixed(1)}kg)</div>
+    <div>Lost: ${weightLost}kg</div>
+    <div>Left: ${(currentWeight - user.goal).toFixed(1)}kg</div>
+    <div>BMI: ${bmi}kg/m² <a target="_blank" rel="noopener" style="text-decoration: underline;" href="https://www.calculator.net/bmi-calculator.html?cheightmeter=${height}&ckg=${currentWeight}&printit=0&ctype=metric&x=Calculate">More Info</a></div>
+    <div>Height: ${height}cm</div>
+    <div class="record-progress">${progress}%<progress value="${progress}" max="100" class="large"></progress></div>
+  </div>
+  <ul class="record-entries">
+    ${entries}
+  </ul>
+</article>`;
     }).join("");
     recordList.querySelectorAll("h3").forEach((heading, index) => {
         heading.textContent = groups[index].user.username;

@@ -34,14 +34,14 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
 
-    <link rel="stylesheet" href="styles.css?v=5" />
+    <link rel="stylesheet" href="styles.css?v=6" />
   </head>
 
   <body class="light">
-    <a class="privacylink" style="right: 0" onclick="toggleHiddenWeights()"
-      >Toggle Smoothing</a
-    >
-    <a class="privacylink" href="./privacy/">Privacy Notice</a>
+    <nav class="tracker-links" aria-label="Tracker utilities">
+      <a href="./privacy/">Privacy Notice</a>
+      <button type="button" onclick="toggleHiddenWeights()">Toggle Smoothing</button>
+    </nav>
     <header
       style="
         flex-direction: row;
@@ -162,18 +162,18 @@
       <div id="tab3" class="page"></div>
       <!-- ---------------------------- -->
 
-      <div class="hzvl" style="display: flex">
-        <div class="ththiuejr" style="width: 50%; height: 90vh">
+      <div class="tracker-layout">
+        <div>
           <div class="tabs" id="GraphTabs">
             <a class="active ripple" data-ui="#tab1">Absolute</a>
             <a class="ripple" data-ui="#tab2">Relative</a>
             <a class="ripple" data-ui="#tab3">Progress</a>
           </div>
-          <div style="height: calc(100% - 5px)">
+          <div class="tracker-plot">
             <canvas id="ProgressGraph"></canvas>
           </div>
         </div>
-        <ul style="width: 50%" id="recordList" class="list border"></ul>
+        <div id="recordList"></div>
       </div>
     </main>
 
@@ -218,6 +218,6 @@
       </form>
     </dialog>
 
-    <script src="app.js?v=13"></script>
+    <script src="app.js?v=14"></script>
   </body>
 </html>
