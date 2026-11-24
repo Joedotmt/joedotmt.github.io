@@ -1,431 +1,432 @@
 button {
-    margin: 0;
+	margin: 0;
 }
 
 body.dark {
-    --primary: #78dc77;
-    --on-primary: #00390a;
-    --primary-container: #005313;
-    --on-primary-container: #94f990;
-    --secondary: #baccb3;
-    --on-secondary: #253423;
-    --secondary-container: #3b4b38;
-    --on-secondary-container: #d5e8cf;
-    --tertiary: #a0cfd4;
-    --on-tertiary: #00363b;
-    --tertiary-container: #1f4d52;
-    --on-tertiary-container: #bcebf0;
-    --error: #ffb4ab;
-    --on-error: #690005;
-    --error-container: #93000a;
-    --on-error-container: #ffb4ab;
-    --background: #1a1c19;
-    --on-background: #e2e3dd;
-    --surface: #121411;
-    --on-surface: #e2e3dd;
-    --surface-variant: #424940;
-    --on-surface-variant: #c2c9bd;
-    --outline: #8c9388;
-    --outline-variant: #424940;
-    --shadow: #000000;
-    --scrim: #000000;
-    --inverse-surface: #e2e3dd;
-    --inverse-on-surface: #2f312d;
-    --inverse-primary: #006e1c;
-    --surface-dim: #121411;
-    --surface-bright: #383a36;
-    --surface-container-lowest: #0c0f0c;
-    --surface-container-low: #1a1c19;
-    --surface-container: #1e201d;
-    --surface-container-high: #282b27;
-    --surface-container-highest: #333531;
+	--primary: #78dc77;
+	--on-primary: #00390a;
+	--primary-container: #005313;
+	--on-primary-container: #94f990;
+	--secondary: #baccb3;
+	--on-secondary: #253423;
+	--secondary-container: #3b4b38;
+	--on-secondary-container: #d5e8cf;
+	--tertiary: #a0cfd4;
+	--on-tertiary: #00363b;
+	--tertiary-container: #1f4d52;
+	--on-tertiary-container: #bcebf0;
+	--error: #ffb4ab;
+	--on-error: #690005;
+	--error-container: #93000a;
+	--on-error-container: #ffb4ab;
+	--background: #1a1c19;
+	--on-background: #e2e3dd;
+	--surface: #121411;
+	--on-surface: #e2e3dd;
+	--surface-variant: #424940;
+	--on-surface-variant: #c2c9bd;
+	--outline: #8c9388;
+	--outline-variant: #424940;
+	--shadow: #000000;
+	--scrim: #000000;
+	--inverse-surface: #e2e3dd;
+	--inverse-on-surface: #2f312d;
+	--inverse-primary: #006e1c;
+	--surface-dim: #121411;
+	--surface-bright: #383a36;
+	--surface-container-lowest: #0c0f0c;
+	--surface-container-low: #1a1c19;
+	--surface-container: #1e201d;
+	--surface-container-high: #282b27;
+	--surface-container-highest: #333531;
 }
 
 body.light {
-    --primary: #006493;
-    --on-primary: #ffffff;
-    --primary-container: #cae6ff;
-    --on-primary-container: #001e30;
-    --secondary: #50606e;
-    --on-secondary: #ffffff;
-    --secondary-container: #d3e5f5;
-    --on-secondary-container: #0c1d29;
-    --tertiary: #65587b;
-    --on-tertiary: #ffffff;
-    --tertiary-container: #ebddff;
-    --on-tertiary-container: #201634;
-    --error: #ba1a1a;
-    --on-error: #ffffff;
-    --error-container: #ffdad6;
-    --on-error-container: #410002;
-    --background: #fcfcff;
-    --on-background: #1a1c1e;
-    --surface: #f9f9fc;
-    --on-surface: #1a1c1e;
-    --surface-variant: #dde3ea;
-    --on-surface-variant: #41474d;
-    --outline: #72787e;
-    --outline-variant: #c1c7ce;
-    --shadow: #000000;
-    --scrim: #000000;
-    --inverse-surface: #2e3133;
-    --inverse-on-surface: #f0f0f3;
-    --inverse-primary: #8dcdff;
-    --surface-dim: #d9dadd;
-    --surface-bright: #f9f9fc;
-    --surface-container-lowest: #ffffff;
-    --surface-container-low: #f3f3f6;
-    --surface-container: #edeef1;
-    --surface-container-high: #e8e8eb;
-    --surface-container-highest: #e2e2e5;
+	--primary: #006493;
+	--on-primary: #ffffff;
+	--primary-container: #cae6ff;
+	--on-primary-container: #001e30;
+	--secondary: #50606e;
+	--on-secondary: #ffffff;
+	--secondary-container: #d3e5f5;
+	--on-secondary-container: #0c1d29;
+	--tertiary: #65587b;
+	--on-tertiary: #ffffff;
+	--tertiary-container: #ebddff;
+	--on-tertiary-container: #201634;
+	--error: #ba1a1a;
+	--on-error: #ffffff;
+	--error-container: #ffdad6;
+	--on-error-container: #410002;
+	--background: #fcfcff;
+	--on-background: #1a1c1e;
+	--surface: #f9f9fc;
+	--on-surface: #1a1c1e;
+	--surface-variant: #dde3ea;
+	--on-surface-variant: #41474d;
+	--outline: #72787e;
+	--outline-variant: #c1c7ce;
+	--shadow: #000000;
+	--scrim: #000000;
+	--inverse-surface: #2e3133;
+	--inverse-on-surface: #f0f0f3;
+	--inverse-primary: #8dcdff;
+	--surface-dim: #d9dadd;
+	--surface-bright: #f9f9fc;
+	--surface-container-lowest: #ffffff;
+	--surface-container-low: #f3f3f6;
+	--surface-container: #edeef1;
+	--surface-container-high: #e8e8eb;
+	--surface-container-highest: #e2e2e5;
 }
 
-
 body {
-    font-family: "Roboto Mono", monospace, Arial, sans-serif;
-    font-weight: 600;
-    margin: 0;
-    padding: 0;
+	font-family: "Roboto Mono", monospace, Arial, sans-serif;
+	font-weight: 600;
+	margin: 0;
+	padding: 0;
 }
 
 #sid_progress {
-    display: flex;
-    align-items: center;
-    align-content: center;
-    justify-content: center;
-    justify-items: center;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    translate: -50% -50%;
-    z-index: 10;
-    animation: stupidScale 500ms ease 0s infinite forwards;
+	display: flex;
+	align-items: center;
+	align-content: center;
+	justify-content: center;
+	justify-items: center;
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	translate: -50% -50%;
+	z-index: 10;
+	animation: stupidScale 500ms ease 0s infinite forwards;
 }
 
 progress.circle {
-    animation: 0.3s to-circular linear infinite;
+	animation: 0.3s to-circular linear infinite;
 }
 
 .tracker-links {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: .25rem .75rem;
-    padding: .25rem 1rem;
-    background: var(--surface-container);
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: 0.25rem 0.75rem;
+	padding: 0.25rem 1rem;
+	background: var(--surface-container);
 }
 
 .tracker-links a,
 .tracker-links button {
-    margin: 0;
-    padding: 0;
-    color: var(--on-surface-variant);
-    font-size: .8125rem;
-    text-decoration: underline;
+	margin: 0;
+	padding: 0;
+	color: var(--on-surface-variant);
+	font-size: 0.8125rem;
+	text-decoration: underline;
 }
 
 .tracker-links button {
-    min-width: 0;
-    min-height: 1.5rem;
-    height: auto;
-    background: transparent;
+	min-width: 0;
+	min-height: 1.5rem;
+	height: auto;
+	background: transparent;
 }
 
 #signinbutton {
-    flex-shrink: 0;
+	flex-shrink: 0;
 }
 
 #sid_words {
-    display: contents;
+	display: contents;
 }
 
 main {
-    padding: 0px;
+	padding: 0px;
 }
 
 section {
-    margin-bottom: 40px;
+	margin-bottom: 40px;
 }
 
 form {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    max-width: 400px;
-    margin: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	max-width: 400px;
+	margin: auto;
 }
 
 label {
-    font-weight: bold;
+	font-weight: bold;
 }
 
 input,
 select {
-    padding: 10px;
-    font-size: 1em;
+	padding: 10px;
+	font-size: 1em;
 }
 
 .tracker-layout {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: start;
-    gap: 1rem;
-    margin: 0 1rem 1rem;
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	align-items: start;
+	gap: 1rem;
+	margin: 0 1rem 1rem;
 }
 
 .tracker-chart {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    background: var(--background);
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	background: var(--background);
 }
 
 .tracker-plot {
-    position: relative;
-    height: clamp(20rem, 62svh, 40rem);
-    max-height: 65svh;
+	position: relative;
+	height: clamp(20rem, 62svh, 40rem);
+	max-height: 65svh;
 }
 
 .tracker-plot canvas {
-    max-width: 100%;
-    max-height: 100%;
+	max-width: 100%;
+	max-height: 100%;
 }
 
 #GraphTabs > a {
-    min-width: 0;
-    block-size: 2.25rem;
-    min-block-size: 0;
-    padding: 0 .25rem;
+	min-width: 0;
+	block-size: 2.25rem;
+	min-block-size: 0;
+	padding: 0 0.25rem;
 }
 
 .record-group {
-    margin: 0;
-    padding: 0;
-    border: 1px solid var(--outline-variant);
-    border-radius: .75rem;
-    box-shadow: none;
-    overflow: clip;
+	margin: 0;
+	padding: 0;
+	border: 1px solid var(--outline-variant);
+	border-radius: 0.75rem;
+	box-shadow: none;
+	overflow: clip;
 }
 
 .record-group + .record-group {
-    margin-top: 1rem;
+	margin-top: 1rem;
 }
 
 .record-group h3 {
-    position: relative;
-    isolation: isolate;
-    margin: 0;
-    padding: .5rem .875rem 0;
-    overflow-wrap: anywhere;
+	position: relative;
+	isolation: isolate;
+	margin: 0;
+	padding: 0.1em 0.3em;
+	overflow-wrap: anywhere;
+	border-radius: 0;
+	background: var(--surface-container);
 }
 
 .record-summary {
-    display: grid;
-    gap: .25rem;
-    padding: .75rem .875rem;
-    overflow-wrap: anywhere;
+	display: grid;
+	gap: 0.25rem;
+	padding: 0.75rem 0.875rem;
+	overflow-wrap: anywhere;
 }
 
 .record-progress {
-    display: flex;
-    gap: .5rem;
-    align-items: center;
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
 }
 
 .record-progress progress {
-    flex: 1;
-    min-width: 0;
+	flex: 1;
+	min-width: 0;
 }
 
 .record-entries {
-    margin: 0;
-    padding: 0;
-    list-style: none;
+	margin: 0;
+	padding: 0;
+	list-style: none;
 }
 
 .weigh-in-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: .5rem;
-    min-height: 2.75rem;
-    padding: .5rem .875rem;
-    border-top: 1px solid var(--outline-variant);
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 0.5rem;
+	min-height: 2.75rem;
+	padding: 0.5rem 0.875rem;
+	border-top: 1px solid var(--outline-variant);
 }
 
 .latest-weigh-in {
-    background-color: var(--inverse-primary);
+	background-color: var(--inverse-primary);
 }
 
 .competition-controls {
-    margin: 0 1em 1em;
+	margin: 0 1em 1em;
 }
 
 .competition-controls[hidden],
 #newCompetitionButton[hidden] {
-    display: none;
+	display: none;
 }
 
 .competition-toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: .375rem .5rem;
-    align-items: center;
-    font-size: .8125rem;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.375rem 0.5rem;
+	align-items: center;
+	font-size: 0.8125rem;
 }
 
 .competition-toolbar select {
-    flex: 1 1 7rem;
-    width: auto;
-    min-width: 0;
-    max-width: 16rem;
-    height: 2rem;
-    margin: 0;
-    padding: 0 .5rem;
-    border: 1px solid var(--outline);
-    border-radius: .375rem;
-    appearance: auto;
-    color: var(--on-surface);
-    background: var(--surface);
+	flex: 1 1 7rem;
+	width: auto;
+	min-width: 0;
+	max-width: 16rem;
+	height: 2rem;
+	margin: 0;
+	padding: 0 0.5rem;
+	border: 1px solid var(--outline);
+	border-radius: 0.375rem;
+	appearance: auto;
+	color: var(--on-surface);
+	background: var(--surface);
 }
 
 .competition-toolbar select:focus-visible {
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
+	outline: 2px solid var(--primary);
+	outline-offset: 2px;
 }
 
 #newCompetitionButton {
-    min-height: 2rem;
-    height: 2rem;
-    margin: 0;
-    padding-inline: .75rem;
-    font-size: inherit;
+	min-height: 2rem;
+	height: 2rem;
+	margin: 0;
+	padding-inline: 0.75rem;
+	font-size: inherit;
 }
 
 #competitionNotice {
-    margin: 0 0 .5rem;
+	margin: 0 0 0.5rem;
 }
 
 #competitionNotice,
 #competitionFormNotice {
-    color: var(--on-surface-variant);
+	color: var(--on-surface-variant);
 }
 
 #competitionFormNotice {
-    margin: .5em 0 0;
+	margin: 0.5em 0 0;
 }
 
 #competitionDialog {
-    width: min(26rem, calc(100vw - 2rem));
+	width: min(26rem, calc(100vw - 2rem));
 }
 
 #competitionDialog form {
-    margin-top: 1.25em;
+	margin-top: 1.25em;
 }
 
 .competition-friends {
-    min-width: 0;
-    margin: 0;
-    padding: .25rem .75rem;
-    border: 1px solid var(--outline);
-    border-radius: .5rem;
+	min-width: 0;
+	margin: 0;
+	padding: 0.25rem 0.75rem;
+	border: 1px solid var(--outline);
+	border-radius: 0.5rem;
 }
 
 #competitionFriends {
-    max-height: 12rem;
-    overflow-y: auto;
+	max-height: 12rem;
+	overflow-y: auto;
 }
 
 .competition-friend {
-    display: flex;
-    align-items: center;
-    gap: .5rem;
-    min-height: 2.5rem;
-    overflow-wrap: anywhere;
-    cursor: pointer;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	min-height: 2.5rem;
+	overflow-wrap: anywhere;
+	cursor: pointer;
 }
 
 .log {
-    display: flex;
-    gap: 1em;
-    color: white;
-    padding: 1em;
-    width: fit-content;
-    border-radius: 1em;
-    margin: 1em;
-    background-color: #368356;
+	display: flex;
+	gap: 1em;
+	color: white;
+	padding: 1em;
+	width: fit-content;
+	border-radius: 1em;
+	margin: 1em;
+	background-color: #368356;
 }
 
 h1 {
-    font-size: 20px !important;
+	font-size: 20px !important;
 }
 
 h2 {
-    font-size: 20px !important;
+	font-size: 20px !important;
 }
 
 ::-webkit-scrollbar {
-    display: none;
+	display: none;
 }
 
 @keyframes stupidScale {
-    0% {
-        transform: scale(1, 1);
-    }
+	0% {
+		transform: scale(1, 1);
+	}
 
-    10% {
-        transform: scale(2.5, 1);
-    }
+	10% {
+		transform: scale(2.5, 1);
+	}
 
-    20% {
-        transform: scale(1, 1.5);
-    }
+	20% {
+		transform: scale(1, 1.5);
+	}
 
-    30% {
-        transform: scale(1.8, 1.3);
-    }
+	30% {
+		transform: scale(1.8, 1.3);
+	}
 
-    40% {
-        transform: scale(1, 1.9);
-    }
+	40% {
+		transform: scale(1, 1.9);
+	}
 
-    50% {
-        transform: scale(1.7, 0.4);
-    }
+	50% {
+		transform: scale(1.7, 0.4);
+	}
 
-    60% {
-        transform: scale(0.7, 1.8);
-    }
+	60% {
+		transform: scale(0.7, 1.8);
+	}
 
-    70% {
-        transform: scale(2, 2);
-    }
+	70% {
+		transform: scale(2, 2);
+	}
 
-    80% {
-        transform: scale(0.4, 1.5);
-    }
+	80% {
+		transform: scale(0.4, 1.5);
+	}
 
-    90% {
-        transform: scale(1.6, 0.3);
-    }
+	90% {
+		transform: scale(1.6, 0.3);
+	}
 
-    100% {
-        transform: scale(1, 1);
-    }
+	100% {
+		transform: scale(1, 1);
+	}
 }
 
 @media (max-width: 841px) {
-    .tracker-layout {
-        grid-template-columns: minmax(0, 1fr);
-    }
+	.tracker-layout {
+		grid-template-columns: minmax(0, 1fr);
+	}
 
-    .tracker-plot {
-        height: clamp(16rem, 46svh, 24rem);
-    }
+	.tracker-plot {
+		height: clamp(16rem, 46svh, 24rem);
+	}
 }
 
 @media (max-width: 420px) {
-    .competition-toolbar label {
-        flex-basis: 100%;
-    }
+	.competition-toolbar label {
+		flex-basis: 100%;
+	}
 }
