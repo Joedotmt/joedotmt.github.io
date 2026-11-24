@@ -109,9 +109,11 @@ progress.circle {
 	display: flex;
 	flex-wrap: wrap;
 	justify-content: space-between;
-	gap: 0.25rem 0.75rem;
-	padding: 0.25rem 1rem;
-	background: var(--surface-container);
+	background: transparent;
+	position: absolute;
+	left: 0;
+	top: -7px;
+	z-index: 1;
 }
 
 .tracker-links a,
