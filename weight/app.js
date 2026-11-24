@@ -13,7 +13,7 @@ const loadingTextLines = Array.from(loadingText.children);
 
 // Global state
 let GLOBALmode = "Absolute";
-const pocketBase = new PocketBase("https://joemt.fly.dev/");
+const pocketBase = new PocketBase("https://joemt-weight.fly.dev/");
 let chartInstance = null;
 let currentUser = {};
 let GLOBALWeightData = null;
