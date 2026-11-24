@@ -173,9 +173,17 @@ select {
     margin: 0 1rem 1rem;
 }
 
+.tracker-chart {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--background);
+}
+
 .tracker-plot {
     position: relative;
     height: clamp(20rem, 62svh, 40rem);
+    max-height: 65svh;
 }
 
 .tracker-plot canvas {
@@ -185,7 +193,9 @@ select {
 
 #GraphTabs > a {
     min-width: 0;
-    padding-inline: .25rem;
+    block-size: 2.25rem;
+    min-block-size: 0;
+    padding: 0 .25rem;
 }
 
 .record-group {
@@ -259,20 +269,49 @@ select {
 .competition-toolbar {
     display: flex;
     flex-wrap: wrap;
-    gap: .75em;
+    gap: .375rem .5rem;
     align-items: center;
+    font-size: .8125rem;
 }
 
-.competition-toolbar .field {
-    flex: 1 1 15rem;
-    max-width: 27rem;
+.competition-toolbar select {
+    flex: 1 1 7rem;
+    width: auto;
     min-width: 0;
+    max-width: 16rem;
+    height: 2rem;
     margin: 0;
+    padding: 0 .5rem;
+    border: 1px solid var(--outline);
+    border-radius: .375rem;
+    appearance: auto;
+    color: var(--on-surface);
+    background: var(--surface);
+}
+
+.competition-toolbar select:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+#newCompetitionButton {
+    min-height: 2rem;
+    height: 2rem;
+    margin: 0;
+    padding-inline: .75rem;
+    font-size: inherit;
+}
+
+#competitionNotice {
+    margin: 0 0 .5rem;
 }
 
 #competitionNotice,
 #competitionFormNotice {
     color: var(--on-surface-variant);
+}
+
+#competitionFormNotice {
     margin: .5em 0 0;
 }
 
@@ -382,5 +421,11 @@ h2 {
 
     .tracker-plot {
         height: clamp(16rem, 46svh, 24rem);
+    }
+}
+
+@media (max-width: 420px) {
+    .competition-toolbar label {
+        flex-basis: 100%;
     }
 }

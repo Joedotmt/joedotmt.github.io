@@ -34,7 +34,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
 
-    <link rel="stylesheet" href="styles.css?v=8" />
+    <link rel="stylesheet" href="styles.css?v=9" />
   </head>
 
   <body class="light">
@@ -139,20 +139,6 @@
         </button>
       </div>
 
-      <div id="competitionControls" class="competition-controls" hidden>
-        <div class="competition-toolbar">
-          <div class="field label suffix border">
-            <select id="competitionSelect">
-              <option value="">All Friends</option>
-            </select>
-            <label for="competitionSelect">Competition</label>
-            <i aria-hidden="true">arrow_drop_down</i>
-          </div>
-          <button type="button" id="newCompetitionButton">New Competition</button>
-        </div>
-        <p id="competitionNotice" role="status" hidden></p>
-      </div>
-
       <!-- tabs wont work without these -->
       <div id="tab1" class="page"></div>
       <div id="tab2" class="page"></div>
@@ -160,7 +146,8 @@
       <!-- ---------------------------- -->
 
       <div class="tracker-layout">
-        <div>
+        <div class="tracker-chart">
+          <p id="competitionNotice" role="status" hidden></p>
           <div class="tabs" id="GraphTabs">
             <a class="active ripple" data-ui="#tab1">Absolute</a>
             <a class="ripple" data-ui="#tab2">Relative</a>
@@ -171,6 +158,16 @@
           </div>
         </div>
         <div id="recordList"></div>
+      </div>
+
+      <div id="competitionControls" class="competition-controls" hidden>
+        <div class="competition-toolbar">
+          <label for="competitionSelect">Competition</label>
+          <select id="competitionSelect">
+            <option value="">All Friends</option>
+          </select>
+          <button type="button" id="newCompetitionButton">New Competition</button>
+        </div>
       </div>
     </main>
 
