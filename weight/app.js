@@ -423,8 +423,10 @@ function renderRecordList(groups, competition) {
           </li>`).join("");
 
         return `<article class="record-group">
-  <progress class="max" value="${progress}" max="100"></progress>
-  <h3></h3>
+  <h3>
+    <progress class="max" value="${progress}" max="100" aria-hidden="true"></progress>
+    <span class="record-title-name"></span>
+  </h3>
   <div class="record-summary">
     <div>Goal: ${startingWeight} to ${user.goal}kg (Lose ${(startingWeight - user.goal).toFixed(1)}kg)</div>
     <div>Lost: ${weightLost}kg</div>
@@ -438,8 +440,8 @@ function renderRecordList(groups, competition) {
   </ul>
 </article>`;
     }).join("");
-    recordList.querySelectorAll("h3").forEach((heading, index) => {
-        heading.textContent = groups[index].user.username;
+    recordList.querySelectorAll(".record-title-name").forEach((name, index) => {
+        name.textContent = groups[index].user.username;
     });
 }
 

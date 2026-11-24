@@ -202,7 +202,10 @@ select {
 }
 
 .record-group h3 {
-    margin: .5rem .875rem 0;
+    position: relative;
+    isolation: isolate;
+    margin: 0;
+    padding: .5rem .875rem 0;
     overflow-wrap: anywhere;
 }
 
