@@ -34,7 +34,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
 
-    <link rel="stylesheet" href="styles.css?v=4" />
+    <link rel="stylesheet" href="styles.css?v=5" />
   </head>
 
   <body class="light">
@@ -142,6 +142,20 @@
         </button>
       </div>
 
+      <div id="competitionControls" class="competition-controls" hidden>
+        <div class="competition-toolbar">
+          <div class="field label suffix border">
+            <select id="competitionSelect">
+              <option value="">All Friends</option>
+            </select>
+            <label for="competitionSelect">Competition</label>
+            <i aria-hidden="true">arrow_drop_down</i>
+          </div>
+          <button type="button" id="newCompetitionButton">New Competition</button>
+        </div>
+        <p id="competitionNotice" role="status" hidden></p>
+      </div>
+
       <!-- tabs wont work without these -->
       <div id="tab1" class="page"></div>
       <div id="tab2" class="page"></div>
@@ -184,6 +198,26 @@
       </nav>
     </dialog>
 
-    <script src="app.js?v=11"></script>
+    <dialog id="competitionDialog" aria-labelledby="competitionDialogTitle">
+      <h2 id="competitionDialogTitle">New Competition</h2>
+      <form id="competitionForm">
+        <div class="field label suffix border">
+          <select id="competitionOpponent" required></select>
+          <label for="competitionOpponent">Friend</label>
+          <i aria-hidden="true">arrow_drop_down</i>
+        </div>
+        <div class="field label border">
+          <input type="date" id="competitionStartDate" required />
+          <label for="competitionStartDate">Start Date</label>
+        </div>
+        <p id="competitionFormNotice" role="status" hidden></p>
+        <nav class="right-align">
+          <button type="button" id="cancelCompetitionButton" class="border">Cancel</button>
+          <button type="submit" id="createCompetitionButton">Create</button>
+        </nav>
+      </form>
+    </dialog>
+
+    <script src="app.js?v=12"></script>
   </body>
 </html>

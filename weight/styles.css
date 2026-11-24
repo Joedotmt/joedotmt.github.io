@@ -156,6 +156,43 @@ select {
     margin-bottom: 20px;
 }
 
+.competition-controls {
+    margin: 0 1em 1em;
+}
+
+.competition-controls[hidden],
+#newCompetitionButton[hidden] {
+    display: none;
+}
+
+.competition-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75em;
+    align-items: center;
+}
+
+.competition-toolbar .field {
+    flex: 1 1 15rem;
+    max-width: 27rem;
+    min-width: 0;
+    margin: 0;
+}
+
+#competitionNotice,
+#competitionFormNotice {
+    color: var(--on-surface-variant);
+    margin: .5em 0 0;
+}
+
+#competitionDialog {
+    width: min(26rem, calc(100vw - 2rem));
+}
+
+#competitionDialog form {
+    margin-top: 1.25em;
+}
+
 .log {
     display: flex;
     gap: 1em;

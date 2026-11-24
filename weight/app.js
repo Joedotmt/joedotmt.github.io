@@ -10,46 +10,60 @@ const signindialog = document.getElementById("signindialog");
 const GraphTabs = document.getElementById("GraphTabs");
 const loadingText = document.getElementById('loadingtext');
 const loadingTextLines = Array.from(loadingText.children);
+const competitionSelect = document.getElementById("competitionSelect");
+const competitionNotice = document.getElementById("competitionNotice");
+const competitionDialog = document.getElementById("competitionDialog");
+const competitionForm = document.getElementById("competitionForm");
+const competitionOpponent = document.getElementById("competitionOpponent");
+const competitionStartDate = document.getElementById("competitionStartDate");
+const competitionFormNotice = document.getElementById("competitionFormNotice");
+const createCompetitionButton = document.getElementById("createCompetitionButton");
+const cancelCompetitionButton = document.getElementById("cancelCompetitionButton");
+const newCompetitionButton = document.getElementById("newCompetitionButton");
 
 // Global state
 let GLOBALmode = "Absolute";
 const pocketBase = new PocketBase("https://joemt-weight.fly.dev/");
+const guestId = "soavzbhd6bu6y5r";
+const competitionTimeZone = "Europe/Berlin";
+const berlinCalendar = new Intl.DateTimeFormat("en-GB", {
+    timeZone: competitionTimeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+});
+const competitionDateLabel = new Intl.DateTimeFormat("en-GB", {
+    timeZone: competitionTimeZone,
+    year: "numeric",
+    month: "short",
+    day: "numeric"
+});
+const competitionTickLabel = new Intl.DateTimeFormat("en-GB", {
+    timeZone: competitionTimeZone,
+    month: "short",
+    day: "2-digit"
+});
 let chartInstance = null;
 let currentUser = {};
-let GLOBALWeightData = null;
+let GLOBALWeightData = [];
 let showHiddenWeights = true;
+let competitions = [];
+let competitionsRequest = 0;
+let weightsRequest = 0;
+let competitionListFailed = false;
+let weightsNotice = "";
 
 // NEW: remember which participants are hidden on the graph (persisted)
 let GLOBALHiddenSeries = new Set();
 
-function toggleHiddenForLabel(label) {
-    if (GLOBALHiddenSeries.has(label)) GLOBALHiddenSeries.delete(label);
-    else GLOBALHiddenSeries.add(label);
+function toggleHiddenParticipant(id) {
+    if (GLOBALHiddenSeries.has(id)) GLOBALHiddenSeries.delete(id);
+    else GLOBALHiddenSeries.add(id);
 }
 
-
-async function toggleHiddenWeights() {
-    // Toggle whether hidden-marked points are shown.
-    // Do NOT reload weights from the server; just update the chart in-place.
+function toggleHiddenWeights() {
     showHiddenWeights = !showHiddenWeights;
-
-    // If chart exists, update datasets to hide/show points marked as hidden.
-    if (chartInstance && chartInstance.data && chartInstance.data.datasets) {
-        chartInstance.data.datasets.forEach(ds => {
-            if (ds._fullData && Array.isArray(ds._fullData)) {
-                ds.data = showHiddenWeights
-                    ? ds._fullData.slice()
-                    : ds._fullData.filter(pt => !pt._hidden);
-            } else {
-                // Fallback: operate on current data if no _fullData present
-                ds.data = showHiddenWeights
-                    ? ds.data
-                    : ds.data.filter(pt => !pt._hidden);
-            }
-        });
-        chartInstance.update();
-    }
-    // Do not change sign-in dialog state or reload weights
+    updateCharts();
 }
 
 // Try to restore PocketBase auth from localStorage and refresh if possible
@@ -65,7 +79,7 @@ async function tryRestoreAuth() {
             currentUser = pocketBase.authStore.model;
             updateWelcomeTextAndWords();
 
-            await loadWeights();
+            await loadTracker();
 
             setSigninDialogMode("closed");
             return true;
@@ -94,10 +108,9 @@ async function signIn(username, password) {
         setSigninDialogMode("signin");
         return;
     }
-    await loadWeights();
+    await loadTracker();
     setSigninDialogMode("closed");
     updateWelcomeTextAndWords();
-    updateCharts();
 }
 
 function updateWelcomeTextAndWords() {
@@ -143,346 +156,368 @@ function renderSignInForm() {
     }
 }
 
-// Load weights data
+function berlinDay(date) {
+    const parts = Object.fromEntries(berlinCalendar.formatToParts(date).map(({ type, value }) => [type, value]));
+    return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+function startDay(competition) {
+    return competition.start_date.slice(0, 10);
+}
+
+function isParticipantAccount() {
+    return Boolean(currentUser.id && currentUser.id !== guestId);
+}
+
+function selectedCompetition() {
+    return competitions.find(competition => competition.id === competitionSelect.value);
+}
+
+function participantName(competition, role) {
+    return competition.expand?.[role]?.username ??
+        (competition[role] === currentUser.id ? currentUser.username : "Friend");
+}
+
+function matchAnyId(field, ids) {
+    return ids.map(id => pocketBase.filter(`${field} = {:id}`, { id })).join(" || ");
+}
+
+function showNotice(element, message) {
+    element.textContent = message;
+    element.hidden = !message;
+}
+
+function displayStartDate(competition) {
+    return competitionDateLabel.format(new Date(`${startDay(competition)}T00:00:00Z`));
+}
+
+function renderCompetitionOptions(selection = competitionSelect.value) {
+    const options = [new Option("All Friends", "")];
+    const duplicates = new Map();
+    for (const competition of competitions) {
+        const otherRole = competition.creator === currentUser.id ? "opponent" : "creator";
+        const label = `${participantName(competition, otherRole)} · ${displayStartDate(competition)}`;
+        const count = (duplicates.get(label) ?? 0) + 1;
+        duplicates.set(label, count);
+        options.push(new Option(count > 1 ? `${label} (${count})` : label, competition.id));
+    }
+    competitionSelect.replaceChildren(...options);
+    if (competitions.some(competition => competition.id === selection)) competitionSelect.value = selection;
+}
+
+async function loadCompetitions() {
+    if (!isParticipantAccount()) return;
+    const request = ++competitionsRequest;
+    try {
+        const records = await pocketBase.collection("competitions").getFullList({
+            sort: "-start_date,created,id",
+            expand: "creator,opponent",
+            requestKey: null
+        });
+        if (request !== competitionsRequest) return;
+        competitionListFailed = false;
+        const selection = competitionSelect.value;
+        competitions = records;
+        renderCompetitionOptions(selection);
+        if (selection !== competitionSelect.value) await changeCompetition();
+        else renderCompetitionNotice();
+    } catch (error) {
+        if (request !== competitionsRequest) return;
+        competitionListFailed = true;
+        renderCompetitionNotice();
+        console.error("Error loading competitions:", error);
+    }
+}
+
+async function openCompetitionForm() {
+    const friends = [...new Set(currentUser.friends ?? [])].filter(id => id !== currentUser.id && id !== guestId);
+    competitionOpponent.replaceChildren(new Option("Choose a friend", ""));
+    competitionStartDate.value = berlinDay(new Date());
+    createCompetitionButton.disabled = true;
+    showNotice(competitionFormNotice, friends.length ? "Loading friends…" : "No friends are available to compete with.");
+    competitionDialog.showModal();
+    if (!friends.length) return;
+
+    try {
+        const records = await pocketBase.collection("fat_users").getFullList({
+            filter: matchAnyId("id", friends),
+            sort: "username",
+            fields: "id,username"
+        });
+        competitionOpponent.append(...records.map(friend => new Option(friend.username, friend.id)));
+        showNotice(competitionFormNotice, records.length ? "" : "No friends are available to compete with.");
+        createCompetitionButton.disabled = !records.length;
+    } catch (error) {
+        if (error.isAbort) return;
+        showNotice(competitionFormNotice, "Couldn’t load your friends. Reopen the form to try again.");
+        console.error("Error loading friends:", error);
+    }
+}
+
+async function createCompetition(event) {
+    event.preventDefault();
+    if (createCompetitionButton.disabled || !isParticipantAccount()) return;
+    createCompetitionButton.disabled = true;
+    cancelCompetitionButton.disabled = true;
+    showNotice(competitionFormNotice, "Creating competition…");
+    let record;
+    try {
+        record = await pocketBase.collection("competitions").create({
+            creator: currentUser.id,
+            opponent: competitionOpponent.value,
+            start_date: `${competitionStartDate.value} 00:00:00.000Z`
+        }, { expand: "creator,opponent" });
+    } catch (error) {
+        showNotice(competitionFormNotice, "Couldn’t create the competition. Check the start date and friend, then try again.");
+        console.error("Error creating competition:", error);
+        return;
+    } finally {
+        createCompetitionButton.disabled = false;
+        cancelCompetitionButton.disabled = false;
+    }
+    competitions = [record, ...competitions.filter(competition => competition.id !== record.id)];
+    renderCompetitionOptions(record.id);
+    competitionDialog.close();
+    await Promise.all([changeCompetition(), loadCompetitions()]);
+}
+
+async function changeCompetition() {
+    GLOBALWeightData = [];
+    weightsNotice = "Loading weigh-ins…";
+    updateCharts();
+    await loadWeights();
+}
+
+function renderCompetitionNotice() {
+    const competition = selectedCompetition();
+    let message = weightsNotice;
+    if (!message && !competition && competitionListFailed) {
+        message = "Couldn’t load competitions. Reload the page to try again.";
+    }
+    if (!message && competition) {
+        if (startDay(competition) > berlinDay(new Date())) {
+            message = `This competition starts on ${displayStartDate(competition)}.`;
+        } else {
+            const logged = new Set(GLOBALWeightData.map(weight => weight.user));
+            const waiting = ["creator", "opponent"].filter(role => !logged.has(competition[role]));
+            if (waiting.length) {
+                const names = waiting.map(role => participantName(competition, role));
+                message = `Waiting for ${names.join(" and ")} to log a first weigh-in.`;
+            }
+        }
+    }
+    showNotice(competitionNotice, message);
+}
+
+function weighInDate(record, competition) {
+    const timestamp = competition ? record.created : record.date || record.created;
+    return new Date(timestamp.replace(" ", "T"));
+}
+
 async function loadWeights() {
+    if (!currentUser.id) return;
+    const request = ++weightsRequest;
+    const competition = selectedCompetition();
+    const participants = competition
+        ? [competition.creator, competition.opponent]
+        : [...new Set([...(currentUser.friends ?? []), currentUser.id])];
     try {
-        const allVisibleToUser = [...currentUser.friends, currentUser.id];
-
-        const friendFilters = allVisibleToUser
-            .map(id => `user.id = "${id}"`)
-            .join(' || ');
-
-        // If showHiddenWeights is true, don't filter by hidden
-        const hiddenFilter = showHiddenWeights ? "" : "hidden = false && ";
-
-        GLOBALWeightData = await pocketBase.collection("weights").getFullList({
-            sort: "-created",
+        const weights = await pocketBase.collection("weights").getFullList({
+            sort: "-created,-id",
             expand: "user",
-            filter: `${hiddenFilter}(${friendFilters})`
+            filter: matchAnyId("user", participants),
+            requestKey: null
         });
+        if (request !== weightsRequest) return;
+        weightsNotice = "";
+        GLOBALWeightData = weights.filter(weight => weight.expand?.user &&
+            (!competition || berlinDay(weighInDate(weight, competition)) >= startDay(competition)));
         updateCharts();
-        return true;
-    } catch (e) {
-        console.error("Error loading weights:", e);
-        return [];
+    } catch (error) {
+        if (request !== weightsRequest) return;
+        weightsNotice = "Couldn’t load weigh-ins. Reload the page to try again.";
+        renderCompetitionNotice();
+        console.error("Error loading weights:", error);
     }
 }
 
-// Update grouping to use the expanded user field
+async function loadTracker() {
+    document.getElementById("competitionControls").hidden = false;
+    newCompetitionButton.hidden = !isParticipantAccount();
+    if (isParticipantAccount()) {
+        pocketBase.collection("competitions").subscribe("*", loadCompetitions).catch(error => {
+            console.error("Error subscribing to competitions:", error);
+        });
+    }
+    await Promise.all([loadWeights(), loadCompetitions()]);
+}
+
 function groupWeights(weights) {
-    const groups = {};
-    weights.forEach(element => {
-        const name = element.expand.user.username;
-        if (!groups[name]) groups[name] = [];
-        groups[name].push(element);
-    });
-    return groups;
+    const groups = new Map();
+    for (const weight of weights) {
+        const user = weight.expand.user;
+        if (!groups.has(user.id)) groups.set(user.id, { user, records: [] });
+        groups.get(user.id).records.push(weight);
+    }
+    return [...groups.values()].sort((a, b) =>
+        Number(b.user.id === currentUser.id) - Number(a.user.id === currentUser.id));
 }
 
-// In renderRecordList, update the user goal logic – assume the authenticated user holds their own goal.
-function renderRecordList(groupedWeights) {
-    let html = '';
-    const allNames = Object.keys(groupedWeights);
-    allNames.sort((a, b) => {
-        if (a === currentUser.username) return -1;
-        if (b === currentUser.username) return 1;
-        return 0;
+function goalProgress(weight, baseline, goal) {
+    return goal === baseline ? 0 : ((weight - baseline) / (goal - baseline)) * 100;
+}
+
+function renderRecordList(groups, competition) {
+    const dateFormat = new Intl.DateTimeFormat("en-GB", {
+        day: "2-digit",
+        month: "long",
+        timeZone: competition ? competitionTimeZone : undefined
     });
-    allNames.forEach(name => {
-        const elements = groupedWeights[name];
-        const goal = elements[0].expand.user.goal;
-        const height_m = elements[0].expand.user.height_cm / 100;
-        const startingWeight = elements[elements.length - 1].weight;
-        const currentWeight = elements[0].weight;
+    recordList.innerHTML = groups.map(({ user, records }) => {
+        const startingWeight = records[records.length - 1].weight;
+        const currentWeight = records[0].weight;
         const weightLost = (startingWeight - currentWeight).toFixed(1);
-        const totalToLose = (startingWeight - goal);
-        const progressPercent = totalToLose ? ((weightLost / totalToLose) * 100).toFixed(1) : 0;
-        const bmi = currentWeight / (height_m * height_m);
-        
-        html += `<article style="padding: 0; border-bottom: .0625rem solid var(--surface-variant); box-shadow: none; border-radius:0;">
-  <progress class="max" value="${progressPercent}" max="100"></progress>
-<h3 style="margin:0em 0.8rem;">${name}</h3>
+        const progress = goalProgress(currentWeight, startingWeight, user.goal).toFixed(1);
+        const height = user.height_cm;
+        const bmi = height ? (currentWeight / (height / 100) ** 2).toFixed(1) : "—";
+        const entries = records.map((record, index) => `
+          <li style="${index ? "" : "background-color: var(--inverse-primary);"}">
+            <div>${dateFormat.format(weighInDate(record, competition))}</div>
+            ${record.weight}kg
+          </li>`).join("");
+
+        return `<article style="padding: 0; border-bottom: .0625rem solid var(--surface-variant); box-shadow: none; border-radius:0;">
+  <progress class="max" value="${progress}" max="100"></progress>
+  <h3 style="margin:0em 0.8rem;"></h3>
 </article>
-    <ul class="list border">
-      <li style="display: flex; flex-direction: column; align-items: flex-start; gap:0; min-height: fit-content; padding:1em;">
-        <div>Goal&#160&#160&#160: ${startingWeight} to ${goal}kg (Lose ${startingWeight - goal}kg)</div>
-        <div>Lost&#160&#160&#160: ${weightLost}kg</div>
-        <div>Left&#160&#160&#160: ${(currentWeight - goal).toFixed(1)}kg</div>
-        <div>BMI&#160&#160&#160&#160: ${bmi.toFixed(1)}kg/m² <a target="_blank" style="text-decoration: underline;" href="https://www.calculator.net/bmi-calculator.html?cheightmeter=${elements[0].expand.user.height_cm}&ckg=${currentWeight}&printit=0&ctype=metric&x=Calculate">More Info</a></div>
-        <div>Height&#160: ${elements[0].expand.user.height_cm}cm</div>
-        <div style="display:flex; gap:0.5em; align-items:center">${progressPercent}%<progress value="${progressPercent}" max="100" class="large"></progress></div>
-      </li>`;
-        elements.forEach((x, i) => {
-            // Use date field if present, otherwise fall back to created
-            const recordDate = x.date ? new Date(x.date) : new Date(x.created);
-            const date = recordDate.toLocaleDateString("en-GB", { day: "2-digit", month: "long" });
-            html += `<li style="${i ? "" : "background-color: var(--inverse-primary);"}">
-        <div>${date}</div>
-        ${x.weight}kg
-      </li>`;
-        });
-        html += '</ul>';
+<ul class="list border">
+  <li style="display: flex; flex-direction: column; align-items: flex-start; gap:0; min-height: fit-content; padding:1em;">
+    <div>Goal&#160;&#160;&#160;: ${startingWeight} to ${user.goal}kg (Lose ${startingWeight - user.goal}kg)</div>
+    <div>Lost&#160;&#160;&#160;: ${weightLost}kg</div>
+    <div>Left&#160;&#160;&#160;: ${(currentWeight - user.goal).toFixed(1)}kg</div>
+    <div>BMI&#160;&#160;&#160;: ${bmi}kg/m² <a target="_blank" rel="noopener" style="text-decoration: underline;" href="https://www.calculator.net/bmi-calculator.html?cheightmeter=${height}&ckg=${currentWeight}&printit=0&ctype=metric&x=Calculate">More Info</a></div>
+    <div>Height&#160;: ${height}cm</div>
+    <div style="display:flex; gap:0.5em; align-items:center">${progress}%<progress value="${progress}" max="100" class="large"></progress></div>
+  </li>
+  ${entries}
+</ul>`;
+    }).join("");
+    recordList.querySelectorAll("h3").forEach((heading, index) => {
+        heading.textContent = groups[index].user.username;
     });
-    recordList.innerHTML = html;
 }
 
-// Calculate goal line values based on currentUserWeights and mode
-function calculateGoalLineValues(currentUserWeights, mode) {
-    const weights = currentUserWeights.length
-        ? currentUserWeights
-        : GLOBALWeightData.map(entry => ({ weight: entry.weight || 0 }));
+function createDatasets(groups, mode, competition) {
+    const colors = ["#0000ff", "#0964ed", "#ff0000", "#00ff00", "#00b350"];
+    return groups.map(({ user, records }) => {
+        const baseline = records[records.length - 1].weight;
+        let hash = 0;
+        for (const char of user.username) hash = (hash * 31 + char.charCodeAt(0)) | 0;
 
-    const firstWeight = weights[weights.length - 1].weight;
-    let goal = currentUser.goal || Math.min(...GLOBALWeightData.map(entry => entry.expand.user.goal || 0));
+        const data = records.slice().reverse()
+            .filter(record => showHiddenWeights || !record.hidden)
+            .map(record => {
+                let y = record.weight;
+                if (mode === "Relative") y = record.weight - baseline;
+                if (mode === "Progress") y = goalProgress(record.weight, baseline, user.goal);
+                return { x: weighInDate(record, competition), y };
+            })
+            .sort((a, b) => a.x - b.x);
 
-    switch (mode) {
-        case "Absolute":
-            return { goalLineValue: goal, lineStartValue: firstWeight };
-        case "Relative":
-            return { goalLineValue: -(firstWeight - goal), lineStartValue: 0 };
-        case "Progress":
-            return { goalLineValue: 100, lineStartValue: 0 };
-        default:
-            return { goalLineValue: 0, lineStartValue: firstWeight };
-    }
+        return {
+            participantId: user.id,
+            label: user.username,
+            data,
+            borderColor: colors[Math.abs(hash) % colors.length],
+            fill: false,
+            hidden: GLOBALHiddenSeries.has(user.id)
+        };
+    });
 }
 
+function goalLines(groups, competition, mode) {
+    const ownRecords = groups.find(group => group.user.id === currentUser.id)?.records;
+    const records = ownRecords ?? (competition ? [] : GLOBALWeightData);
+    if (!records.length) return {};
 
-// In updateCharts, update filter and datasets to use the 'user' field
-async function updateCharts() {
-    // Create chart datasets
-    function createDatasets(groupedWeights, mode) {
-        const colors = ["#0000ff", "#0964ed", "#ff0000", "#00ff00", "#00b350"];
+    const baseline = records[records.length - 1].weight;
+    const goal = currentUser.goal || Math.min(...groups.map(({ user }) => user.goal || 0));
+    const start = mode === "Absolute" ? baseline : 0;
+    const target = mode === "Progress" ? 100 : mode === "Relative" ? goal - baseline : goal;
+    return {
+        lineStart: { type: "line", yMin: start, yMax: start, borderColor: "rgba(0,0,0,0.2)", borderWidth: 2, borderDash: [5, 5] },
+        goalLine: { type: "line", yMin: target, yMax: target, borderColor: "rgba(0,0,0,0.8)", borderWidth: 2, borderDash: [5, 5] },
+        box1: { type: "box", yMin: target - 5, yMax: target, backgroundColor: "rgba(0,0,0,0.25)" }
+    };
+}
 
-        // Hash function to generate a consistent index based on the participant's name
-        function getColorIndex(name) {
-            let hash = 0;
-            for (let i = 0; i < name.length; i++) {
-                hash = (hash << 5) - hash + name.charCodeAt(i);
-                hash |= 0; // Convert to 32-bit integer
-            }
-            return Math.abs(hash) % colors.length;
-        }
+function updateCharts() {
+    const competition = selectedCompetition();
+    const groups = groupWeights(GLOBALWeightData);
+    renderRecordList(groups, competition);
+    renderCompetitionNotice();
 
-        return Object.entries(groupedWeights).map(([name, elements], i) => {
-            const startWeight = elements[elements.length - 1].weight;
-
-            return {
-                label: name,
-                data: elements
-                    .sort((a, b) => {
-                        // Sort using date field if present, otherwise use created
-                        const dateA = a.date ? new Date(a.date) : new Date(a.created);
-                        const dateB = b.date ? new Date(b.date) : new Date(b.created);
-                        return dateA - dateB;
-                    })
-                    .map(x => {
-                        let y;
-                        if (mode === "Relative") {
-                            y = x.weight - startWeight;
-                        } else if (mode === "Progress") {
-                            y = ((x.weight - startWeight) / (elements[0].expand.user.goal - startWeight)) * 100;
-                        } else { // Absolute
-                            y = x.weight;
-                        }
-                        // Use date field if present, otherwise fall back to created
-                        return { 
-                            x: x.date ? new Date(x.date) : new Date(x.created), 
-                            y, 
-                            _hidden: !!x.hidden 
-                        };
-                    }),
-                borderColor: colors[getColorIndex(name)],
-                fill: false,
-                // IMPORTANT: preserve the user's hidden state (legend toggles)
-                hidden: GLOBALHiddenSeries.has(name)
-            };
-        });
+    const mode = GLOBALmode;
+    const datasets = createDatasets(groups, mode, competition);
+    const annotations = goalLines(groups, competition, mode);
+    const xAxis = {
+        type: "time",
+        time: { unit: "day", displayFormats: { day: "dd MMM" }, tooltipFormat: "dd MMM yyyy" },
+        ticks: { autoSkip: true, maxRotation: 0, minRotation: 0 }
+    };
+    const tooltip = { callbacks: {} };
+    if (competition) {
+        xAxis.ticks.callback = value => competitionTickLabel.format(value);
+        tooltip.callbacks.title = items => competitionDateLabel.format(items[0].parsed.x);
     }
-    try {
-        const weights = GLOBALWeightData;
-        const grouped = groupWeights(weights);
-        renderRecordList(grouped);
-        const currentUserWeights = currentUser.id ?
-            weights.filter(w => w.expand.user.id === currentUser.id) : [];
-        const { goalLineValue, lineStartValue } = calculateGoalLineValues(currentUserWeights, GLOBALmode);
+    const yAxis = {
+        title: {
+            display: true,
+            text: mode === "Absolute" ? "Weight (kg)" : mode === "Relative" ? "Weight Change (kg)" : "Progress (%)"
+        },
+        reverse: mode === "Progress",
+        grace: 5
+    };
 
-        const ctx = document.getElementById("ProgressGraph").getContext("2d");
-        const datasets = createDatasets(grouped, GLOBALmode);
-        const margin = 5;
+    if (chartInstance) {
+        chartInstance.data.datasets = datasets;
+        chartInstance.options.scales.x = xAxis;
+        chartInstance.options.scales.y = yAxis;
+        chartInstance.options.plugins.annotation.annotations = annotations;
+        chartInstance.options.plugins.tooltip = tooltip;
+        chartInstance.update();
+        return;
+    }
 
-        // If chart already exists, try to preserve per-dataset full data backups (_fullData)
-        if (chartInstance && chartInstance.data && chartInstance.data.datasets) {
-            const prevFullMap = new Map(chartInstance.data.datasets.map(ds => [ds.label, ds._fullData || ds.data.slice()]));
-            // Attach preserved full data where available and apply point-level hidden filtering based on showHiddenWeights
-            chartInstance.data.datasets = datasets.map(ds => {
-                const preserved = prevFullMap.get(ds.label);
-                // set _fullData to preserved data (if present) or to newly created data
-                // Always rebuild fresh values based on current mode
-                ds._fullData = ds.data.slice();
-                // Then apply hidden filtering
-                ds.data = showHiddenWeights
-                    ? ds._fullData.slice()
-                    : ds._fullData.filter(pt => !pt._hidden);
-
-                ds.data = showHiddenWeights ? ds._fullData.slice() : ds._fullData.filter(pt => !pt._hidden);
-                // apply persisted legend-hidden state
-                ds.hidden = GLOBALHiddenSeries.has(ds.label);
-                return ds;
-            });
-        }
-
-        const yAxisReverse = GLOBALmode === "Progress";
-        let highestValue;
-
-        if (yAxisReverse) {
-            highestValue = Math.min(...datasets.flatMap(ds => ds.data.map(pt => pt.y)));
-        } else {
-            highestValue = Math.max(...datasets.flatMap(ds => ds.data.map(pt => pt.y)));
-        }
-
-        const yAxisLabel = GLOBALmode === "Absolute" ? "Weight (kg)" :
-            GLOBALmode === "Relative" ? "Weight Change (kg)" :
-                "Progress (%)";
-
-        if (chartInstance) {
-            // Update existing chart
-            // (when chartInstance.data.datasets already set above for the preserved case)
-            if (!chartInstance.data.datasets || !chartInstance.data.datasets.length) {
-                // fallback: set datasets directly and ensure _fullData + filtering
-                chartInstance.data.datasets = datasets.map(ds => {
-                    ds._fullData = ds.data.slice();
-                    ds.data = showHiddenWeights ? ds._fullData.slice() : ds._fullData.filter(pt => !pt._hidden);
-                    ds.hidden = GLOBALHiddenSeries.has(ds.label);
-                    return ds;
-                });
-            }
-
-            if (chartInstance.options.plugins?.annotation?.annotations) {
-                const ann = chartInstance.options.plugins.annotation.annotations;
-                ann.lineStart.yMin = lineStartValue;
-                ann.lineStart.yMax = lineStartValue;
-                ann.goalLine.yMin = goalLineValue;
-                ann.goalLine.yMax = goalLineValue;
-                ann.box1.yMax = goalLineValue;
-                ann.box1.yMin = goalLineValue + (yAxisReverse ? margin : -margin);
-            }
-
-            chartInstance.options.scales.y.reverse = yAxisReverse;
-            chartInstance.options.scales.y.title.text = yAxisLabel;
-
-            if (yAxisReverse) {
-                chartInstance.options.scales.y.max = (goalLineValue + margin);
-                chartInstance.options.scales.y.min = (highestValue - margin);
-            } else {
-                chartInstance.options.scales.y.max = (highestValue + margin);
-                chartInstance.options.scales.y.min = (goalLineValue - margin);
-            }
-
-            chartInstance.update();
-        } else {
-            // Create new chart
-            chartInstance = new Chart(ctx,
-                {
-                    type: "line",
-                    data: { datasets },
-                    options:
-                    {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        animation: {
-                            duration: 0 // Disable all animations
-                        },
-                        scales: {
-                            x: {
-                                type: "time",
-                                time: {
-                                    unit: "day",
-                                    displayFormats: { day: "dd MMM" },
-                                    tooltipFormat: "dd MMM yyyy"
-                                },
-                                title: { display: false },
-                                ticks: {
-                                    autoSkip: true,
-                                    maxRotation: 0,
-                                    minRotation: 0
-                                }
-                            },
-                            y: {
-                                title: { display: true, text: yAxisLabel },
-                                reverse: yAxisReverse,
-                                min: (goalLineValue - 5),
-                                max: (highestValue + 5),
-                            }
-                        },
-                        plugins: {
-                            legend: {
-                                display: true,
-                                position: "top",
-                                // CUSTOM: remember toggles by label when legend items are clicked
-                                onClick: function (e, legendItem, legend) {
-                                    const ci = legend.chart;
-                                    const label = legendItem.text;
-                                    // toggle stored hidden state for this label
-                                    toggleHiddenForLabel(label);
-                                    // find the dataset index for this label and apply hidden flag
-                                    const dsIndex = ci.data.datasets.findIndex(d => d.label === label);
-                                    if (dsIndex >= 0) {
-                                        const meta = ci.getDatasetMeta(dsIndex);
-                                        meta.hidden = GLOBALHiddenSeries.has(label);
-                                        ci.update();
-                                    }
-                                }
-                            },
-                            annotation: {
-                                annotations: {
-                                    lineStart: {
-                                        type: "line",
-                                        yMin: lineStartValue,
-                                        yMax: lineStartValue,
-                                        borderColor: "rgba(0,0,0,0.2)",
-                                        borderWidth: 2,
-                                        borderDash: [5, 5]
-                                    },
-                                    goalLine: {
-                                        type: "line",
-                                        yMin: goalLineValue,
-                                        yMax: goalLineValue,
-                                        borderColor: "rgba(0,0,0,0.8)",
-                                        borderWidth: 2,
-                                        borderDash: [5, 5]
-                                    },
-                                    box1: {
-                                        type: "box",
-                                        yMin: goalLineValue - 5,
-                                        yMax: goalLineValue,
-                                        backgroundColor: "rgba(0,0,0,0.25)"
-                                    }
-                                }
-                            }
-                        }
+    chartInstance = new Chart(document.getElementById("ProgressGraph"), {
+        type: "line",
+        data: { datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 0 },
+            scales: { x: xAxis, y: yAxis },
+            plugins: {
+                tooltip,
+                legend: {
+                    position: "top",
+                    onClick(event, item, legend) {
+                        const chart = legend.chart;
+                        const { participantId } = chart.data.datasets[item.datasetIndex];
+                        toggleHiddenParticipant(participantId);
+                        chart.setDatasetVisibility(item.datasetIndex, !GLOBALHiddenSeries.has(participantId));
+                        chart.update();
                     }
-                });
+                },
+                annotation: { annotations }
+            }
         }
-
-        // Preserve full data per dataset so toggle can restore points later
-        chartInstance.data.datasets.forEach((ds, idx) => {
-            // datasets[idx] is the created dataset; copy its full data snapshot
-            ds._fullData = datasets[idx] ? datasets[idx].data.slice() : ds.data.slice();
-            // apply showHiddenWeights filtering immediately
-            ds.data = showHiddenWeights ? ds._fullData.slice() : ds._fullData.filter(pt => !pt._hidden);
-            // apply persisted legend-hidden state
-            ds.hidden = GLOBALHiddenSeries.has(ds.label);
-        });
-    }
-    catch (error) {
-        console.error("Error in updateCharts:", error);
-    }
+    });
 }
 
 // Update logWeight to use the authenticated user relationship
 async function logWeight() {
-    if (currentUser.id == "soavzbhd6bu6y5r") {
+    if (currentUser.id === guestId) {
         submitButton.innerText = ("You CAN'T log weights you're mearly a guest");
         console.error("Unauthorized: Guests can't log weights.");
         return;
@@ -496,6 +531,7 @@ async function logWeight() {
             user: currentUser.id
         });
         document.getElementById("weightInput").value = "";
+        await loadWeights();
     } catch (e) {
         console.error("Error logging weight:", e);
     }
@@ -516,7 +552,6 @@ function setSigninDialogMode(mode) {
     }
     else if (mode === "signin") {
         submitButton.innerText = ("Submit");
-        renderSignInForm();
         sid_progress.style.display = "none";
         sid_words.style.display = "block";
         signindialog.showModal();
@@ -529,8 +564,8 @@ function setSigninDialogMode(mode) {
 
 // Initialize application
 async function init() {
-    pocketBase.collection('weights').subscribe('*', async function (e) {
-        await loadWeights();
+    pocketBase.collection("weights").subscribe("*", loadWeights).catch(error => {
+        console.error("Error subscribing to weights:", error);
     });
     //EVENT LISTENERS...
     const tabs = GraphTabs.querySelectorAll("a");
@@ -541,6 +576,14 @@ async function init() {
         });
     });
     submitButton.addEventListener("click", logWeight);
+    competitionSelect.addEventListener("change", changeCompetition);
+    newCompetitionButton.addEventListener("click", openCompetitionForm);
+    competitionForm.addEventListener("submit", createCompetition);
+    cancelCompetitionButton.addEventListener("click", () => competitionDialog.close());
+    competitionDialog.addEventListener("cancel", event => {
+        if (cancelCompetitionButton.disabled) event.preventDefault();
+    });
+    renderSignInForm();
     ///////////////////////////////
 
     setSigninDialogMode("loading");
