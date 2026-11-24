@@ -34,7 +34,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
 
-    <link rel="stylesheet" href="styles.css?v=6" />
+    <link rel="stylesheet" href="styles.css?v=7" />
   </head>
 
   <body class="light">
@@ -54,10 +54,7 @@
       </h1>
       <button
         id="signinbutton"
-        onclick="
-          setSigninDialogMode('signin');
-          localStorage.clear();
-        "
+        onclick="signOut()"
       >
         Sign Out
       </button>
@@ -201,10 +198,13 @@
     <dialog id="competitionDialog" aria-labelledby="competitionDialogTitle">
       <h2 id="competitionDialogTitle">New Competition</h2>
       <form id="competitionForm">
-        <div class="field label suffix border">
-          <select id="competitionOpponent" required></select>
-          <label for="competitionOpponent">Friend</label>
-          <i aria-hidden="true">arrow_drop_down</i>
+        <fieldset class="competition-friends">
+          <legend>Friends to include</legend>
+          <div id="competitionFriends"></div>
+        </fieldset>
+        <div class="field label border">
+          <input type="text" id="competitionName" maxlength="80" />
+          <label for="competitionName">Name (optional)</label>
         </div>
         <div class="field label border">
           <input type="date" id="competitionStartDate" required />
@@ -218,6 +218,6 @@
       </form>
     </dialog>
 
-    <script src="app.js?v=14"></script>
+    <script src="app.js?v=15"></script>
   </body>
 </html>

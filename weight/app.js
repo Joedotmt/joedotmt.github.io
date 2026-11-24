@@ -14,7 +14,8 @@ const competitionSelect = document.getElementById("competitionSelect");
 const competitionNotice = document.getElementById("competitionNotice");
 const competitionDialog = document.getElementById("competitionDialog");
 const competitionForm = document.getElementById("competitionForm");
-const competitionOpponent = document.getElementById("competitionOpponent");
+const competitionFriends = document.getElementById("competitionFriends");
+const competitionName = document.getElementById("competitionName");
 const competitionStartDate = document.getElementById("competitionStartDate");
 const competitionFormNotice = document.getElementById("competitionFormNotice");
 const createCompetitionButton = document.getElementById("createCompetitionButton");
@@ -43,6 +44,7 @@ const competitionTickLabel = new Intl.DateTimeFormat("en-GB", {
     month: "short",
     day: "2-digit"
 });
+const participantNames = new Intl.ListFormat("en-GB");
 let chartInstance = null;
 let currentUser = {};
 let GLOBALWeightData = [];
@@ -113,6 +115,11 @@ async function signIn(username, password) {
     updateWelcomeTextAndWords();
 }
 
+function signOut() {
+    pocketBase.authStore.clear();
+    window.location.reload();
+}
+
 function updateWelcomeTextAndWords() {
     welcomeText.innerText = `Hello ${currentUser.username}`;
 
@@ -173,9 +180,13 @@ function selectedCompetition() {
     return competitions.find(competition => competition.id === competitionSelect.value);
 }
 
-function participantName(competition, role) {
-    return competition.expand?.[role]?.username ??
-        (competition[role] === currentUser.id ? currentUser.username : "Friend");
+function competitionSelectionKey() {
+    return `weight.selectedCompetition.${currentUser.id}`;
+}
+
+function participantName(competition, id) {
+    return competition.expand?.participants?.find(user => user.id === id)?.username ??
+        (id === currentUser.id ? currentUser.username : "Friend");
 }
 
 function matchAnyId(field, ids) {
@@ -195,8 +206,9 @@ function renderCompetitionOptions(selection = competitionSelect.value) {
     const options = [new Option("All Friends", "")];
     const duplicates = new Map();
     for (const competition of competitions) {
-        const otherRole = competition.creator === currentUser.id ? "opponent" : "creator";
-        const label = `${participantName(competition, otherRole)} · ${displayStartDate(competition)}`;
+        const friends = competition.participants.filter(id => id !== currentUser.id);
+        const title = competition.name || participantNames.format(friends.map(id => participantName(competition, id))) || "Competition";
+        const label = `${title} · ${displayStartDate(competition)}`;
         const count = (duplicates.get(label) ?? 0) + 1;
         duplicates.set(label, count);
         options.push(new Option(count > 1 ? `${label} (${count})` : label, competition.id));
@@ -205,21 +217,27 @@ function renderCompetitionOptions(selection = competitionSelect.value) {
     if (competitions.some(competition => competition.id === selection)) competitionSelect.value = selection;
 }
 
-async function loadCompetitions() {
+async function loadCompetitions(restoreSelection = false) {
     if (!isParticipantAccount()) return;
     const request = ++competitionsRequest;
     try {
         const records = await pocketBase.collection("competitions").getFullList({
             sort: "-start_date,created,id",
-            expand: "creator,opponent",
+            expand: "participants",
             requestKey: null
         });
         if (request !== competitionsRequest) return;
         competitionListFailed = false;
-        const selection = competitionSelect.value;
+        const previous = selectedCompetition();
+        const selection = restoreSelection ? localStorage.getItem(competitionSelectionKey()) : competitionSelect.value;
         competitions = records;
         renderCompetitionOptions(selection);
-        if (selection !== competitionSelect.value) await changeCompetition();
+        const current = selectedCompetition();
+        if (selection && !current) localStorage.removeItem(competitionSelectionKey());
+        const scopeChanged = previous?.id !== current?.id ||
+            previous?.participants.join() !== current?.participants.join() ||
+            previous?.start_date !== current?.start_date;
+        if (!restoreSelection && scopeChanged) await changeCompetition();
         else renderCompetitionNotice();
     } catch (error) {
         if (request !== competitionsRequest) return;
@@ -229,9 +247,14 @@ async function loadCompetitions() {
     }
 }
 
+function selectedFriends() {
+    return [...competitionFriends.querySelectorAll("input:checked")].map(input => input.value);
+}
+
 async function openCompetitionForm() {
     const friends = [...new Set(currentUser.friends ?? [])].filter(id => id !== currentUser.id && id !== guestId);
-    competitionOpponent.replaceChildren(new Option("Choose a friend", ""));
+    competitionFriends.replaceChildren();
+    competitionName.value = "";
     competitionStartDate.value = berlinDay(new Date());
     createCompetitionButton.disabled = true;
     showNotice(competitionFormNotice, friends.length ? "Loading friends…" : "No friends are available to compete with.");
@@ -244,9 +267,18 @@ async function openCompetitionForm() {
             sort: "username",
             fields: "id,username"
         });
-        competitionOpponent.append(...records.map(friend => new Option(friend.username, friend.id)));
+        competitionFriends.replaceChildren(...records.map(friend => {
+            const label = document.createElement("label");
+            label.className = "competition-friend";
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.value = friend.id;
+            const name = document.createElement("span");
+            name.textContent = friend.username;
+            label.append(checkbox, name);
+            return label;
+        }));
         showNotice(competitionFormNotice, records.length ? "" : "No friends are available to compete with.");
-        createCompetitionButton.disabled = !records.length;
     } catch (error) {
         if (error.isAbort) return;
         showNotice(competitionFormNotice, "Couldn’t load your friends. Reopen the form to try again.");
@@ -257,22 +289,24 @@ async function openCompetitionForm() {
 async function createCompetition(event) {
     event.preventDefault();
     if (createCompetitionButton.disabled || !isParticipantAccount()) return;
+    const friends = selectedFriends();
+    if (!friends.length) return;
     createCompetitionButton.disabled = true;
     cancelCompetitionButton.disabled = true;
     showNotice(competitionFormNotice, "Creating competition…");
     let record;
     try {
         record = await pocketBase.collection("competitions").create({
-            creator: currentUser.id,
-            opponent: competitionOpponent.value,
+            participants: [currentUser.id, ...friends],
+            name: competitionName.value.trim(),
             start_date: `${competitionStartDate.value} 00:00:00.000Z`
-        }, { expand: "creator,opponent" });
+        }, { expand: "participants" });
     } catch (error) {
-        showNotice(competitionFormNotice, "Couldn’t create the competition. Check the start date and friend, then try again.");
+        showNotice(competitionFormNotice, "Couldn’t create the competition. Check the start date and participants, then try again.");
         console.error("Error creating competition:", error);
         return;
     } finally {
-        createCompetitionButton.disabled = false;
+        createCompetitionButton.disabled = !selectedFriends().length;
         cancelCompetitionButton.disabled = false;
     }
     competitions = [record, ...competitions.filter(competition => competition.id !== record.id)];
@@ -282,6 +316,7 @@ async function createCompetition(event) {
 }
 
 async function changeCompetition() {
+    if (isParticipantAccount()) localStorage.setItem(competitionSelectionKey(), competitionSelect.value);
     GLOBALWeightData = [];
     weightsNotice = "Loading weigh-ins…";
     updateCharts();
@@ -299,10 +334,10 @@ function renderCompetitionNotice() {
             message = `This competition starts on ${displayStartDate(competition)}.`;
         } else {
             const logged = new Set(GLOBALWeightData.map(weight => weight.user));
-            const waiting = ["creator", "opponent"].filter(role => !logged.has(competition[role]));
+            const waiting = competition.participants.filter(id => !logged.has(id));
             if (waiting.length) {
-                const names = waiting.map(role => participantName(competition, role));
-                message = `Waiting for ${names.join(" and ")} to log a first weigh-in.`;
+                const names = waiting.map(id => participantName(competition, id));
+                message = `Waiting for ${participantNames.format(names)} to log a first weigh-in.`;
             }
         }
     }
@@ -319,7 +354,7 @@ async function loadWeights() {
     const request = ++weightsRequest;
     const competition = selectedCompetition();
     const participants = competition
-        ? [competition.creator, competition.opponent]
+        ? competition.participants
         : [...new Set([...(currentUser.friends ?? []), currentUser.id])];
     try {
         const weights = await pocketBase.collection("weights").getFullList({
@@ -342,14 +377,15 @@ async function loadWeights() {
 }
 
 async function loadTracker() {
-    document.getElementById("competitionControls").hidden = false;
     newCompetitionButton.hidden = !isParticipantAccount();
     if (isParticipantAccount()) {
-        pocketBase.collection("competitions").subscribe("*", loadCompetitions).catch(error => {
+        await loadCompetitions(true);
+        pocketBase.collection("competitions").subscribe("*", () => loadCompetitions()).catch(error => {
             console.error("Error subscribing to competitions:", error);
         });
     }
-    await Promise.all([loadWeights(), loadCompetitions()]);
+    await loadWeights();
+    document.getElementById("competitionControls").hidden = false;
 }
 
 function groupWeights(weights) {
@@ -578,6 +614,9 @@ async function init() {
     submitButton.addEventListener("click", logWeight);
     competitionSelect.addEventListener("change", changeCompetition);
     newCompetitionButton.addEventListener("click", openCompetitionForm);
+    competitionFriends.addEventListener("change", () => {
+        if (!cancelCompetitionButton.disabled) createCompetitionButton.disabled = !selectedFriends().length;
+    });
     competitionForm.addEventListener("submit", createCompetition);
     cancelCompetitionButton.addEventListener("click", () => competitionDialog.close());
     competitionDialog.addEventListener("cancel", event => {
