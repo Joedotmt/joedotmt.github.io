@@ -3,7 +3,6 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<meta http-equiv="Cache-Control" content="no-cache" />
 		<title>Weight Loss Competition Tracker</title>
 		<link rel="icon" href="favicon.ico" />
 
@@ -11,13 +10,16 @@
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link
 			href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,500..700;1,500..700&display=swap"
+			media="print"
+			onload="this.media = 'all'"
 			rel="stylesheet" />
 
-		<script defer src="https://cdnjs.cloudflare.com/ajax/libs/pocketbase/0.25.0/pocketbase.umd.js"></script>
-		<script defer src="app.js?v=20"></script>
+		<script defer crossorigin="anonymous" src="https://cdnjs.cloudflare.com/ajax/libs/pocketbase/0.25.0/pocketbase.umd.js"></script>
+		<script defer src="app.js"></script>
 
 		<link
 			href="https://cdn.jsdelivr.net/npm/beercss@3.9.7/dist/cdn/beer.min.css"
+			crossorigin="anonymous"
 			rel="stylesheet" />
 		<script
 			type="module"
@@ -26,7 +28,7 @@
 			type="module"
 			src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
 
-		<link rel="stylesheet" href="styles.css?v=14" />
+		<link rel="stylesheet" href="styles.css" />
 	</head>
 
 	<body class="light">
@@ -123,6 +125,7 @@
 					Log Weight
 				</button>
 			</div>
+			<button type="button" id="appUpdateButton" class="border" hidden>Update available · Reload</button>
 			<div class="tracker-layout">
 				<div class="tracker-chart">
 					<p id="competitionNotice" role="status" hidden></p>

@@ -451,14 +451,15 @@ async function loadTracker() {
 async function loadChartScripts() {
     try {
         const urls = [
-            "https://cdn.jsdelivr.net/npm/chart.js",
-            "https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns",
-            "https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"
+            "https://cdn.jsdelivr.net/npm/chart.js@4.6.2",
+            "https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0",
+            "https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0"
         ];
         await Promise.all(urls.map(src => new Promise((resolve, reject) => {
             const script = document.createElement("script");
             // Download together, then execute in dependency order.
             script.async = false;
+            script.crossOrigin = "anonymous";
             script.src = src;
             script.onload = resolve;
             script.onerror = () => reject(new Error(`Couldn’t load ${src}`));
@@ -727,6 +728,36 @@ function setSigninDialogMode(mode, message = "") {
     }
 }
 
+async function setupAppCache() {
+    if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
+
+    const updateButton = document.getElementById("appUpdateButton");
+    let currentRelease = document.documentElement.dataset.appRelease;
+    navigator.serviceWorker.addEventListener("message", ({ data }) => {
+        if (data?.type !== "WEIGHT_APP_RELEASE" || !data.release) return;
+        currentRelease ??= data.release;
+        updateButton.hidden = data.release === currentRelease;
+    });
+    updateButton.addEventListener("click", () => {
+        if (!document.querySelector("dialog[open]")) location.reload();
+    });
+
+    try {
+        await navigator.serviceWorker.register("./sw.js");
+        const registration = await navigator.serviceWorker.ready;
+        const checkForUpdate = (refresh = true) => {
+            registration.active?.postMessage({ type: "CHECK_WEIGHT_APP_RELEASE", refresh });
+        };
+        checkForUpdate(Boolean(currentRelease));
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible") checkForUpdate();
+        });
+        window.addEventListener("online", () => checkForUpdate());
+    } catch (error) {
+        console.warn("Couldn’t set up the app cache:", error);
+    }
+}
+
 function init() {
     const tabs = GraphTabs.querySelectorAll("button");
     tabs.forEach(tab => {
@@ -760,5 +791,6 @@ function init() {
     signindialog.addEventListener("cancel", event => event.preventDefault());
     renderSignInForm();
     void tryRestoreAuth();
+    void setupAppCache();
 }
 init();

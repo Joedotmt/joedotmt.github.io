@@ -136,6 +136,15 @@ progress.circle {
 	flex-shrink: 0;
 }
 
+#appUpdateButton {
+	align-self: center;
+	margin: 0 1rem 0.5rem;
+}
+
+#appUpdateButton[hidden] {
+	display: none;
+}
+
 #sid_words {
 	display: contents;
 }
