@@ -13,7 +13,8 @@
 			href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,500..700;1,500..700&display=swap"
 			rel="stylesheet" />
 
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/pocketbase/0.25.0/pocketbase.umd.js"></script>
+		<script defer src="https://cdnjs.cloudflare.com/ajax/libs/pocketbase/0.25.0/pocketbase.umd.js"></script>
+		<script defer src="app.js?v=17"></script>
 
 		<link
 			href="https://cdn.jsdelivr.net/npm/beercss@3.9.7/dist/cdn/beer.min.css"
@@ -25,12 +26,7 @@
 			type="module"
 			src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
 
-		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-		<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-
-		<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
-
-		<link rel="stylesheet" href="styles.css?v=11" />
+		<link rel="stylesheet" href="styles.css?v=12" />
 	</head>
 
 	<body class="light">
@@ -49,7 +45,7 @@
 			<h1 style="margin: 1em 0em; margin-right: 1em">
 				Weight Loss Competition Tracker
 			</h1>
-			<button id="signinbutton" onclick="signOut()">Sign Out</button>
+			<button id="signinbutton" onclick="signOut()" disabled>Sign Out</button>
 		</header>
 
 		<dialog
@@ -60,7 +56,7 @@
 				align-content: center;
 			"
 			id="signindialog">
-			<div id="sid_progress">
+			<div id="sid_progress" style="display: none">
 				<progress id="sid_progressbar" class="circle large"></progress>
 
 				<div style="display: contents" id="loadingtext">
@@ -103,7 +99,7 @@
 							<i>password</i>
 						</div>
 
-						<button type="submit" onclick="setSigninDialogMode('loading')">
+						<button type="submit">
 							Sign In
 						</button>
 						<button type="button" id="guestSignInButton">
@@ -120,11 +116,13 @@
 
 				<button
 					style="width: 50%; box-sizing: border-box"
-					onclick="weightFormDialog.showModal()"
-					id="logweightbutton">
+					type="button"
+					id="logweightbutton"
+					disabled>
 					Log Weight
 				</button>
 			</div>
+			<p id="weightSaveNotice" role="status"></p>
 
 			<!-- tabs wont work without these -->
 			<div id="tab1" class="page"></div>
@@ -135,6 +133,7 @@
 			<div class="tracker-layout">
 				<div class="tracker-chart">
 					<p id="competitionNotice" role="status" hidden></p>
+					<p id="chartNotice" role="status" hidden></p>
 					<div class="tabs" id="GraphTabs">
 						<a class="active ripple" data-ui="#tab1">Absolute</a>
 						<a class="ripple" data-ui="#tab2">Relative</a>
@@ -160,24 +159,24 @@
 			</div>
 		</main>
 
-		<dialog id="weightFormDialog" class="max">
-			<h2 style="margin-bottom: 1em">Log Weight</h2>
+		<dialog id="weightFormDialog" class="max" aria-labelledby="weightFormTitle">
+			<h2 id="weightFormTitle" style="margin-bottom: 1em">Log Weight</h2>
 
-			<div
-				style="padding: 1em; gap: 1em; display: flex; flex-direction: column">
-				<div style="margin: 0" class="field label suffix border">
-					<input type="number" id="weightInput" step="0.1" min="71" required />
-					<label>Weight (kg)</label>
-					<i>scale</i>
+			<form id="weightForm">
+				<div style="padding: 1em">
+					<div style="margin: 0" class="field label suffix border">
+						<input type="number" id="weightInput" inputmode="decimal" step="any" required autofocus />
+						<label for="weightInput">Weight (kg)</label>
+						<i>scale</i>
+					</div>
+					<p id="weightFormNotice" role="status"></p>
 				</div>
-			</div>
 
-			<nav class="right-align">
-				<button onclick="weightFormDialog.close()" class="border">
-					Cancel
-				</button>
-				<button style="margin: 0" id="submitButton">Submit</button>
-			</nav>
+				<nav class="right-align">
+					<button type="button" id="cancelWeightButton" class="border">Cancel</button>
+					<button type="submit" id="submitButton">Submit</button>
+				</nav>
+			</form>
 		</dialog>
 
 		<dialog id="competitionDialog" aria-labelledby="competitionDialogTitle">
@@ -204,7 +203,5 @@
 				</nav>
 			</form>
 		</dialog>
-
-		<script src="app.js?v=16"></script>
 	</body>
 </html>

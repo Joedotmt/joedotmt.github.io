@@ -1,11 +1,17 @@
 // DOM Elements
 const logweightbutton = document.getElementById("logweightbutton");
+const signoutButton = document.getElementById("signinbutton");
 const sid_progress = document.getElementById("sid_progress");
 const sid_words = document.getElementById("sid_words");
 const welcomeText = document.getElementById("welcomeText");
 const recordList = document.getElementById("recordList");
 const submitButton = document.getElementById("submitButton");
+const cancelWeightButton = document.getElementById("cancelWeightButton");
+const weightForm = document.getElementById("weightForm");
 const weightFormDialog = document.getElementById("weightFormDialog");
+const weightInput = document.getElementById("weightInput");
+const weightFormNotice = document.getElementById("weightFormNotice");
+const weightSaveNotice = document.getElementById("weightSaveNotice");
 const signindialog = document.getElementById("signindialog");
 const GraphTabs = document.getElementById("GraphTabs");
 const loadingText = document.getElementById('loadingtext');
@@ -33,6 +39,13 @@ const berlinCalendar = new Intl.DateTimeFormat("en-GB", {
     month: "2-digit",
     day: "2-digit"
 });
+const berlinTime = new Intl.DateTimeFormat("en-GB", {
+    timeZone: competitionTimeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23"
+});
 const competitionDateLabel = new Intl.DateTimeFormat("en-GB", {
     timeZone: competitionTimeZone,
     year: "numeric",
@@ -46,6 +59,7 @@ const competitionTickLabel = new Intl.DateTimeFormat("en-GB", {
 });
 const participantNames = new Intl.ListFormat("en-GB");
 let chartInstance = null;
+let chartReady = false;
 let currentUser = {};
 let GLOBALWeightData = [];
 let showHiddenWeights = true;
@@ -53,6 +67,7 @@ let competitions = [];
 let competitionsRequest = 0;
 let weightsRequest = 0;
 let competitionListFailed = false;
+let competitionScopeReady = false;
 let weightsNotice = "";
 
 // NEW: remember which participants are hidden on the graph (persisted)
@@ -68,51 +83,45 @@ function toggleHiddenWeights() {
     updateCharts();
 }
 
-// Try to restore PocketBase auth from localStorage and refresh if possible
 async function tryRestoreAuth() {
-    // Restore token and model from localStorage if present
-    const pbAuth = localStorage.getItem("pocketbase_auth");
-    if (pbAuth) {
-        try {
-            const { token, model } = JSON.parse(pbAuth);
-            pocketBase.authStore.save(token, model);
-            // Try to refresh the session
-            await pocketBase.collection('fat_users').authRefresh();
-            currentUser = pocketBase.authStore.model;
-            updateWelcomeTextAndWords();
-
-            await loadTracker();
-
-            setSigninDialogMode("closed");
-            return true;
-        } catch (e) {
-            // If refresh fails, clear auth and show sign-in
-            pocketBase.authStore.clear();
-            localStorage.removeItem("pocketbase_auth");
+    let user;
+    try {
+        if (pocketBase.authStore.token) {
+            const session = await pocketBase.collection("fat_users").authRefresh();
+            user = session.record;
         }
+    } catch {
+        pocketBase.authStore.clear();
     }
-    setSigninDialogMode("signin");
-    return false;
+    if (user?.id) startTracker(user);
+    else setSigninDialogMode("signin");
 }
 
-// Updated signIn to use authWithPassword authentication
 async function signIn(username, password) {
+    if (!username || !password || sid_progress.style.display === "block") return;
     setSigninDialogMode("loading");
-    if (!username || !password) {
-        setSigninDialogMode("signin");
-        return;
-    }
+    const started = performance.now();
+    let user;
     try {
-        await pocketBase.collection('fat_users').authWithPassword(username, password);
-        currentUser = pocketBase.authStore.model;
+        const session = await pocketBase.collection("fat_users").authWithPassword(username, password);
+        user = session.record;
     } catch (e) {
         console.error("Error during sign in:", e);
         setSigninDialogMode("signin");
         return;
     }
-    await loadTracker();
-    setSigninDialogMode("closed");
+    const remaining = 600 - (performance.now() - started);
+    if (remaining > 0) await new Promise(resolve => setTimeout(resolve, remaining));
+    startTracker(user);
+}
+
+function startTracker(user) {
+    currentUser = user;
     updateWelcomeTextAndWords();
+    setSigninDialogMode("closed");
+    logweightbutton.disabled = false;
+    signoutButton.disabled = false;
+    void loadTracker();
 }
 
 function signOut() {
@@ -149,7 +158,6 @@ function renderSignInForm() {
     if (container) {
         const form = document.getElementById("signinForm");
         form.addEventListener("submit", async (event) => {
-            setSigninDialogMode("loading");
             event.preventDefault();
             const username = document.getElementById("usernameInput").value;
             const password = document.getElementById("passwordInput").value;
@@ -170,6 +178,13 @@ function berlinDay(date) {
 
 function startDay(competition) {
     return competition.start_date.slice(0, 10);
+}
+
+function competitionStart(competition) {
+    const midnightUtc = new Date(`${startDay(competition)}T00:00:00Z`);
+    // Berlin still uses the local midnight offset at 00:00 UTC on clock-change days.
+    const [hours, minutes, seconds] = berlinTime.format(midnightUtc).split(":").map(Number);
+    return new Date(midnightUtc.getTime() - (hours * 3600 + minutes * 60 + seconds) * 1000);
 }
 
 function isParticipantAccount() {
@@ -350,23 +365,26 @@ function weighInDate(record, competition) {
 }
 
 async function loadWeights() {
-    if (!currentUser.id) return;
+    if (!competitionScopeReady) return;
     const request = ++weightsRequest;
     const competition = selectedCompetition();
     const participants = competition
         ? competition.participants
         : [...new Set([...(currentUser.friends ?? []), currentUser.id])];
     try {
-        const weights = await pocketBase.collection("weights").getFullList({
+        const participantFilter = matchAnyId("user", participants);
+        const filter = competition
+            ? pocketBase.filter(`(${participantFilter}) && created >= {:start}`, { start: competitionStart(competition) })
+            : participantFilter;
+        const weights = participants.length ? await pocketBase.collection("weights").getFullList({
             sort: "-created,-id",
             expand: "user",
-            filter: matchAnyId("user", participants),
+            filter,
             requestKey: null
-        });
+        }) : [];
         if (request !== weightsRequest) return;
         weightsNotice = "";
-        GLOBALWeightData = weights.filter(weight => weight.expand?.user &&
-            (!competition || berlinDay(weighInDate(weight, competition)) >= startDay(competition)));
+        GLOBALWeightData = weights.filter(weight => weight.expand?.user);
         updateCharts();
     } catch (error) {
         if (request !== weightsRequest) return;
@@ -377,15 +395,49 @@ async function loadWeights() {
 }
 
 async function loadTracker() {
+    void loadChartScripts();
     newCompetitionButton.hidden = !isParticipantAccount();
     if (isParticipantAccount()) {
+        const savedCompetition = localStorage.getItem(competitionSelectionKey());
         await loadCompetitions(true);
+        if (savedCompetition && competitionListFailed) return;
         pocketBase.collection("competitions").subscribe("*", () => loadCompetitions()).catch(error => {
             console.error("Error subscribing to competitions:", error);
         });
     }
-    await loadWeights();
+    competitionScopeReady = true;
     document.getElementById("competitionControls").hidden = false;
+    pocketBase.collection("weights").subscribe("*", loadWeights).catch(error => {
+        console.error("Error subscribing to weights:", error);
+    });
+    weightsNotice = "Loading weigh-ins…";
+    renderCompetitionNotice();
+    await loadWeights();
+}
+
+async function loadChartScripts() {
+    try {
+        const urls = [
+            "https://cdn.jsdelivr.net/npm/chart.js",
+            "https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns",
+            "https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"
+        ];
+        await Promise.all(urls.map(src => new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            // Download together, then execute in dependency order.
+            script.async = false;
+            script.src = src;
+            script.onload = resolve;
+            script.onerror = () => reject(new Error(`Couldn’t load ${src}`));
+            document.head.append(script);
+        })));
+        chartReady = true;
+        updateCharts();
+    } catch (error) {
+        chartReady = false;
+        showNotice(document.getElementById("chartNotice"), "Couldn’t load the graph. Reload the page to try again.");
+        console.error("Error loading the graph:", error);
+    }
 }
 
 function groupWeights(weights) {
@@ -503,6 +555,7 @@ function updateCharts() {
     const groups = groupWeights(GLOBALWeightData);
     renderRecordList(groups, competition);
     renderCompetitionNotice();
+    if (!chartReady) return;
 
     const mode = GLOBALmode;
     const datasets = createDatasets(groups, mode, competition);
@@ -562,26 +615,52 @@ function updateCharts() {
     });
 }
 
-// Update logWeight to use the authenticated user relationship
-async function logWeight() {
-    if (currentUser.id === guestId) {
-        submitButton.innerText = ("You CAN'T log weights you're mearly a guest");
-        console.error("Unauthorized: Guests can't log weights.");
+function openWeightForm() {
+    weightSaveNotice.textContent = "";
+    weightFormNotice.textContent = "";
+    weightFormDialog.showModal();
+    weightInput.focus();
+}
+
+async function logWeight(event) {
+    event.preventDefault();
+    if (submitButton.disabled) return;
+    if (!isParticipantAccount()) {
+        weightFormNotice.textContent = "Sign in with a participant account to log a weigh-in.";
         return;
     }
-    weightFormDialog.close();
-    const weight = +document.getElementById("weightInput").value;
-    if (!currentUser.id || isNaN(weight)) return;
+
+    const weight = weightInput.valueAsNumber;
+    if (!Number.isFinite(weight)) return;
+    submitButton.disabled = true;
+    cancelWeightButton.disabled = true;
+    weightInput.readOnly = true;
+    weightFormNotice.textContent = "Saving…";
+
+    let savedWeight;
     try {
-        await pocketBase.collection("weights").create({
-            weight: weight,
+        savedWeight = await pocketBase.collection("weights").create({
+            weight,
             user: currentUser.id
         });
-        document.getElementById("weightInput").value = "";
-        await loadWeights();
-    } catch (e) {
-        console.error("Error logging weight:", e);
+        if (!savedWeight?.id) throw new Error("PocketBase did not return a saved weigh-in.");
+    } catch (error) {
+        const uncertain = !error.status || error.status === 408 || error.status >= 500;
+        weightFormNotice.textContent = uncertain
+            ? "Couldn’t confirm the save. Check your weigh-ins before trying again."
+            : "Couldn’t save the weigh-in. Check the value and try again.";
+        console.error("Error logging weight:", error);
+        return;
+    } finally {
+        submitButton.disabled = false;
+        cancelWeightButton.disabled = false;
+        weightInput.readOnly = false;
     }
+
+    weightForm.reset();
+    weightFormDialog.close();
+    weightSaveNotice.textContent = `${savedWeight.weight} kg saved. You can close the app.`;
+    void loadWeights();
 }
 
 function setSigninDialogMode(mode) {
@@ -598,7 +677,6 @@ function setSigninDialogMode(mode) {
         signindialog.showModal();
     }
     else if (mode === "signin") {
-        submitButton.innerText = ("Submit");
         sid_progress.style.display = "none";
         sid_words.style.display = "block";
         signindialog.showModal();
@@ -609,20 +687,20 @@ function setSigninDialogMode(mode) {
     }
 }
 
-// Initialize application
-async function init() {
-    pocketBase.collection("weights").subscribe("*", loadWeights).catch(error => {
-        console.error("Error subscribing to weights:", error);
-    });
-    //EVENT LISTENERS...
+function init() {
     const tabs = GraphTabs.querySelectorAll("a");
     tabs.forEach(tab => {
-        tab.addEventListener("click", async () => {
+        tab.addEventListener("click", () => {
             GLOBALmode = tab.innerText;
-            await updateCharts();
+            updateCharts();
         });
     });
-    submitButton.addEventListener("click", logWeight);
+    logweightbutton.addEventListener("click", openWeightForm);
+    weightForm.addEventListener("submit", logWeight);
+    cancelWeightButton.addEventListener("click", () => weightFormDialog.close());
+    weightFormDialog.addEventListener("cancel", event => {
+        if (submitButton.disabled) event.preventDefault();
+    });
     competitionSelect.addEventListener("change", changeCompetition);
     newCompetitionButton.addEventListener("click", openCompetitionForm);
     competitionFriends.addEventListener("change", () => {
@@ -633,13 +711,8 @@ async function init() {
     competitionDialog.addEventListener("cancel", event => {
         if (cancelCompetitionButton.disabled) event.preventDefault();
     });
+    signindialog.addEventListener("cancel", event => event.preventDefault());
     renderSignInForm();
-    ///////////////////////////////
-
-    setSigninDialogMode("loading");
-    // Try to restore session, otherwise show sign-in dialog
-    await tryRestoreAuth();
-
-
+    void tryRestoreAuth();
 }
 init();

@@ -156,6 +156,28 @@ form {
 	margin: auto;
 }
 
+#weightForm {
+	max-width: none;
+	margin: 0;
+	gap: 0;
+}
+
+#weightSaveNotice {
+	margin: 0 1rem;
+}
+
+#weightSaveNotice:not(:empty) {
+	margin-bottom: 0.5rem;
+}
+
+#weightFormNotice {
+	margin: 0;
+}
+
+#weightFormNotice:not(:empty) {
+	margin-top: 0.75rem;
+}
+
 label {
 	font-weight: bold;
 }
@@ -305,11 +327,13 @@ select {
 	font-size: inherit;
 }
 
-#competitionNotice {
+#competitionNotice,
+#chartNotice {
 	margin: 0 0 0.5rem;
 }
 
 #competitionNotice,
+#chartNotice,
 #competitionFormNotice {
 	color: var(--on-surface-variant);
 }
