@@ -1,8 +1,11 @@
 const scope = new URL(self.registration.scope);
 const cacheName = `weight-app:${scope.pathname}`;
-const appFiles = ["index.html", "app.js", "styles.css", "favicon.ico"];
-const shellURL = new URL(appFiles[0], scope);
-const appFileURLs = new Set(appFiles.slice(1).map(file => new URL(file, scope).href));
+const shellURL = new URL("index.html", scope);
+const shellAssets = ["app.js", "styles.css", "favicon.ico"];
+const installAssets = ["manifest.webmanifest", "icon-192.png", "icon-512.png"];
+const appFiles = ["index.html", ...shellAssets, ...installAssets];
+const shellAssetURLs = new Set(shellAssets.map(file => new URL(file, scope).href));
+const installAssetURLs = new Set(installAssets.map(file => new URL(file, scope).href));
 const coreDependencies = [
     "https://cdnjs.cloudflare.com/ajax/libs/pocketbase/0.25.0/pocketbase.umd.js",
     "https://cdn.jsdelivr.net/npm/beercss@3.9.7/dist/cdn/beer.min.css",
@@ -38,6 +41,18 @@ function releaseAssetURL(file, release) {
     return `${file}?app-release=${release}`;
 }
 
+async function currentRelease() {
+    const page = await cachedResponse(shellURL.href);
+    return page?.headers.get("X-Weight-Release");
+}
+
+async function installAsset(request) {
+    // Keep the manifest and icon URLs stable for browsers that check installed apps for updates.
+    const release = await currentRelease();
+    const response = release && await cachedResponse(releaseAssetURL(request.url, release));
+    return response || fetch(request);
+}
+
 async function digest(data) {
     const hash = await crypto.subtle.digest("SHA-256", data);
     return Array.from(new Uint8Array(hash), byte => byte.toString(16).padStart(2, "0")).join("");
@@ -64,8 +79,8 @@ async function cacheAppRelease() {
     const responses = await Promise.all(appFiles.map((file, index) => revalidate(file, previousFiles[index])));
     if (responses.every((response, index) => response === previousFiles[index])) return;
 
-    const [page, script, stylesheet] = responses;
-    if ([script, stylesheet].some(asset => asset.headers.get("Content-Type")?.startsWith("text/html"))) {
+    const [page, ...assets] = responses;
+    if (assets.some(asset => asset.headers.get("Content-Type")?.startsWith("text/html"))) {
         throw new Error("An app file was replaced by an HTML response.");
     }
     const hashes = await Promise.all(responses.map(async response => digest(await response.clone().arrayBuffer())));
@@ -128,10 +143,14 @@ self.addEventListener("fetch", event => {
         event.respondWith(cacheDependency(request));
         return;
     }
+    if (installAssetURLs.has(url.href)) {
+        event.respondWith(installAsset(request));
+        return;
+    }
     const isShell = request.mode === "navigate" && url.origin === scope.origin &&
         (url.pathname === scope.pathname || url.pathname === shellURL.pathname);
     const isReleaseAsset = url.searchParams.has("app-release") &&
-        appFileURLs.has(new URL(url.pathname, url.origin).href);
+        shellAssetURLs.has(new URL(url.pathname, url.origin).href);
     if (isShell || isReleaseAsset) {
         const key = isShell ? shellURL.href : request;
         event.respondWith(cachedResponse(key).then(response => response ?? fetch(request)));
@@ -142,7 +161,7 @@ self.addEventListener("message", event => {
     if (event.data?.type !== "CHECK_WEIGHT_APP_RELEASE") return;
     event.waitUntil((async () => {
         if (event.data.refresh) await checkForUpdate().catch(() => {});
-        const release = (await cachedResponse(shellURL.href))?.headers.get("X-Weight-Release");
+        const release = await currentRelease();
         if (release) event.source?.postMessage({ type: "WEIGHT_APP_RELEASE", release });
     })());
 });
