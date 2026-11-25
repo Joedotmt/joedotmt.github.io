@@ -37,7 +37,6 @@
 
 	<body class="light">
 		<nav class="tracker-links" aria-label="Tracker utilities">
-			<a href="./privacy/">Privacy Notice</a>
 			<button type="button" class="ripple" onclick="toggleHiddenWeights()">
 				Toggle Smoothing
 			</button>
@@ -51,7 +50,14 @@
 			<h1 style="margin: 1em 0em; margin-right: 1em">
 				Weight Loss Competition Tracker
 			</h1>
-			<button id="signinbutton" onclick="signOut()" disabled>Sign Out</button>
+			<button
+				type="button"
+				id="settingsButton"
+				aria-label="Settings"
+				aria-haspopup="dialog"
+				aria-controls="settingsDialog">
+				<span aria-hidden="true">⚙︎</span>
+			</button>
 		</header>
 
 		<dialog
@@ -145,20 +151,26 @@
 				</div>
 				<div id="recordList"></div>
 			</div>
+		</main>
+		<div id="weightSaveToast" role="status"></div>
 
+		<dialog id="settingsDialog" aria-labelledby="settingsDialogTitle">
+			<h2 id="settingsDialogTitle">Settings</h2>
 			<div id="competitionControls" class="competition-controls" hidden>
 				<div class="competition-toolbar">
 					<label for="competitionSelect">Competition</label>
 					<select id="competitionSelect">
 						<option value="">All Friends</option>
 					</select>
-					<button type="button" id="newCompetitionButton">
-						New Competition
-					</button>
+					<button type="button" id="newCompetitionButton">New Competition</button>
 				</div>
 			</div>
-		</main>
-		<div id="weightSaveToast" role="status"></div>
+			<a class="settings-privacy-link" href="./privacy/">Privacy Notice</a>
+			<nav class="right-align">
+				<button type="button" id="signinbutton" class="border" onclick="signOut()" disabled>Sign Out</button>
+				<button type="button" id="closeSettingsButton" autofocus>Close</button>
+			</nav>
+		</dialog>
 
 		<dialog id="weightFormDialog" class="max" aria-labelledby="weightFormTitle">
 			<h2 id="weightFormTitle" style="margin-bottom: 1em">Log Weight</h2>

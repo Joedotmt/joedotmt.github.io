@@ -1,6 +1,9 @@
 // DOM Elements
 const logweightbutton = document.getElementById("logweightbutton");
 const signoutButton = document.getElementById("signinbutton");
+const settingsButton = document.getElementById("settingsButton");
+const settingsDialog = document.getElementById("settingsDialog");
+const closeSettingsButton = document.getElementById("closeSettingsButton");
 const sid_progress = document.getElementById("sid_progress");
 const sid_words = document.getElementById("sid_words");
 const welcomeText = document.getElementById("welcomeText");
@@ -521,6 +524,7 @@ function renderRecordList(groups, competition) {
   <h3>
     <progress class="max" value="${progress}" max="100" aria-hidden="true"></progress>
     <span class="record-title-name"></span>
+    <span class="record-title-weight">${currentWeight} kg</span>
   </h3>
   <div class="record-summary">
     <div>Goal: ${startingWeight} to ${user.goal}kg (Lose ${(startingWeight - user.goal).toFixed(1)}kg)</div>
@@ -779,7 +783,12 @@ function init() {
         rememberCompetition(competitionSelect.value);
         void refreshCompetitionWeights();
     });
-    newCompetitionButton.addEventListener("click", openCompetitionForm);
+    settingsButton.addEventListener("click", () => settingsDialog.showModal());
+    closeSettingsButton.addEventListener("click", () => settingsDialog.close());
+    newCompetitionButton.addEventListener("click", () => {
+        settingsDialog.close();
+        void openCompetitionForm();
+    });
     competitionFriends.addEventListener("change", () => {
         if (!cancelCompetitionButton.disabled) createCompetitionButton.disabled = !selectedFriends().length;
     });

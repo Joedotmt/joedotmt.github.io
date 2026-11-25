@@ -116,24 +116,39 @@ progress.circle {
 	z-index: 1;
 }
 
-.tracker-links a,
 .tracker-links button {
 	margin: 0;
 	padding: 0;
 	color: var(--on-surface-variant);
 	font-size: 0.8125rem;
 	text-decoration: underline;
-}
-
-.tracker-links button {
 	min-width: 0;
 	min-height: 1.5rem;
 	height: auto;
 	background: transparent;
 }
 
-#signinbutton {
+#settingsButton {
 	flex-shrink: 0;
+	min-inline-size: 2.75rem;
+	block-size: 2.75rem;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--on-surface);
+	box-shadow: none;
+	font-family: system-ui, sans-serif;
+	font-size: 1.75rem;
+	font-weight: normal;
+	line-height: 1;
+}
+
+#settingsButton::after {
+	content: none;
+}
+
+#settingsButton:focus-visible {
+	outline: 2px solid var(--primary);
 }
 
 #appUpdateButton {
@@ -165,8 +180,9 @@ form {
 	margin: auto;
 }
 
-#weightFormDialog {
-	/* Let the input receive focus during the tap that opens the dialog. */
+#weightFormDialog,
+#settingsDialog {
+	/* Make the controls focusable during the tap that opens the dialog. */
 	transition: none;
 }
 
@@ -272,6 +288,10 @@ select {
 }
 
 .record-group h3 {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.5rem;
 	position: relative;
 	isolation: isolate;
 	margin: 0;
@@ -279,6 +299,11 @@ select {
 	overflow-wrap: anywhere;
 	border-radius: 0;
 	background: var(--surface-container);
+}
+
+.record-title-weight {
+	flex-shrink: 0;
+	white-space: nowrap;
 }
 
 .record-summary {
@@ -319,8 +344,19 @@ select {
 	background-color: var(--inverse-primary);
 }
 
+#settingsDialog {
+	width: min(26rem, calc(100vw - 2rem));
+	min-inline-size: 0;
+}
+
+#settingsDialog h2,
 .competition-controls {
-	margin: 0 1em 1em;
+	margin: 0 0 1rem;
+}
+
+.settings-privacy-link {
+	display: inline-block;
+	text-decoration: underline;
 }
 
 .competition-controls[hidden],
