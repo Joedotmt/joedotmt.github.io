@@ -404,11 +404,16 @@ function goalProgress(weight, baseline, goal) {
 }
 
 function renderRecordList(groups, competition) {
-    const dateFormat = new Intl.DateTimeFormat("en-GB", {
+    const timeZone = competition ? competitionTimeZone : undefined;
+    const dateOptions = {
         day: "2-digit",
         month: "long",
-        timeZone: competition ? competitionTimeZone : undefined
-    });
+        timeZone
+    };
+    const dateFormat = new Intl.DateTimeFormat("en-GB", dateOptions);
+    const dateWithYearFormat = new Intl.DateTimeFormat("en-GB", { ...dateOptions, year: "numeric" });
+    const yearFormat = new Intl.DateTimeFormat("en-GB", { timeZone, year: "numeric" });
+    const currentYear = yearFormat.format(new Date());
     recordList.innerHTML = groups.map(({ user, records }) => {
         const startingWeight = records[records.length - 1].weight;
         const currentWeight = records[0].weight;
@@ -416,11 +421,15 @@ function renderRecordList(groups, competition) {
         const progress = goalProgress(currentWeight, startingWeight, user.goal).toFixed(1);
         const height = user.height_cm;
         const bmi = height ? (currentWeight / (height / 100) ** 2).toFixed(1) : "—";
-        const entries = records.map((record, index) => `
+        const entries = records.map((record, index) => {
+            const date = weighInDate(record, competition);
+            const format = yearFormat.format(date) === currentYear ? dateFormat : dateWithYearFormat;
+            return `
           <li class="weigh-in-row${index === 0 ? " latest-weigh-in" : ""}">
-            <span>${dateFormat.format(weighInDate(record, competition))}</span>
+            <span>${format.format(date)}</span>
             <span>${record.weight}kg</span>
-          </li>`).join("");
+          </li>`;
+        }).join("");
 
         return `<article class="record-group">
   <h3>
