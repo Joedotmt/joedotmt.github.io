@@ -452,6 +452,12 @@ select {
 	color: var(--on-surface);
 }
 
+#competitionControls {
+	margin-block-end: 0.5rem;
+	padding-block-end: 0.5rem;
+	border-block-end: 1px solid var(--outline-variant);
+}
+
 .settings-account {
 	margin-block-start: 0.5rem;
 	padding-block-start: 0.5rem;

@@ -33,6 +33,7 @@ const cancelCompetitionButton = document.getElementById("cancelCompetitionButton
 const newCompetitionButton = document.getElementById("newCompetitionButton");
 
 // Global state
+const chartModeKey = "weight.chartMode";
 let GLOBALmode = "Absolute";
 const pocketBase = new PocketBase("https://joemt-weight.fly.dev/");
 const guestId = "soavzbhd6bu6y5r";
@@ -580,10 +581,18 @@ function goalLines(groups, competition, mode) {
     const goal = currentUser.goal || Math.min(...groups.map(({ user }) => user.goal || 0));
     const start = mode === "Absolute" ? baseline : 0;
     const target = mode === "Progress" ? 100 : mode === "Relative" ? goal - baseline : goal;
+    const beyondGoal = mode === "Progress" ? { yMin: target } : { yMax: target };
     return {
-        lineStart: { type: "line", yMin: start, yMax: start, borderColor: "rgba(0,0,0,0.2)", borderWidth: 2, borderDash: [5, 5] },
+        lineStart: { type: "line", yMin: start, yMax: start, borderColor: "rgba(0,0,0,0.2)", borderWidth: 2 },
         goalLine: { type: "line", yMin: target, yMax: target, borderColor: "rgba(0,0,0,0.8)", borderWidth: 2, borderDash: [5, 5] },
-        box1: { type: "box", yMin: target - 5, yMax: target, backgroundColor: "rgba(0,0,0,0.25)" }
+        goalArea: {
+            type: "box",
+            ...beyondGoal,
+            adjustScaleRange: false,
+            drawTime: "beforeDatasetsDraw",
+            borderWidth: 0,
+            backgroundColor: "rgba(0,0,0,0.25)"
+        }
     };
 }
 
@@ -763,13 +772,25 @@ async function setupAppCache() {
 }
 
 function init() {
-    const tabs = GraphTabs.querySelectorAll("button");
+    const tabs = [...GraphTabs.querySelectorAll("button")];
+    try {
+        const savedMode = localStorage.getItem(chartModeKey);
+        if (tabs.some(tab => tab.value === savedMode)) GLOBALmode = savedMode;
+    } catch {
+        // The default view is available when browser storage is blocked.
+    }
     tabs.forEach(tab => {
+        tab.setAttribute("aria-pressed", String(tab.value === GLOBALmode));
         tab.addEventListener("click", () => {
             if (GLOBALmode === tab.value) return;
             GraphTabs.querySelector('[aria-pressed="true"]').setAttribute("aria-pressed", "false");
             tab.setAttribute("aria-pressed", "true");
             GLOBALmode = tab.value;
+            try {
+                localStorage.setItem(chartModeKey, GLOBALmode);
+            } catch {
+                // The view can still be changed for this visit.
+            }
             updateCharts();
         });
     });
