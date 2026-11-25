@@ -128,8 +128,9 @@ progress.circle {
 	background: transparent;
 }
 
-#settingsButton {
+.settings-icon-button {
 	flex-shrink: 0;
+	inline-size: 2.75rem;
 	min-inline-size: 2.75rem;
 	block-size: 2.75rem;
 	padding: 0;
@@ -137,17 +138,9 @@ progress.circle {
 	background: transparent;
 	color: var(--on-surface);
 	box-shadow: none;
-	font-family: system-ui, sans-serif;
-	font-size: 1.75rem;
-	font-weight: normal;
-	line-height: 1;
 }
 
-#settingsButton::after {
-	content: none;
-}
-
-#settingsButton:focus-visible {
+.settings-icon-button:focus-visible {
 	outline: 2px solid var(--primary);
 }
 
@@ -345,59 +338,124 @@ select {
 }
 
 #settingsDialog {
-	width: min(26rem, calc(100vw - 2rem));
 	min-inline-size: 0;
+	padding: 0;
+	font-family: system-ui, sans-serif;
+	font-weight: 400;
 }
 
-#settingsDialog h2,
-.competition-controls {
-	margin: 0 0 1rem;
+.settings-top-bar {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	background: var(--surface);
+	border-block-end: 1px solid var(--outline-variant);
 }
 
-.settings-privacy-link {
-	display: inline-block;
-	text-decoration: underline;
+.settings-top-bar-content,
+.settings-content {
+	max-inline-size: 40rem;
+	margin-inline: auto;
 }
 
-.competition-controls[hidden],
-#newCompetitionButton[hidden] {
+.settings-top-bar-content {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	min-block-size: 4rem;
+	padding-inline: 0.75rem 1rem;
+}
+
+#settingsDialogTitle {
+	margin: 0;
+	font-weight: 500;
+}
+
+.settings-content {
+	padding-block: 0.5rem 1rem;
+}
+
+#settingsDialog .settings-row {
+	display: flex;
+	justify-content: flex-start;
+	align-items: center;
+	gap: 1rem;
+	box-sizing: border-box;
+	inline-size: 100%;
+	min-block-size: 3.5rem;
+	block-size: auto;
+	margin: 0;
+	padding: 0.75rem 1.25rem;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	color: var(--on-surface);
+	text-align: start;
+	font: inherit;
+	letter-spacing: normal;
+	text-decoration: none;
+}
+
+#settingsDialog [hidden] {
 	display: none;
 }
 
-.competition-toolbar {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.375rem 0.5rem;
-	align-items: center;
-	font-size: 0.8125rem;
+#settingsDialog .settings-row:hover {
+	background: var(--surface-container);
 }
 
-.competition-toolbar select {
-	flex: 1 1 7rem;
-	width: auto;
-	min-width: 0;
-	max-width: 16rem;
-	height: 2rem;
-	margin: 0;
-	padding: 0 0.5rem;
-	border: 1px solid var(--outline);
-	border-radius: 0.375rem;
-	appearance: auto;
-	color: var(--on-surface);
-	background: var(--surface);
-}
-
-.competition-toolbar select:focus-visible {
+#settingsDialog .settings-row:focus-visible,
+.settings-picker:has(select:focus-visible) {
 	outline: 2px solid var(--primary);
-	outline-offset: 2px;
+	outline-offset: -2px;
 }
 
-#newCompetitionButton {
-	min-height: 2rem;
-	height: 2rem;
+#settingsDialog .settings-row > i {
+	flex: none;
 	margin: 0;
-	padding-inline: 0.75rem;
-	font-size: inherit;
+	color: var(--on-surface-variant);
+}
+
+#settingsDialog .settings-row > .settings-trailing-icon {
+	margin-inline-start: auto;
+}
+
+#settingsDialog .settings-picker {
+	position: relative;
+	min-block-size: 4.5rem;
+}
+
+#competitionPickerLabel {
+	align-self: flex-start;
+}
+
+#competitionSelect {
+	position: absolute;
+	inset: 0;
+	inline-size: 100%;
+	block-size: 100%;
+	margin: 0;
+	padding: 1.5rem 3.5rem 0 3.75rem;
+	border: 0;
+	border-radius: 0;
+	appearance: none;
+	background: transparent;
+	color: var(--on-surface-variant);
+	font: inherit;
+	font-size: 0.875rem;
+	text-overflow: ellipsis;
+	cursor: pointer;
+}
+
+#competitionSelect option {
+	background: var(--surface);
+	color: var(--on-surface);
+}
+
+.settings-account {
+	margin-block-start: 0.5rem;
+	padding-block-start: 0.5rem;
+	border-block-start: 1px solid var(--outline-variant);
 }
 
 #competitionNotice,
@@ -533,11 +591,5 @@ h2 {
 	.record-group {
 		border-inline: 0;
 		border-radius: 0;
-	}
-}
-
-@media (max-width: 420px) {
-	.competition-toolbar label {
-		flex-basis: 100%;
 	}
 }

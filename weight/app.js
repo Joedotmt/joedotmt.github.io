@@ -785,10 +785,7 @@ function init() {
     });
     settingsButton.addEventListener("click", () => settingsDialog.showModal());
     closeSettingsButton.addEventListener("click", () => settingsDialog.close());
-    newCompetitionButton.addEventListener("click", () => {
-        settingsDialog.close();
-        void openCompetitionForm();
-    });
+    newCompetitionButton.addEventListener("click", openCompetitionForm);
     competitionFriends.addEventListener("change", () => {
         if (!cancelCompetitionButton.disabled) createCompetitionButton.disabled = !selectedFriends().length;
     });

@@ -53,10 +53,11 @@
 			<button
 				type="button"
 				id="settingsButton"
+				class="transparent circle settings-icon-button"
 				aria-label="Settings"
 				aria-haspopup="dialog"
 				aria-controls="settingsDialog">
-				<span aria-hidden="true">⚙︎</span>
+				<i aria-hidden="true">settings</i>
 			</button>
 		</header>
 
@@ -154,22 +155,42 @@
 		</main>
 		<div id="weightSaveToast" role="status"></div>
 
-		<dialog id="settingsDialog" aria-labelledby="settingsDialogTitle">
-			<h2 id="settingsDialogTitle">Settings</h2>
-			<div id="competitionControls" class="competition-controls" hidden>
-				<div class="competition-toolbar">
-					<label for="competitionSelect">Competition</label>
-					<select id="competitionSelect">
-						<option value="">All Friends</option>
-					</select>
-					<button type="button" id="newCompetitionButton">New Competition</button>
+		<dialog id="settingsDialog" class="max" aria-labelledby="settingsDialogTitle">
+			<div class="settings-top-bar">
+				<div class="settings-top-bar-content">
+					<button type="button" id="closeSettingsButton" class="transparent circle settings-icon-button" aria-label="Back" autofocus>
+						<i aria-hidden="true">arrow_back</i>
+					</button>
+					<h2 id="settingsDialogTitle">Settings</h2>
 				</div>
 			</div>
-			<a class="settings-privacy-link" href="./privacy/">Privacy Notice</a>
-			<nav class="right-align">
-				<button type="button" id="signinbutton" class="border" onclick="signOut()" disabled>Sign Out</button>
-				<button type="button" id="closeSettingsButton" autofocus>Close</button>
-			</nav>
+			<div class="settings-content">
+				<div id="competitionControls" hidden>
+					<div class="settings-row settings-picker">
+						<i aria-hidden="true">groups</i>
+						<span id="competitionPickerLabel">Competition</span>
+						<i class="settings-trailing-icon" aria-hidden="true">expand_more</i>
+						<select id="competitionSelect" aria-labelledby="competitionPickerLabel">
+							<option value="">All Friends</option>
+						</select>
+					</div>
+					<button type="button" id="newCompetitionButton" class="settings-row">
+						<i aria-hidden="true">add</i>
+						<span>New Competition</span>
+					</button>
+				</div>
+				<a class="settings-row" href="./privacy/">
+					<i aria-hidden="true">privacy_tip</i>
+					<span>Privacy Notice</span>
+					<i class="settings-trailing-icon" aria-hidden="true">chevron_right</i>
+				</a>
+				<div class="settings-account">
+					<button type="button" id="signinbutton" class="settings-row" onclick="signOut()" disabled>
+						<i aria-hidden="true">logout</i>
+						<span>Sign Out</span>
+					</button>
+				</div>
+			</div>
 		</dialog>
 
 		<dialog id="weightFormDialog" class="max" aria-labelledby="weightFormTitle">
