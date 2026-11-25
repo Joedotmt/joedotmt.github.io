@@ -53,7 +53,7 @@
 			<button
 				type="button"
 				id="settingsButton"
-				class="transparent circle settings-icon-button"
+				class="transparent circle settings-icon-button ripple"
 				aria-label="Settings"
 				aria-haspopup="dialog"
 				aria-controls="settingsDialog">
@@ -113,10 +113,10 @@
 						</div>
 
 						<p id="signinNotice" role="status" hidden></p>
-						<button type="submit">
+						<button type="submit" class="ripple">
 							Sign In
 						</button>
-						<button type="button" id="guestSignInButton">
+						<button type="button" id="guestSignInButton" class="ripple">
 							Sign in as Guest
 						</button>
 					</form>
@@ -132,11 +132,12 @@
 					style="width: 50%; box-sizing: border-box"
 					type="button"
 					id="logweightbutton"
+					class="ripple"
 					disabled>
 					Log Weight
 				</button>
 			</div>
-			<button type="button" id="appUpdateButton" class="border" hidden>Update available · Reload</button>
+			<button type="button" id="appUpdateButton" class="border ripple" hidden>Update available · Reload</button>
 			<div class="tracker-layout">
 				<div class="tracker-chart">
 					<p id="competitionNotice" role="status" hidden></p>
@@ -158,7 +159,7 @@
 		<dialog id="settingsDialog" class="max" aria-labelledby="settingsDialogTitle">
 			<div class="settings-top-bar">
 				<div class="settings-top-bar-content">
-					<button type="button" id="closeSettingsButton" class="transparent circle settings-icon-button" aria-label="Back" autofocus>
+					<button type="button" id="closeSettingsButton" class="transparent circle settings-icon-button ripple" aria-label="Back" autofocus>
 						<i aria-hidden="true">arrow_back</i>
 					</button>
 					<h2 id="settingsDialogTitle">Settings</h2>
@@ -174,18 +175,18 @@
 							<option value="">All Friends</option>
 						</select>
 					</div>
-					<button type="button" id="newCompetitionButton" class="settings-row">
+					<button type="button" id="newCompetitionButton" class="settings-row ripple">
 						<i aria-hidden="true">add</i>
 						<span>New Competition</span>
 					</button>
 				</div>
-				<a class="settings-row" href="./privacy/" target="_blank" rel="noopener" aria-label="Privacy Notice (opens in a new tab)">
+				<a class="settings-row ripple" href="./privacy/" target="_blank" rel="noopener" aria-label="Privacy Notice (opens in a new tab)">
 					<i aria-hidden="true">privacy_tip</i>
 					<span>Privacy Notice</span>
 					<i class="settings-trailing-icon" aria-hidden="true">open_in_new</i>
 				</a>
 				<div class="settings-account">
-					<button type="button" id="signinbutton" class="settings-row" onclick="signOut()" disabled>
+					<button type="button" id="signinbutton" class="settings-row ripple" onclick="signOut()" disabled>
 						<i aria-hidden="true">logout</i>
 						<span>Sign Out</span>
 					</button>
@@ -207,8 +208,8 @@
 				</div>
 
 				<nav class="right-align">
-					<button type="button" id="cancelWeightButton" class="border">Cancel</button>
-					<button type="submit" id="submitButton">Submit</button>
+					<button type="button" id="cancelWeightButton" class="border ripple">Cancel</button>
+					<button type="submit" id="submitButton" class="ripple">Submit</button>
 				</nav>
 			</form>
 		</dialog>
@@ -230,10 +231,10 @@
 				</div>
 				<p id="competitionFormNotice" role="status" hidden></p>
 				<nav class="right-align">
-					<button type="button" id="cancelCompetitionButton" class="border">
+					<button type="button" id="cancelCompetitionButton" class="border ripple">
 						Cancel
 					</button>
-					<button type="submit" id="createCompetitionButton">Create</button>
+					<button type="submit" id="createCompetitionButton" class="ripple">Create</button>
 				</nav>
 			</form>
 		</dialog>

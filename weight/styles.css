@@ -2,6 +2,17 @@ button {
 	margin: 0;
 }
 
+@media (hover: none) {
+	/* Override BeerCSS hover elevation and icon fill on touch screens. */
+	button.ripple:hover:not(.border, .chip) {
+		box-shadow: none;
+	}
+
+	button.ripple.transparent:is(:hover, :focus) > i:not(.fill) {
+		font-variation-settings: "FILL" 0;
+	}
+}
+
 body.dark {
 	--primary: #78dc77;
 	--on-primary: #00390a;
@@ -400,8 +411,10 @@ select {
 	display: none;
 }
 
-#settingsDialog .settings-row:hover {
-	background: var(--surface-container);
+@media (hover: hover) {
+	#settingsDialog .settings-row:hover {
+		background: var(--surface-container);
+	}
 }
 
 #settingsDialog .settings-row:focus-visible,
