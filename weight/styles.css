@@ -156,18 +156,35 @@ form {
 	margin: auto;
 }
 
+#weightFormDialog {
+	/* Let the input receive focus during the tap that opens the dialog. */
+	transition: none;
+}
+
 #weightForm {
 	max-width: none;
 	margin: 0;
 	gap: 0;
 }
 
-#weightSaveNotice {
-	margin: 0 1rem;
+#weightSaveToast {
+	position: fixed;
+	z-index: 110;
+	left: 50%;
+	bottom: calc(1rem + env(safe-area-inset-bottom));
+	transform: translateX(-50%);
+	inline-size: max-content;
+	max-inline-size: calc(100% - 2rem);
+	padding: 0.75rem 1rem;
+	border-radius: 0.75rem;
+	color: var(--inverse-on-surface);
+	background: var(--inverse-surface);
+	box-shadow: var(--elevate2);
+	pointer-events: none;
 }
 
-#weightSaveNotice:not(:empty) {
-	margin-bottom: 0.5rem;
+#weightSaveToast:empty {
+	opacity: 0;
 }
 
 #weightFormNotice {

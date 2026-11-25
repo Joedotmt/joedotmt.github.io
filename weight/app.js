@@ -11,7 +11,7 @@ const weightForm = document.getElementById("weightForm");
 const weightFormDialog = document.getElementById("weightFormDialog");
 const weightInput = document.getElementById("weightInput");
 const weightFormNotice = document.getElementById("weightFormNotice");
-const weightSaveNotice = document.getElementById("weightSaveNotice");
+const weightSaveToast = document.getElementById("weightSaveToast");
 const signindialog = document.getElementById("signindialog");
 const GraphTabs = document.getElementById("GraphTabs");
 const loadingText = document.getElementById('loadingtext');
@@ -64,11 +64,13 @@ let currentUser = {};
 let GLOBALWeightData = [];
 let showHiddenWeights = true;
 let competitions = [];
+let preferredCompetitionId = "";
 let competitionsRequest = 0;
 let weightsRequest = 0;
 let competitionListFailed = false;
 let competitionScopeReady = false;
 let weightsNotice = "";
+let weightSaveToastTimeout;
 
 // NEW: remember which participants are hidden on the graph (persisted)
 let GLOBALHiddenSeries = new Set();
@@ -192,11 +194,16 @@ function isParticipantAccount() {
 }
 
 function selectedCompetition() {
-    return competitions.find(competition => competition.id === competitionSelect.value);
+    return competitions.find(competition => competition.id === preferredCompetitionId);
 }
 
 function competitionSelectionKey() {
     return `weight.selectedCompetition.${currentUser.id}`;
+}
+
+function rememberCompetition(id) {
+    preferredCompetitionId = id;
+    if (isParticipantAccount()) localStorage.setItem(competitionSelectionKey(), id);
 }
 
 function participantName(competition, id) {
@@ -217,7 +224,7 @@ function displayStartDate(competition) {
     return competitionDateLabel.format(new Date(`${startDay(competition)}T00:00:00Z`));
 }
 
-function renderCompetitionOptions(selection = competitionSelect.value) {
+function renderCompetitionOptions() {
     const options = [new Option("All Friends", "")];
     const duplicates = new Map();
     for (const competition of competitions) {
@@ -229,10 +236,10 @@ function renderCompetitionOptions(selection = competitionSelect.value) {
         options.push(new Option(count > 1 ? `${label} (${count})` : label, competition.id));
     }
     competitionSelect.replaceChildren(...options);
-    if (competitions.some(competition => competition.id === selection)) competitionSelect.value = selection;
+    competitionSelect.value = selectedCompetition()?.id ?? "";
 }
 
-async function loadCompetitions(restoreSelection = false) {
+async function loadCompetitions() {
     if (!isParticipantAccount()) return;
     const request = ++competitionsRequest;
     try {
@@ -244,15 +251,13 @@ async function loadCompetitions(restoreSelection = false) {
         if (request !== competitionsRequest) return;
         competitionListFailed = false;
         const previous = selectedCompetition();
-        const selection = restoreSelection ? localStorage.getItem(competitionSelectionKey()) : competitionSelect.value;
         competitions = records;
-        renderCompetitionOptions(selection);
+        renderCompetitionOptions();
         const current = selectedCompetition();
-        if (selection && !current) localStorage.removeItem(competitionSelectionKey());
         const scopeChanged = previous?.id !== current?.id ||
             previous?.participants.join() !== current?.participants.join() ||
             previous?.start_date !== current?.start_date;
-        if (!restoreSelection && scopeChanged) await changeCompetition();
+        if (competitionScopeReady && scopeChanged) await refreshCompetitionWeights();
         else renderCompetitionNotice();
     } catch (error) {
         if (request !== competitionsRequest) return;
@@ -325,13 +330,13 @@ async function createCompetition(event) {
         cancelCompetitionButton.disabled = false;
     }
     competitions = [record, ...competitions.filter(competition => competition.id !== record.id)];
-    renderCompetitionOptions(record.id);
+    rememberCompetition(record.id);
+    renderCompetitionOptions();
     competitionDialog.close();
-    await Promise.all([changeCompetition(), loadCompetitions()]);
+    await Promise.all([refreshCompetitionWeights(), loadCompetitions()]);
 }
 
-async function changeCompetition() {
-    if (isParticipantAccount()) localStorage.setItem(competitionSelectionKey(), competitionSelect.value);
+async function refreshCompetitionWeights() {
     GLOBALWeightData = [];
     weightsNotice = "Loading weigh-ins…";
     updateCharts();
@@ -398,9 +403,9 @@ async function loadTracker() {
     void loadChartScripts();
     newCompetitionButton.hidden = !isParticipantAccount();
     if (isParticipantAccount()) {
-        const savedCompetition = localStorage.getItem(competitionSelectionKey());
-        await loadCompetitions(true);
-        if (savedCompetition && competitionListFailed) return;
+        preferredCompetitionId = localStorage.getItem(competitionSelectionKey()) ?? "";
+        await loadCompetitions();
+        if (preferredCompetitionId && competitionListFailed) return;
         pocketBase.collection("competitions").subscribe("*", () => loadCompetitions()).catch(error => {
             console.error("Error subscribing to competitions:", error);
         });
@@ -616,7 +621,8 @@ function updateCharts() {
 }
 
 function openWeightForm() {
-    weightSaveNotice.textContent = "";
+    clearTimeout(weightSaveToastTimeout);
+    weightSaveToast.textContent = "";
     weightFormNotice.textContent = "";
     weightFormDialog.showModal();
     weightInput.focus();
@@ -659,7 +665,10 @@ async function logWeight(event) {
 
     weightForm.reset();
     weightFormDialog.close();
-    weightSaveNotice.textContent = `${savedWeight.weight} kg saved. You can close the app.`;
+    weightSaveToast.textContent = "Weigh-in saved.";
+    weightSaveToastTimeout = setTimeout(() => {
+        weightSaveToast.textContent = "";
+    }, 4000);
     void loadWeights();
 }
 
@@ -701,7 +710,10 @@ function init() {
     weightFormDialog.addEventListener("cancel", event => {
         if (submitButton.disabled) event.preventDefault();
     });
-    competitionSelect.addEventListener("change", changeCompetition);
+    competitionSelect.addEventListener("change", () => {
+        rememberCompetition(competitionSelect.value);
+        void refreshCompetitionWeights();
+    });
     newCompetitionButton.addEventListener("click", openCompetitionForm);
     competitionFriends.addEventListener("change", () => {
         if (!cancelCompetitionButton.disabled) createCompetitionButton.disabled = !selectedFriends().length;

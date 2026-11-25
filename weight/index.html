@@ -14,7 +14,7 @@
 			rel="stylesheet" />
 
 		<script defer src="https://cdnjs.cloudflare.com/ajax/libs/pocketbase/0.25.0/pocketbase.umd.js"></script>
-		<script defer src="app.js?v=17"></script>
+		<script defer src="app.js?v=19"></script>
 
 		<link
 			href="https://cdn.jsdelivr.net/npm/beercss@3.9.7/dist/cdn/beer.min.css"
@@ -26,7 +26,7 @@
 			type="module"
 			src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
 
-		<link rel="stylesheet" href="styles.css?v=12" />
+		<link rel="stylesheet" href="styles.css?v=13" />
 	</head>
 
 	<body class="light">
@@ -122,8 +122,6 @@
 					Log Weight
 				</button>
 			</div>
-			<p id="weightSaveNotice" role="status"></p>
-
 			<!-- tabs wont work without these -->
 			<div id="tab1" class="page"></div>
 			<div id="tab2" class="page"></div>
@@ -158,6 +156,7 @@
 				</div>
 			</div>
 		</main>
+		<div id="weightSaveToast" role="status"></div>
 
 		<dialog id="weightFormDialog" class="max" aria-labelledby="weightFormTitle">
 			<h2 id="weightFormTitle" style="margin-bottom: 1em">Log Weight</h2>
