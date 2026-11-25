@@ -14,7 +14,7 @@
 			rel="stylesheet" />
 
 		<script defer src="https://cdnjs.cloudflare.com/ajax/libs/pocketbase/0.25.0/pocketbase.umd.js"></script>
-		<script defer src="app.js?v=19"></script>
+		<script defer src="app.js?v=20"></script>
 
 		<link
 			href="https://cdn.jsdelivr.net/npm/beercss@3.9.7/dist/cdn/beer.min.css"
@@ -26,7 +26,7 @@
 			type="module"
 			src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
 
-		<link rel="stylesheet" href="styles.css?v=13" />
+		<link rel="stylesheet" href="styles.css?v=14" />
 	</head>
 
 	<body class="light">
@@ -85,7 +85,7 @@
 								autocomplete="off"
 								id="usernameInput"
 								required />
-							<label>Username</label>
+							<label for="usernameInput">Username</label>
 							<i>person</i>
 						</div>
 
@@ -95,10 +95,11 @@
 								type="password"
 								autocomplete="current-password"
 								required />
-							<label>Password</label>
+							<label for="passwordInput">Password</label>
 							<i>password</i>
 						</div>
 
+						<p id="signinNotice" role="status" hidden></p>
 						<button type="submit">
 							Sign In
 						</button>
@@ -122,20 +123,14 @@
 					Log Weight
 				</button>
 			</div>
-			<!-- tabs wont work without these -->
-			<div id="tab1" class="page"></div>
-			<div id="tab2" class="page"></div>
-			<div id="tab3" class="page"></div>
-			<!-- ---------------------------- -->
-
 			<div class="tracker-layout">
 				<div class="tracker-chart">
 					<p id="competitionNotice" role="status" hidden></p>
 					<p id="chartNotice" role="status" hidden></p>
-					<div class="tabs" id="GraphTabs">
-						<a class="active ripple" data-ui="#tab1">Absolute</a>
-						<a class="ripple" data-ui="#tab2">Relative</a>
-						<a class="ripple" data-ui="#tab3">Progress</a>
+					<div class="tabs" id="GraphTabs" role="group" aria-label="Chart mode">
+						<button type="button" class="ripple" value="Absolute" aria-pressed="true">Absolute</button>
+						<button type="button" class="ripple" value="Relative" aria-pressed="false">Relative</button>
+						<button type="button" class="ripple" value="Progress" aria-pressed="false">Progress</button>
 					</div>
 					<div class="tracker-plot">
 						<canvas id="ProgressGraph"></canvas>

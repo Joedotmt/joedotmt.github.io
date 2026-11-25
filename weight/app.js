@@ -13,6 +13,7 @@ const weightInput = document.getElementById("weightInput");
 const weightFormNotice = document.getElementById("weightFormNotice");
 const weightSaveToast = document.getElementById("weightSaveToast");
 const signindialog = document.getElementById("signindialog");
+const signinNotice = document.getElementById("signinNotice");
 const GraphTabs = document.getElementById("GraphTabs");
 const loadingText = document.getElementById('loadingtext');
 const loadingTextLines = Array.from(loadingText.children);
@@ -91,9 +92,16 @@ async function tryRestoreAuth() {
         if (pocketBase.authStore.token) {
             const session = await pocketBase.collection("fat_users").authRefresh();
             user = session.record;
+            if (!user?.id) throw new Error("PocketBase did not return an authenticated account.");
         }
-    } catch {
-        pocketBase.authStore.clear();
+    } catch (error) {
+        if (error.status === 401 || error.status === 403) {
+            pocketBase.authStore.clear();
+            setSigninDialogMode("signin", "Please sign in again.");
+        } else {
+            setSigninDialogMode("signin", "Couldn’t reconnect. Reload the page to retry your saved session.");
+        }
+        return;
     }
     if (user?.id) startTracker(user);
     else setSigninDialogMode("signin");
@@ -107,9 +115,13 @@ async function signIn(username, password) {
     try {
         const session = await pocketBase.collection("fat_users").authWithPassword(username, password);
         user = session.record;
-    } catch (e) {
-        console.error("Error during sign in:", e);
-        setSigninDialogMode("signin");
+        if (!user?.id) throw new Error("PocketBase did not return an authenticated account.");
+    } catch (error) {
+        console.error("Error during sign in:", error);
+        const credentialError = username !== "guest" && [400, 401, 403].includes(error.status);
+        setSigninDialogMode("signin", credentialError
+            ? "Couldn’t sign in. Check your username or password and try again."
+            : "Couldn’t sign in. Try again.");
         return;
     }
     const remaining = 600 - (performance.now() - started);
@@ -220,6 +232,10 @@ function showNotice(element, message) {
     element.hidden = !message;
 }
 
+function saveResultIsUncertain(error) {
+    return !error.status || error.status === 408 || error.status >= 500;
+}
+
 function displayStartDate(competition) {
     return competitionDateLabel.format(new Date(`${startDay(competition)}T00:00:00Z`));
 }
@@ -321,8 +337,13 @@ async function createCompetition(event) {
             name: competitionName.value.trim(),
             start_date: `${competitionStartDate.value} 00:00:00.000Z`
         }, { expand: "participants" });
+        if (!record?.id || !Array.isArray(record.participants) || !record.start_date) {
+            throw new Error("PocketBase did not return a saved competition.");
+        }
     } catch (error) {
-        showNotice(competitionFormNotice, "Couldn’t create the competition. Check the start date and participants, then try again.");
+        showNotice(competitionFormNotice, saveResultIsUncertain(error)
+            ? "Couldn’t confirm the competition was created. Check the competition list before trying again."
+            : "Couldn’t create the competition. Check the start date and participants, then try again.");
         console.error("Error creating competition:", error);
         return;
     } finally {
@@ -365,8 +386,11 @@ function renderCompetitionNotice() {
 }
 
 function weighInDate(record, competition) {
-    const timestamp = competition ? record.created : record.date || record.created;
-    return new Date(timestamp.replace(" ", "T"));
+    if (!competition && record.date) {
+        const date = new Date(record.date.replace(" ", "T"));
+        if (Number.isFinite(date.getTime())) return date;
+    }
+    return new Date(record.created?.replace(" ", "T"));
 }
 
 async function loadWeights() {
@@ -389,7 +413,11 @@ async function loadWeights() {
         }) : [];
         if (request !== weightsRequest) return;
         weightsNotice = "";
-        GLOBALWeightData = weights.filter(weight => weight.expand?.user);
+        GLOBALWeightData = weights
+            .filter(weight => weight.expand?.user)
+            .map(weight => ({ ...weight, recordedAt: weighInDate(weight, competition) }))
+            .filter(weight => Number.isFinite(weight.recordedAt.getTime()))
+            .sort((a, b) => b.recordedAt - a.recordedAt);
         updateCharts();
     } catch (error) {
         if (request !== weightsRequest) return;
@@ -479,7 +507,7 @@ function renderRecordList(groups, competition) {
         const height = user.height_cm;
         const bmi = height ? (currentWeight / (height / 100) ** 2).toFixed(1) : "—";
         const entries = records.map((record, index) => {
-            const date = weighInDate(record, competition);
+            const date = record.recordedAt;
             const format = yearFormat.format(date) === currentYear ? dateFormat : dateWithYearFormat;
             return `
           <li class="weigh-in-row${index === 0 ? " latest-weigh-in" : ""}">
@@ -511,7 +539,7 @@ function renderRecordList(groups, competition) {
     });
 }
 
-function createDatasets(groups, mode, competition) {
+function createDatasets(groups, mode) {
     const colors = ["#0000ff", "#0964ed", "#ff0000", "#00ff00", "#00b350"];
     return groups.map(({ user, records }) => {
         const baseline = records[records.length - 1].weight;
@@ -524,9 +552,8 @@ function createDatasets(groups, mode, competition) {
                 let y = record.weight;
                 if (mode === "Relative") y = record.weight - baseline;
                 if (mode === "Progress") y = goalProgress(record.weight, baseline, user.goal);
-                return { x: weighInDate(record, competition), y };
-            })
-            .sort((a, b) => a.x - b.x);
+                return { x: record.recordedAt, y };
+            });
 
         return {
             participantId: user.id,
@@ -563,7 +590,7 @@ function updateCharts() {
     if (!chartReady) return;
 
     const mode = GLOBALmode;
-    const datasets = createDatasets(groups, mode, competition);
+    const datasets = createDatasets(groups, mode);
     const annotations = goalLines(groups, competition, mode);
     const xAxis = {
         type: "time",
@@ -637,7 +664,11 @@ async function logWeight(event) {
     }
 
     const weight = weightInput.valueAsNumber;
-    if (!Number.isFinite(weight)) return;
+    if (!Number.isFinite(weight) || weight <= 0) {
+        weightFormNotice.textContent = "Enter a weight greater than 0 kg.";
+        weightInput.focus();
+        return;
+    }
     submitButton.disabled = true;
     cancelWeightButton.disabled = true;
     weightInput.readOnly = true;
@@ -651,8 +682,7 @@ async function logWeight(event) {
         });
         if (!savedWeight?.id) throw new Error("PocketBase did not return a saved weigh-in.");
     } catch (error) {
-        const uncertain = !error.status || error.status === 408 || error.status >= 500;
-        weightFormNotice.textContent = uncertain
+        weightFormNotice.textContent = saveResultIsUncertain(error)
             ? "Couldn’t confirm the save. Check your weigh-ins before trying again."
             : "Couldn’t save the weigh-in. Check the value and try again.";
         console.error("Error logging weight:", error);
@@ -672,7 +702,8 @@ async function logWeight(event) {
     void loadWeights();
 }
 
-function setSigninDialogMode(mode) {
+function setSigninDialogMode(mode, message = "") {
+    showNotice(signinNotice, message);
     if (mode === "loading") {
         // Randomly choose one line
         const chosen = Math.floor(Math.random() * loadingTextLines.length);
@@ -697,10 +728,13 @@ function setSigninDialogMode(mode) {
 }
 
 function init() {
-    const tabs = GraphTabs.querySelectorAll("a");
+    const tabs = GraphTabs.querySelectorAll("button");
     tabs.forEach(tab => {
         tab.addEventListener("click", () => {
-            GLOBALmode = tab.innerText;
+            if (GLOBALmode === tab.value) return;
+            GraphTabs.querySelector('[aria-pressed="true"]').setAttribute("aria-pressed", "false");
+            tab.setAttribute("aria-pressed", "true");
+            GLOBALmode = tab.value;
             updateCharts();
         });
     });
